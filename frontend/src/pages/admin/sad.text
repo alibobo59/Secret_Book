@@ -1202,3 +1202,4 @@ const PublisherDetail = () => {
 };
 
 export default PublisherDetail;
+GIT_AUTHOR_DATE="2024-12-31 15:30:00" GIT_COMMITTER_DATE="2024-12-31 15:30:00" git commit -m "Backdated commit"

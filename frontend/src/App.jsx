@@ -10,7 +10,9 @@ import WishlistPage from "./pages/WishlistPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import CheckoutConfirmationPage from "./pages/CheckoutConfirmationPage.jsx";
-import AccountPage from "./pages/AccountPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import AccountManagePage from "./pages/AccountManagePage.jsx";
 import AboutUsPage from "./pages/AboutUsPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
@@ -31,7 +33,9 @@ function App() {
             path="/checkout/confirmation"
             element={<CheckoutConfirmationPage />}
           />
-          <Route path="/account" element={<AccountPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/account" element={<AccountManagePage />} />
           <Route path="/about" element={<AboutUsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

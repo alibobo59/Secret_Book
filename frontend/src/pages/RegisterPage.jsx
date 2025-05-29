@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authService from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -58,6 +58,9 @@ const RegisterPage = () => {
     return errors;
   };
 
+  // Get register function from AuthContext
+  const { register } = useAuth();
+
   // Handle register form submission
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
@@ -82,7 +85,7 @@ const RegisterPage = () => {
       };
 
       // Call register API
-      await authService.register(userData);
+      await register(userData);
 
       // Show success message and reset form
       setRegisterSuccess(true);

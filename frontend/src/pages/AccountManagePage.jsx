@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authService from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 const AccountManagePage = () => {
   const navigate = useNavigate();
@@ -60,20 +60,22 @@ const AccountManagePage = () => {
     },
   ];
 
+  // Get auth context values
+  const { currentUser, isAuthenticated, logout } = useAuth();
+
   // Check if user is logged in on component mount
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (!currentUser) {
+    if (!isAuthenticated) {
       // Redirect to login if not authenticated
       navigate("/login");
     } else {
       setUser(currentUser);
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated, currentUser]);
 
   // Handle logout
   const handleLogout = () => {
-    authService.logout();
+    logout();
     navigate("/login");
   };
 

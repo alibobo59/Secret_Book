@@ -1,29 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authService from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check authentication status when component mounts
-    const checkAuth = () => {
-      const isAuth = authService.isAuthenticated();
-      setIsAuthenticated(isAuth);
-    };
-
-    checkAuth();
-
-    // Set up event listener for auth changes
-    window.addEventListener("auth-change", checkAuth);
-
-    return () => {
-      window.removeEventListener("auth-change", checkAuth);
-    };
-  }, []);
+  const { isAuthenticated, logout } = useAuth();
 
   return (
     <header className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-5">
@@ -161,6 +144,27 @@ const Header = () => {
             <p className="text-xs">Login</p>
           </Link>
         )}
+
+        {isAuthenticated && (
+          <button
+            onClick={() => logout()}
+            className="ml-4 flex cursor-pointer flex-col items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="h-6 w-6">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+              />
+            </svg>
+            <p className="text-xs">Logout</p>
+          </button>
+        )}
       </div>
 
       {/* Mobile menu */}
@@ -273,6 +277,27 @@ const Header = () => {
 
                 <p className="text-xs">Login</p>
               </Link>
+            )}
+
+            {isAuthenticated && (
+              <button
+                onClick={() => logout()}
+                className="flex cursor-pointer flex-col items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="h-6 w-6">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                  />
+                </svg>
+                <p className="text-xs">Logout</p>
+              </button>
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authService from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,9 @@ const LoginPage = () => {
     });
   };
 
+  // Get login function from AuthContext
+  const { login } = useAuth();
+
   // Handle login form submission
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +34,7 @@ const LoginPage = () => {
     setIsLoggingIn(true);
 
     try {
-      await authService.login({
+      await login({
         email: loginForm.email,
         password: loginForm.password,
         remember: loginForm.rememberMe,

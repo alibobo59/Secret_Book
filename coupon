@@ -158,3 +158,163 @@ header('Location: index.php');
 exit;
 ?>
 wsndjsd
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+<?php
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+<?php
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+<?php
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;mdanifndnviknsjdvnjs vkm sfm vmaacdajncnasjkc kjas ;
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+<?php
+include 'db.php';
+
+$id = $_GET['id'];
+$stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd
+stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+$stmt->execute([$id]);
+
+header('Location: index.php');
+exit;
+?>
+wsndjsd

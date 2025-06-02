@@ -1,0 +1,142 @@
+export const enTranslations = {
+  // Common
+  "app.name": "Secret",
+  "app.slogan": "Your Gateway to Knowledge",
+
+  // Navigation
+  "nav.home": "Home",
+  "nav.books": "Books",
+  "nav.categories": "Categories",
+  "nav.about": "About Us",
+  "nav.contact": "Contact",
+  "nav.search": "Search",
+  "nav.cart": "Cart",
+  "nav.login": "Login",
+  "nav.register": "Register",
+  "nav.profile": "Profile",
+  "nav.logout": "Logout",
+  "nav.language": "Language",
+
+  // Home Page
+  "home.featured": "Featured Books",
+  "home.bestsellers": "Bestsellers",
+  "home.newArrivals": "New Arrivals",
+  "home.onSale": "On Sale",
+  "home.viewAll": "View All",
+  "home.categories": "Categories",
+  "home.new": "New Arrivals",
+
+  // Book Details
+  "book.detail.author": "Author",
+  "book.detail.publisher": "Publisher",
+  "book.detail.published": "Published",
+  "book.detail.pages": "Pages",
+  "book.detail.language": "Language",
+  "book.detail.isbn": "ISBN",
+  "book.detail.category": "Category",
+  "book.detail.price": "Price",
+  "book.detail.addToCart": "Add to Cart",
+  "book.detail.buyNow": "Buy Now",
+  "book.detail.description": "Description",
+  "book.detail.reviews": "Customer Reviews",
+  "book.detail.relatedBooks": "Related Books",
+  "book.detail.quantity": "Quantity",
+  "book.detail.writeReview": "Write a Review",
+  "book.detail.rating": "Rating",
+  "book.detail.submitReview": "Submit Review",
+  "book.detail.noReviews": "No reviews yet. Be the first to review this book!",
+  "book.detail.notFound": "Book Not Found",
+  "book.detail.notFoundMessage":
+    "The book you're looking for doesn't exist or has been removed.",
+  "book.detail.backToBooks": "Back to Books",
+  "book.detail.by": "by",
+
+  // Cart
+  "cart.title": "Shopping Cart",
+  "cart.empty": "Your cart is empty",
+  "cart.continue": "Continue Shopping",
+  "cart.checkout": "Checkout",
+  "cart.remove": "Remove",
+  "cart.total": "Total",
+  "cart.subtotal": "Subtotal",
+  "cart.shipping": "Shipping",
+  "cart.tax": "Tax",
+  "cart.inStock": "In Stock",
+  "cart.onlyCountLeft": "Only {{count}} left",
+  "cart.outOfStock": "Out of Stock",
+
+  // User
+  "user.profile": "Profile",
+  "user.orders": "My Orders",
+  "user.wishlist": "Wishlist",
+  "user.settings": "Settings",
+  "user.name": "Name",
+  "user.email": "Email",
+  "user.password": "Password",
+  "user.confirmPassword": "Confirm Password",
+  "user.address": "Address",
+  "user.phone": "Phone",
+
+  // Forms
+  "form.required": "This field is required",
+  "form.submit": "Submit",
+  "form.cancel": "Cancel",
+  "form.save": "Save",
+  "form.search": "Search",
+  "form.filter": "Filter",
+  "form.error.invalidEmail": "Please enter a valid email address",
+  "form.error.passwordMismatch": "Passwords do not match",
+  "form.error.minLength": "Minimum length is {{count}} characters",
+
+  // Admin
+  "admin.dashboard": "Dashboard",
+  "admin.books": "Books Management",
+  "admin.users": "Users Management",
+  "admin.orders": "Orders Management",
+  "admin.categories": "Categories Management",
+  "admin.reports": "Reports",
+  "admin.settings": "Settings",
+  "admin.addNew": "Add New",
+  "admin.edit": "Edit",
+  "admin.delete": "Delete",
+  "admin.view": "View",
+  "admin.search": "Search",
+  "admin.filter": "Filter",
+  "admin.status": "Status",
+  "admin.actions": "Actions",
+  "admin.panel": "Admin Panel",
+
+  // Footer
+  "footer.rights": "All Rights Reserved",
+  "footer.privacy": "Privacy Policy",
+  "footer.terms": "Terms of Service",
+  "footer.contact": "Contact Us",
+  "footer.about": "About Us",
+  "footer.faq": "FAQ",
+  "footer.shipping": "Shipping Policy",
+  "footer.returns": "Returns Policy",
+
+  // Messages
+  "message.welcome": "Welcome to our BookStore",
+  "message.error": "An error occurred",
+  "message.success": "Operation successful",
+  "message.loading": "Loading...",
+  "message.confirmDelete": "Are you sure you want to delete {{item}}?",
+  "message.itemAdded": "Item added to cart",
+  "message.itemRemoved": "Item removed from cart",
+  "message.orderPlaced": "Your order has been placed successfully",
+
+  // Language Switcher
+  "language.en": "English",
+  "language.vi": "Vietnamese",
+  "language.select": "Select Language",
+
+  // General
+  "general.browseBooks": "Browse Books",
+  "general.pageNotFound": "Page Not Found",
+  "general.pageNotFoundMessage":
+    "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+  "general.backToHome": "Back to Home",
+  "general.next": "Next",
+  "general.previous": "Previous",
+};

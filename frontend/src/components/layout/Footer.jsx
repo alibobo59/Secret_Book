@@ -1,119 +1,211 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { BookOpen, Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
+
   return (
-    <footer className="bg-gray-100 py-8">
-      <div className="mx-auto max-w-[1200px] px-5">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-bold">About</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/about-us"
-                  className="text-gray-600 hover:text-amber-500">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact-us"
-                  className="text-gray-600 hover:text-amber-500">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Blog
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-bold">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Safety Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Community Guidelines
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-bold">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Cookies Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-amber-500">
-                  Terms of Service
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="mb-3 text-lg font-bold">Payment Methods</h3>
-            <div className="flex flex-wrap gap-2">
-              <img
-                src="./assets/images/payment-method-visa.svg"
-                alt="Visa"
-                className="h-8"
-              />
-              <img
-                src="./assets/images/payment-method-mastercard.svg"
-                alt="Mastercard"
-                className="h-8"
-              />
-              <img
-                src="./assets/images/payment-method-paypal.svg"
-                alt="PayPal"
-                className="h-8"
-              />
-              <img
-                src="./assets/images/payment-method-stripe.svg"
-                alt="Stripe"
-                className="h-8"
-              />
-              <img
-                src="./assets/images/payment-method-bitcoin.svg"
-                alt="Bitcoin"
-                className="h-8"
-              />
+    <footer className="bg-gray-100 dark:bg-gray-800 pt-12 pb-8">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Logo and about */}
+          <div className="col-span-1">
+            <Link to="/" className="flex items-center mb-4">
+              <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-500" />
+              <span className="ml-2 text-2xl font-serif font-bold text-gray-800 dark:text-white">
+                {t("app.name")}
+              </span>
+            </Link>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {t("message.welcome")}
+            </p>
+            <div className="flex space-x-4">
+              <a
+                href="#"
+                className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200"
+                aria-label="Facebook">
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200"
+                aria-label="Twitter">
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200"
+                aria-label="Instagram">
+                <Instagram className="h-5 w-5" />
+              </a>
             </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="col-span-1">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              {t("nav.home")}
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/books"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("nav.books")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/categories"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("nav.categories")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/recommendations"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("home.bestsellers")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/bestsellers"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("home.bestsellers")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/new-releases"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("home.new")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Account */}
+          <div className="col-span-1">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              {t("user.profile")}
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/login"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("nav.login")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/register"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("nav.register")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/my-books"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("user.orders")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/orders"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("user.orders")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/wishlist"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("user.wishlist")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div className="col-span-1">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              {t("footer.contact")}
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("footer.contact")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/faq"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("footer.faq")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shipping"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("footer.shipping")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/returns"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("footer.returns")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
+                  {t("footer.privacy")}
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-200 pt-8 text-center">
-          <p className="text-gray-600">
-            © {new Date().getFullYear()} MayBell - Online furniture store. All
-            rights reserved.
+        {/* Newsletter */}
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div className="max-w-md mx-auto">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">
+              {t("message.welcome")}
+            </h3>
+            <form className="flex">
+              <input
+                type="email"
+                placeholder={t("user.email")}
+                className="flex-grow py-2 px-4 rounded-l-md focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-r-md transition-colors duration-200">
+                {t("form.submit")}
+              </button>
+            </form>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+              {t("message.welcome")}
+            </p>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-12 text-center">
+          <p className="text-gray-600 dark:text-gray-400">
+            &copy; {currentYear} {t("app.name")}. {t("footer.rights")}
           </p>
         </div>
       </div>

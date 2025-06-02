@@ -1,327 +1,257 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useBook } from '../contexts/BookContext';
+import { motion } from 'framer-motion';
+import { Search, ChevronRight } from 'lucide-react';
+import BookCard from '../components/books/BookCard';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const HomePage = () => {
+  const { books, categories, loading } = useBook();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const { t } = useLanguage();
+
+  // Get featured books (top rated books)
+  const featuredBooks = React.useMemo(() => {
+    if (!books) return [];
+    return [...books]
+      .sort((a, b) => b.average_rating - a.average_rating)
+      .slice(0, 4);
+  }, [books]);
+
+  // Get new releases (most recent books)
+  const newReleases = React.useMemo(() => {
+    if (!books) return [];
+    return [...books]
+      .sort((a, b) => new Date(b.published_date) - new Date(a.published_date))
+      .slice(0, 4);
+  }, [books]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/books?search=${encodeURIComponent(searchQuery)}`;
+    }
+  };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <div>
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section
-        className="h-[600px] w-full bg-cover bg-center"
-        style={{ backgroundImage: "url('./assets/images/header-bg.jpeg')" }}>
-        <div className="mx-auto flex h-full max-w-[1200px] items-center px-5">
-          <div className="sm:w-2/3 md:w-1/2">
-            <h1 className="text-4xl font-bold text-white sm:text-5xl md:text-6xl">
-              Best Furniture <br /> For Your Home
+      <section className="relative bg-gradient-to-r from-amber-700 to-amber-500 text-white">
+        <div className="absolute inset-0 bg-black opacity-10"></div>
+        <div className="relative container mx-auto px-4 py-24 md:py-32">
+          <motion.div 
+            className="max-w-3xl mx-auto text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-6">
+              {t('home.hero.title')}
             </h1>
-            <p className="mt-2 text-white sm:mt-4 sm:text-lg">
-              Find the perfect furniture for your home from our wide collection.
+            <p className="text-xl md:text-2xl mb-8 opacity-90">
+              {t('home.hero.subtitle')}
             </p>
-            <Link
-              to="/catalog"
-              className="mt-4 inline-block rounded bg-amber-400 px-8 py-3 text-center font-bold text-gray-900 transition duration-300 hover:bg-yellow-300 sm:mt-6">
-              Shop Now
+            <form onSubmit={handleSearch} className="max-w-xl mx-auto relative">
+              <input
+                type="text"
+                placeholder={t('search.placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full py-3 px-5 pl-12 rounded-full bg-white bg-opacity-20 backdrop-blur-sm text-white placeholder-white placeholder-opacity-75 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:bg-opacity-30 transition-all duration-200"
+              />
+              <Search className="absolute left-4 top-3.5 h-6 w-6 text-white" />
+              <button
+                type="submit"
+                className="absolute right-3 top-3 bg-white text-amber-600 rounded-full p-1.5 hover:bg-opacity-90 transition-colors duration-200"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Featured Books Section */}
+      <section className="py-16 bg-amber-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
+              {t('home.featured')}
+            </h2>
+            <Link 
+              to="/books" 
+              className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium flex items-center"
+            >
+              {t('common.viewAll')}
+              <ChevronRight className="h-5 w-5 ml-1" />
             </Link>
           </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 h-96 animate-pulse">
+                  <div className="h-52 bg-gray-300 dark:bg-gray-700 rounded-md mb-4"></div>
+                  <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+            >
+              {featuredBooks.map(book => (
+                <motion.div key={book.id} variants={itemVariants}>
+                  <BookCard book={book} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="mx-auto max-w-[1200px] px-5 py-10">
-        <h2 className="mb-6 text-center text-2xl font-bold md:text-3xl">
-          Shop by Category
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          <div className="group relative overflow-hidden rounded-lg">
-            <img
-              src="./assets/images/living-room.png"
-              alt="Living Room"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-              <h3 className="text-xl font-bold text-white">Living Room</h3>
+      <section className="py-16 bg-white dark:bg-gray-800">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white mb-8">
+            {t('home.categories')}
+          </h2>
+          
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, index) => (
+                <div key={index} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              ))}
             </div>
-            <Link to="/catalog" className="absolute inset-0">
-              <span className="sr-only">Shop Living Room</span>
-            </Link>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-lg">
-            <img
-              src="./assets/images/bedroom.png"
-              alt="Bedroom"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-              <h3 className="text-xl font-bold text-white">Bedroom</h3>
-            </div>
-            <Link to="/catalog" className="absolute inset-0">
-              <span className="sr-only">Shop Bedroom</span>
-            </Link>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-lg">
-            <img
-              src="./assets/images/kitchen.png"
-              alt="Kitchen"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-              <h3 className="text-xl font-bold text-white">Kitchen</h3>
-            </div>
-            <Link to="/catalog" className="absolute inset-0">
-              <span className="sr-only">Shop Kitchen</span>
-            </Link>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-lg">
-            <img
-              src="./assets/images/outdoors.png"
-              alt="Outdoors"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
-              <h3 className="text-xl font-bold text-white">Outdoors</h3>
-            </div>
-            <Link to="/catalog" className="absolute inset-0">
-              <span className="sr-only">Shop Outdoors</span>
-            </Link>
-          </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+            >
+              {categories.map(category => (
+                <motion.div key={category.id} variants={itemVariants}>
+                  <Link 
+                    to={`/books?category=${category.id}`}
+                    className="block h-32 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-800 rounded-lg overflow-hidden relative group"
+                  >
+                    <div className="absolute inset-0 bg-black opacity-30 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <h3 className="text-white text-xl font-bold">{category.name}</h3>
+                    </div>
+                    <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <ChevronRight className="h-5 w-5 text-white" />
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <section className="mx-auto max-w-[1200px] px-5 py-10">
-        <h2 className="mb-6 text-center text-2xl font-bold md:text-3xl">
-          Featured Products
-        </h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Product Card 1 */}
-          <div className="group rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-lg">
-            <div className="relative mb-4 overflow-hidden rounded-lg">
-              <img
-                src="./assets/images/product-sofa.png"
-                alt="Modern Sofa"
-                className="h-64 w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-              <div className="absolute right-2 top-2 flex flex-col gap-2">
-                <button className="rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <h3 className="mb-2 text-lg font-medium">Modern Sofa</h3>
-            <div className="mb-2 flex items-center">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ))}
-              </div>
-              <span className="ml-2 text-gray-600">(24 reviews)</span>
-            </div>
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xl font-bold">$599.99</span>
-              <span className="text-sm text-gray-500">In stock</span>
-            </div>
-            <Link
-              to="/product-overview"
-              className="block rounded bg-amber-400 px-4 py-2 text-center font-bold text-gray-900 transition hover:bg-yellow-300">
-              View Details
+      {/* New Releases Section */}
+      <section className="py-16 bg-amber-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
+              {t('home.new')}
+            </h2>
+            <Link 
+              to="/new-releases" 
+              className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium flex items-center"
+            >
+              {t('common.viewAll')}
+              <ChevronRight className="h-5 w-5 ml-1" />
             </Link>
           </div>
 
-          {/* Product Card 2 */}
-          <div className="group rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-lg">
-            <div className="relative mb-4 overflow-hidden rounded-lg">
-              <img
-                src="./assets/images/product-chair.png"
-                alt="Accent Chair"
-                className="h-64 w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-              <div className="absolute right-2 top-2 flex flex-col gap-2">
-                <button className="rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                    />
-                  </svg>
-                </button>
-              </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 h-96 animate-pulse">
+                  <div className="h-52 bg-gray-300 dark:bg-gray-700 rounded-md mb-4"></div>
+                  <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full mb-3"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                </div>
+              ))}
             </div>
-            <h3 className="mb-2 text-lg font-medium">Accent Chair</h3>
-            <div className="mb-2 flex items-center">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ))}
-              </div>
-              <span className="ml-2 text-gray-600">(18 reviews)</span>
-            </div>
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xl font-bold">$249.99</span>
-              <span className="text-sm text-gray-500">In stock</span>
-            </div>
-            <Link
-              to="/product-overview"
-              className="block rounded bg-amber-400 px-4 py-2 text-center font-bold text-gray-900 transition hover:bg-yellow-300">
-              View Details
-            </Link>
-          </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+            >
+              {newReleases.map(book => (
+                <motion.div key={book.id} variants={itemVariants}>
+                  <BookCard book={book} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </section>
 
-          {/* Product Card 3 */}
-          <div className="group rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-lg">
-            <div className="relative mb-4 overflow-hidden rounded-lg">
-              <img
-                src="./assets/images/product-table.png"
-                alt="Coffee Table"
-                className="h-64 w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-              <div className="absolute right-2 top-2 flex flex-col gap-2">
-                <button className="rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <h3 className="mb-2 text-lg font-medium">Coffee Table</h3>
-            <div className="mb-2 flex items-center">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ))}
-              </div>
-              <span className="ml-2 text-gray-600">(32 reviews)</span>
-            </div>
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xl font-bold">$349.99</span>
-              <span className="text-sm text-gray-500">In stock</span>
-            </div>
-            <Link
-              to="/product-overview"
-              className="block rounded bg-amber-400 px-4 py-2 text-center font-bold text-gray-900 transition hover:bg-yellow-300">
-              View Details
+      {/* Join Community Section */}
+      <section className="py-16 bg-teal-600 text-white">
+        <div className="container mx-auto px-4">
+          <motion.div 
+            className="max-w-3xl mx-auto text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl font-serif font-bold mb-6">
+              {t('home.community.title')}
+            </h2>
+            <p className="text-xl mb-8 opacity-90">
+              {t('home.community.subtitle')}
+            </p>
+            <Link 
+              to="/register" 
+              className="inline-block px-8 py-3 bg-white text-teal-600 font-medium rounded-full hover:bg-opacity-90 transition-colors duration-200"
+            >
+              {t('nav.register')}
             </Link>
-          </div>
-
-          {/* Product Card 4 */}
-          <div className="group rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-lg">
-            <div className="relative mb-4 overflow-hidden rounded-lg">
-              <img
-                src="./assets/images/product-matrass.png"
-                alt="Memory Foam Mattress"
-                className="h-64 w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-              <div className="absolute right-2 top-2 flex flex-col gap-2">
-                <button className="rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <h3 className="mb-2 text-lg font-medium">Memory Foam Mattress</h3>
-            <div className="mb-2 flex items-center">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ))}
-              </div>
-              <span className="ml-2 text-gray-600">(42 reviews)</span>
-            </div>
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xl font-bold">$799.99</span>
-              <span className="text-sm text-gray-500">In stock</span>
-            </div>
-            <Link
-              to="/product-overview"
-              className="block rounded bg-amber-400 px-4 py-2 text-center font-bold text-gray-900 transition hover:bg-yellow-300">
-              View Details
-            </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>

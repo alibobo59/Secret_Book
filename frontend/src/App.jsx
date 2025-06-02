@@ -1,46 +1,41 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
-import Header from "./components/layout/Header.jsx";
-import Footer from "./components/layout/Footer.jsx";
-import HomePage from "./pages/HomePage.jsx";
-import CatalogPage from "./pages/CatalogPage.jsx";
-import ContactPage from "./pages/ContactPage.jsx";
-import ProductOverviewPage from "./pages/ProductOverviewPage.jsx";
-import WishlistPage from "./pages/WishlistPage.jsx";
-import CartPage from "./pages/CartPage.jsx";
-import CheckoutPage from "./pages/CheckoutPage.jsx";
-import CheckoutConfirmationPage from "./pages/CheckoutConfirmationPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
-import AccountManagePage from "./pages/AccountManagePage.jsx";
-import AboutUsPage from "./pages/AboutUsPage.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
+import { Routes, Route, useLocation } from "react-router-dom";
+
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import HomePage from "./pages/HomePage";
+import BookDetailPage from "./pages/BookDetailPage";
+import BrowseBooksPage from "./pages/BrowseBooksPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import ProfilePage from "./pages/ProfilePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import AdminDashboard from "./pages/admin/Dashboard";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow">
+    <div className="flex flex-col min-h-screen bg-amber-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      {!isAdminRoute && <Header />}
+      <main className={`flex-grow ${isAdminRoute ? 'p-0' : ''}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/catalog" element={<CatalogPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/product/:id" element={<ProductOverviewPage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/books" element={<BrowseBooksPage />} />
+          <Route path="/books/:id" element={<BookDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route
-            path="/checkout/confirmation"
-            element={<CheckoutConfirmationPage />}
-          />
+          <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/account" element={<AccountManagePage />} />
-          <Route path="/about" element={<AboutUsPage />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </div>
   );
 }

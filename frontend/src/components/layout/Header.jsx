@@ -1,307 +1,386 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  Moon,
+  Sun,
+  BookOpen,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useCart } from "../../contexts/CartContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import LanguageSwitcher from "../common/LanguageSwitcher";
 
 const Header = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
-  const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize darkMode state based on localStorage or system preference
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.theme === "dark" ||
+        (!localStorage.theme &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      );
+    }
+    return false;
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user, logout } = useAuth();
+  const { cartItems } = useCart();
+  const { t } = useLanguage();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    // Apply initial theme
+    document.documentElement.classList.toggle("dark", darkMode);
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleThemeChange = (e) => {
+      if (!("theme" in localStorage)) {
+        setDarkMode(e.matches);
+        document.documentElement.classList.toggle("dark", e.matches);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    mediaQuery.addEventListener("change", handleThemeChange);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      mediaQuery.removeEventListener("change", handleThemeChange);
+    };
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+
+    if (newDarkMode) {
+      localStorage.theme = "dark";
+      document.documentElement.classList.add("dark");
+    } else {
+      localStorage.theme = "light";
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Implement search functionality
+    console.log("Searching for:", searchQuery);
+  };
 
   return (
-    <header className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-5">
-      <Link to="/">
-        <img
-          className="cursor-pointer sm:h-auto sm:w-auto"
-          src="./assets/images/company-logo.svg"
-          alt="company logo"
-        />
-      </Link>
-
-      <div className="md:hidden">
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="h-8 w-8">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <form className="hidden h-9 w-2/5 items-center border md:flex">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="1.5"
-          stroke="currentColor"
-          className="mx-3 h-4 w-4">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-
-        <input
-          className="hidden w-11/12 outline-none md:block"
-          type="search"
-          placeholder="Search"
-        />
-
-        <button className="ml-auto h-full bg-amber-400 px-4 hover:bg-yellow-300">
-          Search
-        </button>
-      </form>
-
-      <div className="hidden gap-3 md:!flex">
-        <Link
-          to="/wishlist"
-          className="flex cursor-pointer flex-col items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="h-6 w-6">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
-          </svg>
-
-          <p className="text-xs">Wishlist</p>
-        </Link>
-
-        <Link
-          to="/cart"
-          className="flex cursor-pointer flex-col items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="h-6 w-6">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
-            />
-          </svg>
-
-          <p className="text-xs">Cart</p>
-        </Link>
-
-        {isAuthenticated ? (
-          <Link
-            to="/account"
-            className="flex cursor-pointer flex-col items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="h-6 w-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-              />
-            </svg>
-
-            <p className="text-xs">Account</p>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-white dark:bg-gray-800 shadow-md py-2"
+          : "bg-transparent backdrop-blur-sm py-4"
+      }`}>
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center group">
+            <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-500 transition-transform group-hover:rotate-6 duration-300" />
+            <span className="ml-2 text-2xl font-serif font-bold text-gray-800 dark:text-white">
+              {t("app.name")}
+            </span>
           </Link>
-        ) : (
-          <Link
-            to="/login"
-            className="flex cursor-pointer flex-col items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="h-6 w-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-              />
-            </svg>
 
-            <p className="text-xs">Login</p>
-          </Link>
-        )}
-
-        {isAuthenticated && (
-          <button
-            onClick={() => logout()}
-            className="ml-4 flex cursor-pointer flex-col items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="h-6 w-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-              />
-            </svg>
-            <p className="text-xs">Logout</p>
-          </button>
-        )}
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-16 z-50 bg-white p-5 md:hidden">
-          <form className="flex h-9 items-center border">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="mx-3 h-4 w-4">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
-
-            <input
-              className="w-11/12 outline-none"
-              type="search"
-              placeholder="Search"
-            />
-
-            <button className="ml-auto h-full bg-amber-400 px-4 hover:bg-yellow-300">
-              Search
-            </button>
-          </form>
-
-          <div className="mt-5 flex justify-between">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
             <Link
-              to="/wishlist"
-              className="flex cursor-pointer flex-col items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="h-6 w-6">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                />
-              </svg>
-
-              <p className="text-xs">Wishlist</p>
+              to="/books"
+              className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                location.pathname.includes("/books") &&
+                !location.pathname.includes("/books/")
+                  ? "text-amber-600 dark:text-amber-500"
+                  : "text-gray-700 dark:text-gray-300"
+              }`}>
+              {t("nav.books")}
             </Link>
+            <Link
+              to="/categories"
+              className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                location.pathname.includes("/categories")
+                  ? "text-amber-600 dark:text-amber-500"
+                  : "text-gray-700 dark:text-gray-300"
+              }`}>
+              {t("nav.categories")}
+            </Link>
+            <Link
+              to="/recommendations"
+              className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                location.pathname.includes("/recommendations")
+                  ? "text-amber-600 dark:text-amber-500"
+                  : "text-gray-700 dark:text-gray-300"
+              }`}>
+              {t("home.bestsellers")}
+            </Link>
+          </nav>
+
+          {/* Search, Cart, User Section */}
+          <div className="hidden md:flex items-center space-x-6">
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                placeholder={t("nav.search") + "..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200 w-40 focus:w-60"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </form>
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }>
+              {darkMode ? (
+                <Sun className="h-5 w-5 text-amber-500" />
+              ) : (
+                <Moon className="h-5 w-5 text-gray-700" />
+              )}
+            </button>
 
             <Link
               to="/cart"
-              className="flex cursor-pointer flex-col items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="h-6 w-6">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
-                />
-              </svg>
-
-              <p className="text-xs">Cart</p>
+              className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+              <ShoppingCart className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              {cartItems?.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  {cartItems.length}
+                </span>
+              )}
             </Link>
 
-            {isAuthenticated ? (
-              <Link
-                to="/account"
-                className="flex cursor-pointer flex-col items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="h-6 w-6">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                  />
-                </svg>
-
-                <p className="text-xs">Account</p>
-              </Link>
+            {user ? (
+              <div className="relative group">
+                <button className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
+                    {user.name.charAt(0)}
+                  </div>
+                </button>
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 origin-top-right transition-all duration-200">
+                  <div className="py-2">
+                    <Link
+                      to={`/profile/${user.username}`}
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Profile
+                    </Link>
+                    <Link
+                      to="/my-books"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      My Books
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      My Orders
+                    </Link>
+                    {user.isAdmin && (
+                      <Link
+                        to="/admin"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <Link
                 to="/login"
-                className="flex cursor-pointer flex-col items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="h-6 w-6">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                  />
-                </svg>
-
-                <p className="text-xs">Login</p>
+                className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200">
+                {t("nav.login")}
               </Link>
             )}
-
-            {isAuthenticated && (
-              <button
-                onClick={() => logout()}
-                className="flex cursor-pointer flex-col items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="h-6 w-6">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                  />
-                </svg>
-                <p className="text-xs">Logout</p>
-              </button>
-            )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+            onClick={toggleMenu}>
+            {isMenuOpen ? (
+              <X className="h-6 w-6 text-gray-800 dark:text-white" />
+            ) : (
+              <Menu className="h-6 w-6 text-gray-800 dark:text-white" />
+            )}
+          </button>
         </div>
-      )}
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <form onSubmit={handleSearch} className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={t("nav.search") + "..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+            </form>
+
+            {/* Mobile Language Switcher */}
+            <div className="mb-4">
+              <LanguageSwitcher />
+            </div>
+            <nav className="flex flex-col space-y-4">
+              <Link
+                to="/books"
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                  location.pathname.includes("/books") &&
+                  !location.pathname.includes("/books/")
+                    ? "text-amber-600 dark:text-amber-500"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
+                onClick={() => setIsMenuOpen(false)}>
+                {t("nav.books")}
+              </Link>
+              <Link
+                to="/categories"
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                  location.pathname.includes("/categories")
+                    ? "text-amber-600 dark:text-amber-500"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
+                onClick={() => setIsMenuOpen(false)}>
+                {t("nav.categories")}
+              </Link>
+              <Link
+                to="/recommendations"
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                  location.pathname.includes("/recommendations")
+                    ? "text-amber-600 dark:text-amber-500"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
+                onClick={() => setIsMenuOpen(false)}>
+                {t("home.bestsellers")}
+              </Link>
+
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                <Link
+                  to="/cart"
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300"
+                  onClick={() => setIsMenuOpen(false)}>
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>
+                    {t("nav.cart")}
+                    {cartItems?.length > 0 ? ` (${cartItems.length})` : ""}
+                  </span>
+                </Link>
+                <button
+                  onClick={() => {
+                    toggleDarkMode();
+                    setIsMenuOpen(false);
+                  }}
+                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                  aria-label={
+                    darkMode ? "Switch to light mode" : "Switch to dark mode"
+                  }>
+                  {darkMode ? (
+                    <Sun className="h-5 w-5 text-amber-500" />
+                  ) : (
+                    <Moon className="h-5 w-5 text-gray-700" />
+                  )}
+                </button>
+              </div>
+
+              {user ? (
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
+                      {user.name.charAt(0)}
+                    </div>
+                    <span className="font-medium text-gray-800 dark:text-white">
+                      {user.name}
+                    </span>
+                  </div>
+                  <div className="flex flex-col space-y-3">
+                    <Link
+                      to={`/profile/${user.username}`}
+                      className="text-gray-700 dark:text-gray-300"
+                      onClick={() => setIsMenuOpen(false)}>
+                      Profile
+                    </Link>
+                    <Link
+                      to="/my-books"
+                      className="text-gray-700 dark:text-gray-300"
+                      onClick={() => setIsMenuOpen(false)}>
+                      My Books
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="text-gray-700 dark:text-gray-300"
+                      onClick={() => setIsMenuOpen(false)}>
+                      My Orders
+                    </Link>
+                    {user.isAdmin && (
+                      <Link
+                        to="/admin"
+                        className="text-gray-700 dark:text-gray-300"
+                        onClick={() => setIsMenuOpen(false)}>
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-left text-red-600 dark:text-red-500">
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <Link
+                    to="/login"
+                    className="block w-full px-4 py-2 text-center rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}>
+                    {t("nav.login")}
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="block w-full mt-2 px-4 py-2 text-center rounded-md border border-amber-600 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}>
+                    {t("nav.register")}
+                  </Link>
+                </div>
+              )}
+            </nav>
+          </div>
+        )}
+      </div>
     </header>
   );
 };

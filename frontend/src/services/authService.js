@@ -1,17 +1,19 @@
-import api from "./api";
+import api from "../services/api.js";
 
 const authService = {
   // Register a new user
   register: async (userData) => {
     try {
       const response = await api.post("/register", userData);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+      const { user, token } = response.data;
+      if (token) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
       }
-      return response.data;
+      return { user, token };
     } catch (error) {
-      throw error.response ? error.response.data : { message: "Network error" };
+      const message = error.response?.data?.message || "Registration failed";
+      throw new Error(message);
     }
   },
 
@@ -19,26 +21,42 @@ const authService = {
   login: async (credentials) => {
     try {
       const response = await api.post("/login", credentials);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+      const { user, token } = response.data;
+      if (token) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
       }
-      return response.data;
+      return { user, token };
     } catch (error) {
-      throw error.response ? error.response.data : { message: "Network error" };
+      const message = error.response?.data?.message || "Login failed";
+      throw new Error(message);
     }
   },
 
   // Logout user
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  logout: async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await api.post("/logout");
+      }
+    } catch (error) {
+      console.error("Logout error:", error.response?.data || error.message);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
   },
 
   // Get current user
   getCurrentUser: () => {
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user) : null;
+    try {
+      const user = localStorage.getItem("user");
+      return user ? JSON.parse(user) : null;
+    } catch (error) {
+      console.error("Error parsing user:", error);
+      return null;
+    }
   },
 
   // Check if user is authenticated

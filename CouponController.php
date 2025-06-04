@@ -16,7 +16,11 @@ class CouponController extends Controller
     public function store(Request $request)
     {
         $coupon = Coupon::create($request->only([
-            'code', 'type', 'value', 'max_uses', 'expires_at'
+            'code',
+            'type',
+            'value',
+            'max_uses',
+            'expires_at'
         ]));
         return response()->json($coupon, 201);
     }
@@ -30,7 +34,11 @@ class CouponController extends Controller
     {
         $coupon = Coupon::findOrFail($id);
         $coupon->update($request->only([
-            'code', 'type', 'value', 'max_uses', 'expires_at'
+            'code',
+            'type',
+            'value',
+            'max_uses',
+            'expires_at'
         ]));
         return response()->json($coupon);
     }
@@ -40,5 +48,23 @@ class CouponController extends Controller
         $coupon = Coupon::findOrFail($id);
         $coupon->delete();
         return response()->json(['message' => 'Coupon deleted']);
+    }
+    public function trashed()
+    {
+        return response()->json(Coupon::onlyTrashed()->get());
+    }
+
+    public function restore($id)
+    {
+        $coupon = Coupon::withTrashed()->findOrFail($id);
+        $coupon->restore();
+        return response()->json(['message' => 'Coupon restored']);
+    }
+
+    public function forceDelete($id)
+    {
+        $coupon = Coupon::withTrashed()->findOrFail($id);
+        $coupon->forceDelete();
+        return response()->json(['message' => 'Coupon permanently deleted']);
     }
 }

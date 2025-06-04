@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in (from localStorage)
+  // Check if user is already logged in
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
@@ -25,16 +25,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-
-      // Call the login method from authService
       const response = await authService.login({ email, password });
-
-      // Set user state
       setUser(response.user);
       return response.user;
     } catch (error) {
-      setError(error.message || "Failed to login");
-      throw error;
+      const message = error.message || "Failed to login";
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -44,21 +41,18 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-
-      // Call the register method from authService
       const response = await authService.register({
         name,
         email,
         password,
         password_confirmation,
       });
-
-      // Set user state
       setUser(response.user);
       return response.user;
     } catch (error) {
-      setError(error.message || "Failed to register");
-      throw error;
+      const message = error.response?.data?.message || "Failed to register";
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -67,20 +61,24 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-
-      // Call the backend to invalidate the token
       if (user) {
         await authService.logout();
       }
-
-      // Clear user state
       setUser(null);
+      setError(null);
     } catch (error) {
       console.error("Logout error:", error);
+      setError("Failed to logout");
     } finally {
       setLoading(false);
     }
   };
+
+  // Role-based checks
+  const isAdmin = () => user?.role === "admin";
+  const isMod = () => user?.role === "mod";
+  const isUser = () => user?.role === "user";
+  const hasRole = (roles) => user && roles.includes(user.role);
 
   const value = {
     user,
@@ -89,7 +87,11 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    isAuthenticated: !!user,
+
+    isAdmin,
+    isMod,
+    isUser,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

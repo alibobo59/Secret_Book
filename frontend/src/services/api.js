@@ -1,11 +1,8 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "http://127.0.0.1:8000";
-axios.defaults.withCredentials = true;
-
-// Create an axios instance with default config
+// Create an axios instance for API requests
 const api = axios.create({
-  baseURL: "http://localhost:8000", // Using Vite's proxy configuration
+  baseURL: "/api", // Vite's proxy for /api routes
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -16,13 +13,10 @@ const api = axios.create({
 // Fetch CSRF token
 const fetchCsrfToken = async () => {
   try {
-    const response = await axios.get(
-      "http://127.0.0.1:8000/sanctum/csrf-cookie",
-      {
-        withCredentials: true,
-        headers: { Accept: "application/json" },
-      }
-    );
+    const response = await axios.get("/sanctum/csrf-cookie", {
+      withCredentials: true,
+      headers: { Accept: "application/json" },
+    });
     console.log("CSRF token response:", {
       status: response.status,
       headers: response.headers,
@@ -63,15 +57,10 @@ api.interceptors.request.use(
 // Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (error.response?.status === 419 && !error.config?._retry) {
-      console.warn("CSRF token mismatch, retrying once...");
-      error.config._retry = true;
-      const success = await fetchCsrfToken();
-      if (success) {
-        return api(error.config);
-      }
-      return Promise.reject(new Error("CSRF token retry failed"));
+  (error) => {
+    if (error.response?.status === 419) {
+      console.error("CSRF token mismatch:", error.response?.data);
+      return Promise.reject(new Error("CSRF token mismatch"));
     }
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
@@ -83,4 +72,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export { api, fetchCsrfToken };

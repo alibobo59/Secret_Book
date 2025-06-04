@@ -9,7 +9,7 @@ import {
   Modal,
   FormField,
 } from "../../components/admin";
-import api from "../../services/api";
+import { api } from "../../services/api";
 
 const CategoryManagement = () => {
   const { categories, loading, error: bookError } = useBook();

@@ -1,10 +1,21 @@
-import api from "../services/api.js";
+import { api, fetchCsrfToken } from "./api.js";
 
 const authService = {
-  // Register a new user
   register: async (userData) => {
     try {
+      console.log("Attempting to fetch CSRF token...");
+      const success = await fetchCsrfToken();
+      if (!success) {
+        throw new Error("Failed to fetch CSRF token");
+      }
+      console.log(
+        "CSRF token fetched successfully, sending register request:",
+        userData
+      );
       const response = await api.post("/register", userData);
+
+      console.log("posting register");
+      console.log("Register response:", response.data);
       const { user, token } = response.data;
       if (token) {
         localStorage.setItem("token", token);
@@ -13,14 +24,20 @@ const authService = {
       return { user, token };
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed";
+      console.error("Register error:", {
+        message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       throw new Error(message);
     }
   },
 
-  // Login user
   login: async (credentials) => {
     try {
+      console.log("Sending login request:", credentials);
       const response = await api.post("/login", credentials);
+      console.log("Login response:", response.data);
       const { user, token } = response.data;
       if (token) {
         localStorage.setItem("token", token);
@@ -29,16 +46,22 @@ const authService = {
       return { user, token };
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
+      console.error("Login error:", {
+        message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       throw new Error(message);
     }
   },
 
-  // Logout user
   logout: async () => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
+        console.log("Sending logout request...");
         await api.post("/logout");
+        console.log("Logout successful");
       }
     } catch (error) {
       console.error("Logout error:", error.response?.data || error.message);
@@ -48,7 +71,6 @@ const authService = {
     }
   },
 
-  // Get current user
   getCurrentUser: () => {
     try {
       const user = localStorage.getItem("user");
@@ -59,7 +81,6 @@ const authService = {
     }
   },
 
-  // Check if user is authenticated
   isAuthenticated: () => {
     return !!localStorage.getItem("token");
   },

@@ -34,7 +34,7 @@ const AdminDashboard = () => {
 
   // Check if user is admin
   useEffect(() => {
-    if (!user || !user.isAdmin) {
+    if (!user || !user.hasRole(["admin", "mod"])) {
       navigate("/login");
     }
   }, [user, navigate]);

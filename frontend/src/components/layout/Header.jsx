@@ -19,7 +19,6 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
-    // Initialize darkMode state based on localStorage or system preference
     if (typeof window !== "undefined") {
       return (
         localStorage.theme === "dark" ||
@@ -30,7 +29,7 @@ const Header = () => {
     return false;
   });
   const [searchQuery, setSearchQuery] = useState("");
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const { cartItems } = useCart();
   const { t } = useLanguage();
   const location = useLocation();
@@ -40,10 +39,8 @@ const Header = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
-    // Apply initial theme
     document.documentElement.classList.toggle("dark", darkMode);
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleThemeChange = (e) => {
       if (!("theme" in localStorage)) {
@@ -80,7 +77,6 @@ const Header = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Implement search functionality
     console.log("Searching for:", searchQuery);
   };
 
@@ -141,33 +137,33 @@ const Header = () => {
                 placeholder={t("nav.search") + "..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200 w-40 focus:w-60"
+                className="py-2 pl-10 pr-4 rounded-full text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200 w-40 sm:w-48 focus:w-56 sm:focus:w-64"
               />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-2.5 h-4 w-5 text-gray-500 dark:text-gray-300" />
             </form>
 
-            {/* Language Switcher */}
             <LanguageSwitcher />
 
             <button
+              type="button"
               onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2"
               aria-label={
                 darkMode ? "Switch to light mode" : "Switch to dark mode"
               }>
               {darkMode ? (
                 <Sun className="h-5 w-5 text-amber-500" />
               ) : (
-                <Moon className="h-5 w-5 text-gray-700" />
+                <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               )}
             </button>
 
             <Link
               to="/cart"
-              className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+              className="relative p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
               <ShoppingCart className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               {cartItems?.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                <span className="absolute top-2 right-2 bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full h-4 w-4 flex items-center justify-center">
                   {cartItems.length}
                 </span>
               )}
@@ -175,15 +171,15 @@ const Header = () => {
 
             {user ? (
               <div className="relative group">
-                <button className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
-                  <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
+                <button className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <div className="w-8 h-7 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
                     {user.name.charAt(0)}
                   </div>
                 </button>
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 origin-top-right transition-all duration-200">
                   <div className="py-2">
                     <Link
-                      to={`/profile/${user.username}`}
+                      to={`/profile/${user.id}`}
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                       Profile
                     </Link>
@@ -197,7 +193,7 @@ const Header = () => {
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                       My Orders
                     </Link>
-                    {user.isAdmin && (
+                    {hasRole(["admin", "mod"]) && (
                       <Link
                         to="/admin"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -205,6 +201,7 @@ const Header = () => {
                       </Link>
                     )}
                     <button
+                      type="button"
                       onClick={logout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">
                       Logout
@@ -215,7 +212,7 @@ const Header = () => {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200">
+                className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200 text-sm font-medium">
                 {t("nav.login")}
               </Link>
             )}
@@ -223,6 +220,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <button
+            type="button"
             className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
             onClick={toggleMenu}>
             {isMenuOpen ? (
@@ -243,20 +241,19 @@ const Header = () => {
                   placeholder={t("nav.search") + "..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full py-2 pl-10 pr-4 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
                 />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500 dark:text-gray-300" />
               </div>
             </form>
 
-            {/* Mobile Language Switcher */}
             <div className="mb-4">
               <LanguageSwitcher />
             </div>
             <nav className="flex flex-col space-y-4">
               <Link
                 to="/books"
-                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 text-sm ${
                   location.pathname.includes("/books") &&
                   !location.pathname.includes("/books/")
                     ? "text-amber-600 dark:text-amber-500"
@@ -267,7 +264,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/categories"
-                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 text-sm ${
                   location.pathname.includes("/categories")
                     ? "text-amber-600 dark:text-amber-500"
                     : "text-gray-700 dark:text-gray-300"
@@ -277,7 +274,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/recommendations"
-                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 ${
+                className={`font-medium hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200 text-sm ${
                   location.pathname.includes("/recommendations")
                     ? "text-amber-600 dark:text-amber-500"
                     : "text-gray-700 dark:text-gray-300"
@@ -289,7 +286,7 @@ const Header = () => {
               <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
                 <Link
                   to="/cart"
-                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300"
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 text-sm"
                   onClick={() => setIsMenuOpen(false)}>
                   <ShoppingCart className="h-5 w-5" />
                   <span>
@@ -298,6 +295,7 @@ const Header = () => {
                   </span>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => {
                     toggleDarkMode();
                     setIsMenuOpen(false);
@@ -309,7 +307,7 @@ const Header = () => {
                   {darkMode ? (
                     <Sun className="h-5 w-5 text-amber-500" />
                   ) : (
-                    <Moon className="h-5 w-5 text-gray-700" />
+                    <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                   )}
                 </button>
               </div>
@@ -320,43 +318,44 @@ const Header = () => {
                     <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
                       {user.name.charAt(0)}
                     </div>
-                    <span className="font-medium text-gray-800 dark:text-white">
+                    <span className="font-medium text-gray-800 dark:text-white text-sm">
                       {user.name}
                     </span>
                   </div>
                   <div className="flex flex-col space-y-3">
                     <Link
-                      to={`/profile/${user.username}`}
-                      className="text-gray-700 dark:text-gray-300"
+                      to={`/profile/${user.id}`}
+                      className="text-gray-700 dark:text-gray-300 text-sm"
                       onClick={() => setIsMenuOpen(false)}>
                       Profile
                     </Link>
                     <Link
                       to="/my-books"
-                      className="text-gray-700 dark:text-gray-300"
+                      className="text-gray-700 dark:text-gray-300 text-sm"
                       onClick={() => setIsMenuOpen(false)}>
                       My Books
                     </Link>
                     <Link
                       to="/orders"
-                      className="text-gray-700 dark:text-gray-300"
+                      className="text-gray-700 dark:text-gray-300 text-sm"
                       onClick={() => setIsMenuOpen(false)}>
                       My Orders
                     </Link>
-                    {user.isAdmin && (
+                    {hasRole(["admin", "mod"]) && (
                       <Link
                         to="/admin"
-                        className="text-gray-700 dark:text-gray-300"
+                        className="text-gray-700 dark:text-gray-300 text-sm"
                         onClick={() => setIsMenuOpen(false)}>
                         Admin Dashboard
                       </Link>
                     )}
                     <button
+                      type="button"
                       onClick={() => {
                         logout();
                         setIsMenuOpen(false);
                       }}
-                      className="text-left text-red-600 dark:text-red-500">
+                      className="text-left text-red-600 dark:text-red-500 text-sm">
                       Logout
                     </button>
                   </div>
@@ -365,13 +364,13 @@ const Header = () => {
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                   <Link
                     to="/login"
-                    className="block w-full px-4 py-2 text-center rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200"
+                    className="block w-full px-4 py-2 text-center rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors duration-200 text-sm"
                     onClick={() => setIsMenuOpen(false)}>
                     {t("nav.login")}
                   </Link>
                   <Link
                     to="/register"
-                    className="block w-full mt-2 px-4 py-2 text-center rounded-md border border-amber-600 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                    className="block w-full mt-2 px-4 py-2 text-center rounded-md border border-amber-600 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-gray-800 transition-colors duration-200 text-sm"
                     onClick={() => setIsMenuOpen(false)}>
                     {t("nav.register")}
                   </Link>

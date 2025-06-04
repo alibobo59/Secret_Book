@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\RestrictToAdminOrMod;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Enable Sanctum's stateful API for SPA authentication
         $middleware->statefulApi();
+
+        // Register custom middleware
+        $middleware->alias([
+            'admin.or.mod' => RestrictToAdminOrMod::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -13,35 +13,14 @@ class CouponController extends Controller
         return response()->json(Coupon::all());
     }
 
-    public function store(Request $request)
-    {
-        $coupon = Coupon::create($request->only([
-            'code',
-            'type',
-            'value',
-            'max_uses',
-            'expires_at'
-        ]));
-        return response()->json($coupon, 201);
-    }
+    
 
     public function show($id)
     {
         return response()->json(Coupon::findOrFail($id));
     }
 
-    public function update(Request $request, $id)
-    {
-        $coupon = Coupon::findOrFail($id);
-        $coupon->update($request->only([
-            'code',
-            'type',
-            'value',
-            'max_uses',
-            'expires_at'
-        ]));
-        return response()->json($coupon);
-    }
+    
 
     public function destroy($id)
     {
@@ -49,22 +28,38 @@ class CouponController extends Controller
         $coupon->delete();
         return response()->json(['message' => 'Coupon deleted']);
     }
-    public function trashed()
-    {
-        return response()->json(Coupon::onlyTrashed()->get());
-    }
+    public function store(Request $request)
+{
+    $request->validate([
+        'code'       => 'required|string|unique:coupons,code',
+        'type'       => 'required|in:fixed,percent',
+        'value'      => 'required|numeric|min:1',
+        'max_uses'   => 'nullable|integer|min:1',
+        'expires_at' => 'nullable|date|after:today',
+    ]);
 
-    public function restore($id)
-    {
-        $coupon = Coupon::withTrashed()->findOrFail($id);
-        $coupon->restore();
-        return response()->json(['message' => 'Coupon restored']);
-    }
+    $coupon = Coupon::create($request->only([
+        'code', 'type', 'value', 'max_uses', 'expires_at'
+    ]));
 
-    public function forceDelete($id)
-    {
-        $coupon = Coupon::withTrashed()->findOrFail($id);
-        $coupon->forceDelete();
-        return response()->json(['message' => 'Coupon permanently deleted']);
-    }
+    return response()->json($coupon, 201);
+}
+
+public function update(Request $request, $id)
+{
+    $request->validate([
+        'type'       => 'in:fixed,percent',
+        'value'      => 'numeric|min:1',
+        'max_uses'   => 'nullable|integer|min:1',
+        'expires_at' => 'nullable|date|after:today',
+    ]);
+
+    $coupon = Coupon::findOrFail($id);
+    $coupon->update($request->only([
+        'code', 'type', 'value', 'max_uses', 'expires_at'
+    ]));
+
+    return response()->json($coupon);
+}
+
 }

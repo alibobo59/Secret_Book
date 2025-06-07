@@ -18,4 +18,12 @@ class Coupon extends Model
     ];
 
     protected $dates = ['deleted_at'];
+    public function calculateDiscount($orderAmount)
+{
+    if ($this->type === 'percent') {
+        return $orderAmount * ($this->value / 100);
+    }
+    return min($this->value, $orderAmount);
+}
+
 }

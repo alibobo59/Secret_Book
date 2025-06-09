@@ -13,7 +13,6 @@ export default defineConfig({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
         configure: (proxy) => {
           proxy.on("error", (err) => {
             console.error("Proxy error /api:", err);
@@ -36,7 +35,6 @@ export default defineConfig({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/sanctum/, "/sanctum"),
         configure: (proxy) => {
           proxy.on("error", (err) => {
             console.error("Proxy error /sanctum:", err);

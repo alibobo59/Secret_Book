@@ -8,12 +8,15 @@ import { useLanguage } from "../../contexts/LanguageContext";
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();
   const { t } = useLanguage();
-
+  console.log("CardMounted");
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(book);
   };
+
+  const averageRating = book.average_rating || 0;
+  const ratingsCount = book.ratings?.length || 0;
 
   return (
     <Link to={`/books/${book.id}`}>
@@ -49,9 +52,9 @@ const BookCard = ({ book }) => {
                 <Star
                   key={index}
                   className={`h-4 w-4 ${
-                    index < Math.floor(book.average_rating)
+                    index < Math.floor(averageRating)
                       ? "fill-current"
-                      : index < book.average_rating
+                      : index < averageRating
                       ? "fill-current opacity-50"
                       : ""
                   }`}
@@ -59,12 +62,12 @@ const BookCard = ({ book }) => {
               ))}
             </div>
             <span className="text-xs text-gray-600 dark:text-gray-400 ml-2">
-              ({book.ratings?.length || 0} {t("reviews")})
+              ({ratingsCount} {t("reviews")})
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-bold text-gray-800 dark:text-white">
-              ${book.price.toFixed(2)}
+              ${book.price}
             </span>
             <span
               className={`text-xs px-2 py-1 rounded ${

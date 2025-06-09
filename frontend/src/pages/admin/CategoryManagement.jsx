@@ -1,312 +1,141 @@
 import React, { useState, useEffect } from "react";
-import { useBook } from "../../contexts/BookContext";
-import { useAuth } from "../../contexts/AuthContext";
-import { AlertCircle, Save } from "lucide-react";
-import {
-  PageHeader,
-  Table,
-  ActionButtons,
-  Modal,
-  FormField,
-} from "../../components/admin";
 import { api } from "../../services/api";
+import { Plus, Edit, Trash2 } from "lucide-react";
 
 const CategoryManagement = () => {
-  const { categories, loading, error: bookError } = useBook();
-  const { user } = useAuth();
-  const [localCategories, setLocalCategories] = useState([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "", description: "" });
-  const [formErrors, setFormErrors] = useState({});
-  const [apiError, setApiError] = useState(null);
-
-  const canManageCategories =
-    user && (user.role === "admin" || user.role === "mod");
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({ name: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLocalCategories(categories);
-  }, [categories]);
+    fetchCategories();
+  }, []);
 
-  const validateForm = (category) => {
-    const errors = {};
-    if (!category.name.trim()) {
-      errors.name = "Category name is required";
-    }
-    if (!category.description.trim()) {
-      errors.description = "Category description is required";
-    }
-    return errors;
-  };
-
-  const handleAddCategory = async () => {
-    const errors = validateForm(newCategory);
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
+  const fetchCategories = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await api.post("/categories", newCategory);
-      setLocalCategories([...localCategories, response.data.category]);
-      setNewCategory({ name: "", description: "" });
-      setFormErrors({});
-      setIsAddModalOpen(false);
-      setApiError(null);
+      const response = await api.get("/categories");
+      setCategories(response.data);
     } catch (err) {
-      setApiError(err.response?.data?.error || "Failed to add category");
+      setError("Failed to fetch categories.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditCategory = async () => {
-    const errors = validateForm(currentCategory);
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
     try {
-      const response = await api.put(
-        `/categories/${currentCategory.id}`,
-        currentCategory
-      );
-      setLocalCategories(
-        localCategories.map((cat) =>
-          cat.id === currentCategory.id ? response.data.category : cat
-        )
-      );
-      setCurrentCategory(null);
-      setFormErrors({});
-      setIsEditModalOpen(false);
-      setApiError(null);
+      if (editingId) {
+        const response = await api.put(`/categories/${editingId}`, form);
+        setCategories(
+          categories.map((cat) => (cat.id === editingId ? response.data : cat))
+        );
+        setSuccess("Category updated successfully.");
+        setEditingId(null);
+      } else {
+        const response = await api.post("/categories", form);
+        setCategories([...categories, response.data]);
+        setSuccess("Category added successfully.");
+      }
+      setForm({ name: "" });
     } catch (err) {
-      setApiError(err.response?.data?.error || "Failed to update category");
+      setError("Failed to save category.");
     }
   };
 
-  const handleDeleteCategory = async () => {
-    try {
-      await api.delete(`/categories/${currentCategory.id}`);
-      setLocalCategories(
-        localCategories.filter((cat) => cat.id !== currentCategory.id)
-      );
-      setCurrentCategory(null);
-      setIsDeleteModalOpen(false);
-      setApiError(null);
-    } catch (err) {
-      setApiError(err.response?.data?.error || "Failed to delete category");
+  const handleEdit = (category) => {
+    setForm({ name: category.name });
+    setEditingId(category.id);
+    setSuccess(null);
+    setError(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      setError(null);
+      setSuccess(null);
+      try {
+        await api.delete(`/categories/${id}`);
+        setCategories(categories.filter((cat) => cat.id !== id));
+        setSuccess("Category deleted successfully.");
+      } catch (err) {
+        setError("Failed to delete category.");
+      }
     }
   };
-
-  const openEditModal = (category) => {
-    setCurrentCategory({ ...category });
-    setFormErrors({});
-    setIsEditModalOpen(true);
-  };
-
-  const openDeleteModal = (category) => {
-    setCurrentCategory(category);
-    setIsDeleteModalOpen(true);
-  };
-
-  const columns = [
-    { id: "id", label: "ID", sortable: false },
-    { id: "name", label: "Name", sortable: false },
-    { id: "slug", label: "Slug", sortable: false },
-    { id: "description", label: "Description", sortable: false },
-    { id: "created_by", label: "Created By", sortable: false },
-    { id: "actions", label: "Actions", sortable: false },
-  ];
-
-  if (loading) {
-    return <div className="p-4">Loading categories...</div>;
-  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Category Management"
-        onAddNew={
-          canManageCategories
-            ? () => {
-                setNewCategory({ name: "", description: "" });
-                setFormErrors({});
-                setIsAddModalOpen(true);
-              }
-            : null
-        }
-        addNewLabel={canManageCategories ? "Add New Category" : null}
-      />
-
-      {(apiError || bookError) && (
-        <div className="p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800">
-          {apiError || bookError}
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+        Category Management
+      </h2>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {success && <p className="text-green-500 mb-4">{success}</p>}
+      <form onSubmit={handleSubmit} className="mb-6">
+        <div className="flex space-x-4">
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm({ name: e.target.value })}
+            placeholder="Category Name"
+            className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
+            required
+          />
+          <button
+            type="submit"
+            className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
+            {editingId ? "Update" : "Add"} Category
+          </button>
+        </div>
+      </form>
+      {loading ? (
+        <p>Loading categories...</p>
+      ) : categories.length === 0 ? (
+        <p>No categories found.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {categories?.map((category) => (
+                <tr key={category.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                    {category.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button
+                      onClick={() => handleEdit(category)}
+                      className="text-amber-600 hover:text-amber-800 mr-4">
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category.id)}
+                      className="text-red-600 hover:text-red-800">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-
-      <Table
-        columns={columns}
-        data={localCategories}
-        renderRow={(category) => (
-          <tr
-            key={category.id}
-            className="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-              {category.id}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {category.name}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {category.slug}
-            </td>
-            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-              {category.description}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {category.creator?.name || "Unknown"}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              {canManageCategories && (
-                <ActionButtons
-                  onEdit={() => openEditModal(category)}
-                  onDelete={() => openDeleteModal(category)}
-                />
-              )}
-            </td>
-          </tr>
-        )}
-      />
-
-      {/* Add Category Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Add New Category"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsAddModalOpen(false)}>
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 flex items-center"
-              onClick={handleAddCategory}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Category
-            </button>
-          </div>
-        }>
-        <div className="space-y-4">
-          <FormField
-            label="Category Name"
-            type="text"
-            value={newCategory.name}
-            onChange={(e) =>
-              setNewCategory({ ...newCategory, name: e.target.value })
-            }
-            error={formErrors.name}
-            required
-          />
-          <FormField
-            label="Description"
-            type="textarea"
-            value={newCategory.description}
-            onChange={(e) =>
-              setNewCategory({ ...newCategory, description: e.target.value })
-            }
-            error={formErrors.description}
-            required
-          />
-        </div>
-      </Modal>
-
-      {/* Edit Category Modal */}
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title="Edit Category"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsEditModalOpen(false)}>
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 flex items-center"
-              onClick={handleEditCategory}>
-              <Save className="h-4 w-4 mr-2" />
-              Update Category
-            </button>
-          </div>
-        }>
-        {currentCategory && (
-          <div className="space-y-4">
-            <FormField
-              label="Category Name"
-              type="text"
-              value={currentCategory.name}
-              onChange={(e) =>
-                setCurrentCategory({
-                  ...currentCategory,
-                  name: e.target.value,
-                })
-              }
-              error={formErrors.name}
-              required
-            />
-            <FormField
-              label="Description"
-              type="textarea"
-              value={currentCategory.description}
-              onChange={(e) =>
-                setCurrentCategory({
-                  ...currentCategory,
-                  description: e.target.value,
-                })
-              }
-              error={formErrors.description}
-              required
-            />
-          </div>
-        )}
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Category"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsDeleteModalOpen(false)}>
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
-              onClick={handleDeleteCategory}>
-              Delete Category
-            </button>
-          </div>
-        }>
-        {currentCategory && (
-          <div className="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            <span>
-              Are you sure you want to delete the category
-              <span className="font-semibold"> {currentCategory.name}</span>?
-              This action cannot be undone and may affect books assigned to this
-              category.
-            </span>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

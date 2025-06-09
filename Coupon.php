@@ -21,9 +21,10 @@ class Coupon extends Model
     public function calculateDiscount($orderAmount)
 {
     if ($this->type === 'percent') {
-        return $orderAmount * ($this->value / 100);
+        return $orderAmount * ($this->value / 100)
     }
     return min($this->value, $orderAmount);
 }
+
 
 }

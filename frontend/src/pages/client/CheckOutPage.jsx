@@ -154,5 +154,57 @@ const CheckoutPage = () => {
     </div>
   );
 };
+ const [cart, setCart] = useState([
+    { id: 1, name: "Sản phẩm A", price: 100000, qty: 1 },
+    { id: 2, name: "Sản phẩm B", price: 200000, qty: 2 },
+  ]);
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleQtyChange = (id, delta) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
+      )
+    );
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Thông tin:", form);
+    console.log("Giỏ hàng:", cart);
+    alert("Đã nhập thông tin + giỏ hàng!");
+  };
+
+  return (
+    <div className="checkout-page">
+      <h2>Thông tin giao hàng</h2>
+      <form onSubmit={handleSubmit}>
+        <input name="name" placeholder="Họ tên" value={form.name} onChange={handleChange} />
+        <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+        <input name="phone" placeholder="Số điện thoại" value={form.phone} onChange={handleChange} />
+        <input name="city" placeholder="Tỉnh/Thành phố" value={form.city} onChange={handleChange} />
+        <input name="address" placeholder="Địa chỉ" value={form.address} onChange={handleChange} />
+        <textarea name="note" placeholder="Ghi chú" value={form.note} onChange={handleChange} />
+
+        <h3>Giỏ hàng</h3>
+        {cart.map((item) => (
+          <div key={item.id}>
+            <span>{item.name}</span> - {item.price.toLocaleString()}đ
+            <button type="button" onClick={() => handleQtyChange(item.id, -1)}>-</button>
+            {item.qty}
+            <button type="button" onClick={() => handleQtyChange(item.id, 1)}>+</button>
+          </div>
+        ))}
+        <p><b>Tổng cộng:</b> {total.toLocaleString()}đ</p>
+
+        <button type="submit">Xác nhận đơn hàng</button>
+      </form>
+    </div>
+  );
+}
 export default CheckoutPage;

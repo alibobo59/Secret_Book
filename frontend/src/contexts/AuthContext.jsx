@@ -5,14 +5,12 @@ const AuthContext = createContext();
 
 export const useAuth = () => {
   return useContext(AuthContext);
-};
-
+}; // AuthContext.jsx
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
@@ -74,11 +72,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Role-based checks
+  const getToken = () => localStorage.getItem("token"); // Add token retrieval
+
   const isAdmin = () => user?.role === "admin";
   const isMod = () => user?.role === "mod";
   const isUser = () => user?.role === "user";
-  const hasRole = (roles) => user && roles.includes(user.role);
+  const hasRole = (roles) =>
+    user && Array.isArray(roles) && roles.includes(user.role);
 
   const value = {
     user,
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-
+    getToken, // Expose token retrieval
     isAdmin,
     isMod,
     isUser,

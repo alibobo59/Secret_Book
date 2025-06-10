@@ -19,8 +19,14 @@ const CategoryManagement = () => {
     setError(null);
     try {
       const response = await api.get("/categories");
-      setCategories(response.data);
+      console.log("Categories raw response:", response.data); // Debug log
+      // Unwrap data property if present, fallback to response.data or empty array
+      const categoriesData = Array.isArray(response.data.data)
+        ? response.data.data
+        : response.data || [];
+      setCategories(categoriesData);
     } catch (err) {
+      console.error("Fetch error:", err.message);
       setError("Failed to fetch categories.");
     } finally {
       setLoading(false);
@@ -113,25 +119,29 @@ const CategoryManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {categories?.map((category) => (
-                <tr key={category.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                    {category.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button
-                      onClick={() => handleEdit(category)}
-                      className="text-amber-600 hover:text-amber-800 mr-4">
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="text-red-600 hover:text-red-800">
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {categories.map(
+                (
+                  category // Removed ?. since we ensure it's an array
+                ) => (
+                  <tr key={category.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                      {category.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <button
+                        onClick={() => handleEdit(category)}
+                        className="text-amber-600 hover:text-amber-800 mr-4">
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="text-red-600 hover:text-red-800">
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>

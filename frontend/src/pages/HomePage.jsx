@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useBook } from "../contexts/BookContext";
 import { motion } from "framer-motion";
@@ -7,22 +7,33 @@ import BookCard from "../components/books/BookCard";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const HomePage = () => {
-  const { books, categories, loading } = useBook();
+  const { books, categories, loading, error } = useBook();
   const [searchQuery, setSearchQuery] = React.useState("");
   const { t } = useLanguage();
 
-  // Get featured books (first 5 books as a fallback since average_rating is not available)
-  const featuredBooks = React.useMemo(() => {
-    if (!books) return [];
-    return [...books].slice(0, 5); // Simply take the first 5 books
-  }, [books]);
-  console.log(featuredBooks, "feat");
-  console.log(books, "books from home");
+  useEffect(() => {
+    console.log(
+      "HomePage updated - books:",
+      books,
+      "categories:",
+      categories,
+      "loading:",
+      loading,
+      "error:",
+      error
+    );
+  }, [books, categories, loading, error]);
 
-  // Get new releases (first 5 books as a fallback since published_date is not available)
-  const newReleases = React.useMemo(() => {
+  const featuredBooks = React.useMemo(() => {
+    console.log("Computing featuredBooks, books length:", books?.length);
     if (!books) return [];
-    return [...books].slice(0, 5); // Simply take the first 5 books
+    return [...books].slice(0, 5);
+  }, [books]);
+
+  const newReleases = React.useMemo(() => {
+    console.log("Computing newReleases, books length:", books?.length);
+    if (!books) return [];
+    return [...books].slice(5, 10); // Adjusted to avoid duplicating featuredBooks
   }, [books]);
 
   const handleSearch = (e) => {
@@ -32,15 +43,9 @@ const HomePage = () => {
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
@@ -48,10 +53,7 @@ const HomePage = () => {
     visible: {
       y: 0,
       opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-      },
+      transition: { type: "spring", stiffness: 100 },
     },
   };
 
@@ -91,6 +93,16 @@ const HomePage = () => {
         </div>
       </section>
 
+      {error && (
+        <section className="py-8 bg-red-100 dark:bg-red-900">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-red-800 dark:text-red-200">
+              {t("error.fetchData")}: {error}
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Featured Books Section */}
       <section className="py-16 bg-amber-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
@@ -120,6 +132,10 @@ const HomePage = () => {
                 </div>
               ))}
             </div>
+          ) : featuredBooks.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              No books available (Debug: books length: {books.length})
+            </p>
           ) : (
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8"
@@ -152,6 +168,11 @@ const HomePage = () => {
                   className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
               ))}
             </div>
+          ) : categories.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              No categories available (Debug: categories length:{" "}
+              {categories.length})
+            </p>
           ) : (
             <motion.div
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
@@ -210,6 +231,11 @@ const HomePage = () => {
                 </div>
               ))}
             </div>
+          ) : newReleases.length === 0 ? (
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              No books available (Debug: newReleases length:{" "}
+              {newReleases.length})
+            </p>
           ) : (
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8"

@@ -44,7 +44,7 @@ const BookCard = ({ book }) => {
             {book.title}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-            {book.author}
+            {book.author?.name || "Unknown Author"}
           </p>
           <div className="flex items-center mb-2">
             <div className="flex text-amber-500">

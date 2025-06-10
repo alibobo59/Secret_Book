@@ -1,6 +1,6 @@
 import React from "react";
-import { useCart } from "../contexts/CartContext";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useCart } from "../../contexts/CartContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const CheckoutPage = () => {
   const { cartItems, getCartTotal } = useCart();

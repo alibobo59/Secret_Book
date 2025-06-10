@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useBook } from "../contexts/BookContext";
+import { useBook } from "../../contexts/BookContext";
 import { motion } from "framer-motion";
 import { Search, ChevronRight } from "lucide-react";
-import BookCard from "../components/books/BookCard";
-import { useLanguage } from "../contexts/LanguageContext";
+import BookCard from "../../components/client/BookCard";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const HomePage = () => {
   const { books, categories, loading, error } = useBook();

@@ -1,7 +1,7 @@
 import React from "react";
-import { useBook } from "../contexts/BookContext";
-import BookCard from "../components/books/BookCard";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useBook } from "../../contexts/BookContext";
+import BookCard from "../../components/client/BookCard";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const BrowseBooksPage = () => {
   const { books, loading } = useBook();

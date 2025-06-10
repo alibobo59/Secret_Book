@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { User, Mail, Lock, UserPlus, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({

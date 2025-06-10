@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useBook } from "../contexts/BookContext";
-import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../contexts/AuthContext";
+import { useBook } from "../../contexts/BookContext";
+import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   Star,
   ShoppingCart,
@@ -12,7 +12,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const BookDetailPage = () => {
   const { id } = useParams();

@@ -5,52 +5,108 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
+    /**
+     * Display a listing of the categories.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
     {
-        $categories = Category::with('creator')->get();
-        return response()->json(['categories' => $categories]);
+        $categories = Category::all();
+        return response()->json(['data' => $categories], Response::HTTP_OK);
     }
 
+    /**
+     * Display the specified category.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json(['data' => $category], Response::HTTP_OK);
+    }
+
+    /**
+     * Store a newly created category in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'required|string',
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $category = Category::create([
-            'name' => $validated['name'],
-
-            'description' => $validated['description'],
-
+            'name' => $request->name,
         ]);
 
-        return response()->json(['category' => $category->load('creator')], 201);
+        return response()->json(['data' => $category], Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, Category $category)
+    /**
+     * Update the specified category in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'required|string',
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:categories,name,' . $id,
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $category->update([
-            'name' => $validated['name'],
-
-            'description' => $validated['description'],
+            'name' => $request->name,
         ]);
 
-        return response()->json(['category' => $category->load('creator')]);
+        return response()->json(['data' => $category], Response::HTTP_OK);
     }
 
-    public function destroy(Category $category)
+    /**
+     * Remove the specified category from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
     {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+
         $category->delete();
-        return response()->json(['message' => 'Category deleted']);
+
+        return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 }

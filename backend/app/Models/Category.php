@@ -14,5 +14,10 @@ class Category extends Model
         'created_by',
     ];
 
+    public function books()
+    {
+        return $this->hasMany(Book::class);
+    }
+
 
 }

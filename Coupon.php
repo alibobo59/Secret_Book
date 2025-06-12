@@ -25,5 +25,9 @@ class Coupon extends Model
     }
     return min($this->value, $orderAmount);
 }
+public function usages()
+{
+    return $this->hasMany(CouponUsage::class);
+}
 
 }

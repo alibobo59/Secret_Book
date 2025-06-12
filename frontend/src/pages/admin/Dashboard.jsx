@@ -25,7 +25,7 @@ import AdminHeader from "../../components/admin/AdminHeader";
 
 const AdminDashboard = () => {
   const { user, logout, hasRole, loading: authLoading } = useAuth();
-  const { books, categories, loading: bookLoading, error } = useBook(); // Include loading and error
+  const { books, categories, loading: bookLoading, error = "test" } = useBook(); // Include loading and error
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -79,6 +79,7 @@ const AdminDashboard = () => {
 
   // Show error if data fetch failed
   if (error) {
+    console.log(error);
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
         <p className="text-red-500">{error}</p>

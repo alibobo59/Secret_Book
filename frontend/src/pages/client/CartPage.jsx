@@ -69,7 +69,7 @@ const CartPage = () => {
                           {item.title}
                         </Link>
                         <p className="text-gray-600 dark:text-gray-400">
-                          {t("book.by")} {item.author}
+                          {t("book.by")} {item.author.name}
                         </p>
                       </div>
                       <button

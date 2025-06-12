@@ -7,3 +7,5 @@ export { default as PageHeader } from "./PageHeader";
 export { default as SearchFilter } from "./SearchFilter";
 export { default as StatCard } from "./StatCard";
 export { default as Table } from "./Table";
+export { default as AdminFooter } from "./AdminFooter";
+export { default as Loading } from "./Loading";

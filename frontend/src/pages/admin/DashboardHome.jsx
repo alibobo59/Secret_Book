@@ -1,21 +1,38 @@
 import React from "react";
 import { BookOpen, Tag, AlertCircle, DollarSign } from "lucide-react";
 import { StatCard, Table } from "../../components/admin";
+import { useOutletContext } from "react-router-dom";
 
-/**
- * Dashboard home component showing statistics and low stock books
- */
-const DashboardHome = ({ books, categories }) => {
-  // Calculate statistics
+const DashboardHome = () => {
+  const { books = [], categories = [], loading, error } = useOutletContext();
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   const totalBooks = books.length;
   const totalCategories = categories.length;
-  const lowStockBooks = books.filter((book) => book.stock < 10).length;
+  const lowStockBooks = books.filter((book) => book?.stock < 10).length;
   const totalValue = books.reduce(
-    (sum, book) => sum + book.price * book.stock,
+    (sum, book) => sum + (book?.price || 0) * (book?.stock || 0),
     0
   );
 
-  // Define columns for the low stock books table
   const columns = [
     { id: "id", label: "ID", sortable: false },
     { id: "title", label: "Title", sortable: false },
@@ -24,14 +41,11 @@ const DashboardHome = ({ books, categories }) => {
     { id: "price", label: "Price", sortable: false },
   ];
 
-  // Filter books with low stock
-  const lowStockBooksData = books.filter((book) => book.stock < 10);
+  const lowStockBooksData = books.filter((book) => book?.stock < 10) || [];
 
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold">Dashboard</h2>
-
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon={<BookOpen className="h-6 w-6" />}
@@ -40,7 +54,6 @@ const DashboardHome = ({ books, categories }) => {
           title="Total Books"
           value={totalBooks}
         />
-
         <StatCard
           icon={<Tag className="h-6 w-6" />}
           iconBgColor="bg-green-100"
@@ -48,7 +61,6 @@ const DashboardHome = ({ books, categories }) => {
           title="Categories"
           value={totalCategories}
         />
-
         <StatCard
           icon={<AlertCircle className="h-6 w-6" />}
           iconBgColor="bg-red-100"
@@ -56,7 +68,6 @@ const DashboardHome = ({ books, categories }) => {
           title="Low Stock"
           value={lowStockBooks}
         />
-
         <StatCard
           icon={<DollarSign className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
@@ -65,8 +76,6 @@ const DashboardHome = ({ books, categories }) => {
           value={`$${totalValue.toFixed(2)}`}
         />
       </div>
-
-      {/* Low Stock Alert */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold mb-4">Low Stock Alert</h3>
         <Table

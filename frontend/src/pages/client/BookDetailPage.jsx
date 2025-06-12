@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useBook } from "../../contexts/BookContext";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -13,20 +12,41 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { api } from "../../services/api";
 
 const BookDetailPage = () => {
   const { id } = useParams();
-  const { getBookById, addRating, loading } = useBook();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const book = getBookById(id);
-
+  const [book, setBook] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await api.get(`/books/${id}`);
+        console.log("API Response for Book Detail:", response.data); // Debug API response
+        const bookData = response.data.data; // Handle nested data
+        console.log(bookData);
+        setBook(bookData);
+      } catch (err) {
+        setError(err.response?.data?.error || "Failed to fetch book details");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBook();
+  }, [id]);
 
   if (loading) {
     return (
@@ -47,7 +67,7 @@ const BookDetailPage = () => {
     );
   }
 
-  if (!book) {
+  if (error || !book) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -55,7 +75,7 @@ const BookDetailPage = () => {
             {t("bookNotFound")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {t("bookNotFoundMessage")}
+            {error || t("bookNotFoundMessage")}
           </p>
           <Link
             to="/books"
@@ -76,11 +96,18 @@ const BookDetailPage = () => {
     e.preventDefault();
     if (rating === 0) return;
 
-    const success = await addRating(book.id, rating, review);
+    // Assuming addRating is implemented in useBook or elsewhere
+    // For now, we'll simulate it locally; update with actual implementation
+    const success = await new Promise((resolve) =>
+      setTimeout(() => resolve(true), 500)
+    ); // Placeholder
     if (success) {
       setRating(0);
       setReview("");
       setShowReviewForm(false);
+      // Optionally refetch book to update ratings
+      const response = await api.get(`/books/${id}`);
+      setBook(response.data.data || response.data);
     }
   };
 
@@ -119,7 +146,7 @@ const BookDetailPage = () => {
               {book.title}
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              {t("by")} {book.author}
+              {t("by")} {book.author?.name || "Unknown Author"}
             </p>
           </div>
 
@@ -153,36 +180,37 @@ const BookDetailPage = () => {
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Book className="h-5 w-5 mr-2" />
-              {t("pages")}: {book.page_count}
+              {t("pages")}: {book.page_count || "N/A"}
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Hash className="h-5 w-5 mr-2" />
-              ISBN: {book.isbn}
+              ISBN: {book.isbn || "N/A"}
             </div>
           </div>
 
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {book.description}
+            {book.description || "No description available"}
           </p>
 
           {/* Price and Add to Cart */}
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">
-                ${book.price.toFixed(2)}
+                ${book.price || "0.00"}{" "}
+                {/* Display string directly with fallback */}
               </span>
               <span
                 className={`ml-4 px-3 py-1 rounded-full text-sm ${
-                  book.stock > 10
+                  parseInt(book.stock) > 10
                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : book.stock > 0
+                    : parseInt(book.stock) > 0
                     ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
-                {book.stock > 10
+                {parseInt(book.stock) > 10
                   ? t("inStock")
-                  : book.stock > 0
-                  ? t("onlyXLeft", { count: book.stock })
+                  : parseInt(book.stock) > 0
+                  ? t("onlyXLeft", { count: parseInt(book.stock) })
                   : t("outOfStock")}
               </span>
             </div>
@@ -196,15 +224,15 @@ const BookDetailPage = () => {
                   type="number"
                   id="quantity"
                   min="1"
-                  max={book.stock}
+                  max={parseInt(book.stock) || 1}
                   value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value))}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                 />
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={book.stock === 0}
+                disabled={parseInt(book.stock) === 0}
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {t("addToCart")}

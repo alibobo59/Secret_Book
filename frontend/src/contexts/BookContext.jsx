@@ -3,10 +3,6 @@ import { api } from "../services/api";
 
 const BookContext = createContext();
 
-export const useBook = () => {
-  return useContext(BookContext);
-};
-
 export const BookProvider = ({ children }) => {
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -15,111 +11,91 @@ export const BookProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const fetchData = async () => {
-      try {
-        const booksUrl = "/books";
-        const categoriesUrl = "/categories";
-        const authorsUrl = "/authors";
-        const publishersUrl = "/publishers";
+      // Fetch all required data in parallel
+      const [
+        booksResponse,
+        categoriesResponse,
+        authorsResponse,
+        publishersResponse,
+      ] = await Promise.all([
+        api.get("/books"),
+        api.get("/categories"),
+        api.get("/authors"),
+        api.get("/publishers"),
+      ]);
 
-        // console.log("Starting fetch...");
-        // console.log("Books URL:", `${api.defaults.baseURL}${booksUrl}`);
-        // console.log(
-        //   "Categories URL:",
-        //   `${api.defaults.baseURL}${categoriesUrl}`
-        // );
+      // Extract data from responses
+      const fetchedBooks = booksResponse.data.data || [];
+      const fetchedCategories = categoriesResponse.data.data || [];
+      const fetchedAuthors = authorsResponse.data.data || [];
+      const fetchedPublishers = publishersResponse.data.data || [];
 
-        const [bookRes, catRes, authorRes, publisherRes] = await Promise.all([
-          api.get(booksUrl),
-          api.get(categoriesUrl),
-          api.get(authorsUrl),
-          api.get(publishersUrl),
-        ]);
+      // Log fetched data for debugging
+      console.log("Fetched data:", {
+        books: fetchedBooks,
+        categories: fetchedCategories,
+        authors: fetchedAuthors,
+        publishers: fetchedPublishers,
+      });
 
-        // console.log("Raw books response:", bookRes.data);
-        // console.log("Raw categories response:", catRes.data);
+      // Update state
+      setBooks(fetchedBooks);
+      setCategories(fetchedCategories);
+      setAuthors(fetchedAuthors);
+      setPublishers(fetchedPublishers);
 
-        const booksData = Array.isArray(bookRes.data.data)
-          ? bookRes.data.data
-          : [];
-        const categoriesData = Array.isArray(catRes.data.data)
-          ? catRes.data.data
-          : [];
-        const authorsData = Array.isArray(authorRes.data.data)
-          ? authorRes.data.data
-          : [];
-        const publishersData = Array.isArray(publisherRes.data.data)
-          ? publisherRes.data.data
-          : [];
-
-        if (isMounted) {
-          const enrichedBooks = booksData.map((book) => ({
-            ...book,
-            cover_image: book.cover_image || "/placeholder-image.jpg",
-            author: book.author || `Author ${book.author_id}`, // Extract name or fallback to author_id
-            stock: book.stock || 15,
-            average_rating: book.average_rating || 0,
-            ratings: book.ratings || [],
-          }));
-          setBooks(enrichedBooks);
-          setCategories(categoriesData);
-          setAuthors(authorsData);
-          setPublishers(publishersData);
-
-          console.log(
-            "State updated - books:",
-            enrichedBooks,
-            "categories:",
-            categoriesData
-          );
-        }
-      } catch (err) {
-        console.error(
-          "Fetch error:",
-          err.message,
-          "Response:",
-          err.response?.data
-        );
-        if (isMounted) {
-          setError(err.message || "Failed to fetch data");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-          console.log(
-            "Final state - loading:",
-            loading,
-            "error:",
-            error,
-            "books length:",
-            books.length,
-            "categories length:",
-            categories.length
-          );
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const value = {
-    authors,
-    publishers,
-    books,
-    categories,
-    loading,
-    error,
+      // Log state after update
+      console.log("State updated:", {
+        books: fetchedBooks,
+        categories: fetchedCategories,
+        authors: fetchedAuthors,
+        publishers: fetchedPublishers,
+      });
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(err.response?.data?.error || "Failed to fetch data");
+    } finally {
+      setLoading(false);
+      console.log("Final state:", {
+        loading: false,
+        error,
+        booksLength: books.length,
+        categoriesLength: categories.length,
+        authorsLength: authors.length,
+        publishersLength: publishers.length,
+      });
+    }
   };
 
-  return <BookContext.Provider value={value}>{children}</BookContext.Provider>;
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  return (
+    <BookContext.Provider
+      value={{
+        books,
+        setBooks,
+        categories,
+        authors,
+        publishers,
+        loading,
+        error,
+      }}>
+      {children}
+    </BookContext.Provider>
+  );
 };
 
-export default BookProvider;
+export const useBook = () => {
+  const context = useContext(BookContext);
+  if (!context) {
+    throw new Error("useBook must be used within a BookProvider");
+  }
+  return context;
+};

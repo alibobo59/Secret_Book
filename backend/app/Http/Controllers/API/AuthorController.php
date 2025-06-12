@@ -3,43 +3,43 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Author;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
-class CategoryController extends Controller
+class AuthorController extends Controller
 {
     /**
-     * Display a listing of the categories.
+     * Display a listing of the authors.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        $categories = Category::orderBy('name', 'asc')->get();
-        return response()->json(['data' => $categories], Response::HTTP_OK);
+        $authors = Author::all();
+        return response()->json(['data' => $authors], Response::HTTP_OK);
     }
 
     /**
-     * Display the specified category.
+     * Display the specified author.
      *
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        $category = Category::find($id);
+        $author = Author::find($id);
 
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        if (!$author) {
+            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return response()->json(['data' => $category], Response::HTTP_OK);
+        return response()->json(['data' => $author], Response::HTTP_OK);
     }
 
     /**
-     * Store a newly created category in storage.
+     * Store a newly created author in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -47,22 +47,24 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255',
+            'bio' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $category = Category::create([
+        $author = Author::create([
             'name' => $request->name,
+            'bio' => $request->bio,
         ]);
 
-        return response()->json(['data' => $category], Response::HTTP_CREATED);
+        return response()->json(['data' => $author], Response::HTTP_CREATED);
     }
 
     /**
-     * Update the specified category in storage.
+     * Update the specified author in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -70,42 +72,44 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $category = Category::find($id);
+        $author = Author::find($id);
 
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        if (!$author) {
+            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'name' => 'required|string|max:255',
+            'bio' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $category->update([
+        $author->update([
             'name' => $request->name,
+            'bio' => $request->bio,
         ]);
 
-        return response()->json(['data' => $category], Response::HTTP_OK);
+        return response()->json(['data' => $author], Response::HTTP_OK);
     }
 
     /**
-     * Remove the specified category from storage.
+     * Remove the specified author from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        $category = Category::find($id);
+        $author = Author::find($id);
 
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        if (!$author) {
+            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $category->delete();
+        $author->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }

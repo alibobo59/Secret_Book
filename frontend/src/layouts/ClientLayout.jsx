@@ -10,9 +10,6 @@ const ClientLayout = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      navigate("/login");
-    }
   }, [user, authLoading, navigate]);
 
   if (authLoading) {

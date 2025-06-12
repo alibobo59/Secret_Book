@@ -13,6 +13,7 @@ const AdminLayout = () => {
 
   useEffect(() => {
     if (!authLoading && (!user || !hasRole(["admin", "mod"]))) {
+      console.log("navigate from adminLayout");
       navigate("/login");
     }
   }, [user, authLoading, hasRole, navigate]);

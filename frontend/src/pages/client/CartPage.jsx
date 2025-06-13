@@ -1,7 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
-import { Minus, Plus, X, ShoppingBag, ArrowRight } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  X,
+  ShoppingBag,
+  ArrowRight,
+  CreditCard,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 
@@ -39,9 +46,109 @@ const CartPage = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Left Column: Shipping Information and Payment Method */}
+          <div className="space-y-6">
+            {/* Shipping Information */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-medium text-gray-800 dark:text-white mb-6">
+                {t("cart.shippingInfo")}
+              </h2>
+              <form className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="shippingName"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t("cart.shippingName")}
+                  </label>
+                  <input
+                    type="text"
+                    id="shippingName"
+                    name="shippingName"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                    placeholder={t("cart.shippingNamePlaceholder")}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="shippingAddress"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t("cart.shippingAddress")}
+                  </label>
+                  <input
+                    type="text"
+                    id="shippingAddress"
+                    name="shippingAddress"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                    placeholder={t("cart.shippingAddressPlaceholder")}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="shippingCity"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t("cart.shippingCity")}
+                  </label>
+                  <input
+                    type="text"
+                    id="shippingCity"
+                    name="shippingCity"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                    placeholder={t("cart.shippingCityPlaceholder")}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="shippingPostalCode"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t("cart.shippingPostalCode")}
+                  </label>
+                  <input
+                    type="text"
+                    id="shippingPostalCode"
+                    name="shippingPostalCode"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                    placeholder={t("cart.shippingPostalCodePlaceholder")}
+                  />
+                </div>
+              </form>
+            </motion.div>
+
+            {/* Payment Method */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-medium text-gray-800 dark:text-white mb-6 flex items-center">
+                <CreditCard className="h-5 w-5 mr-2 text-amber-600 dark:text-amber-500" />
+                {t("cart.paymentMethod")}
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="cashOnDelivery"
+                    name="paymentMethod"
+                    value="cash_on_delivery"
+                    defaultChecked
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300"
+                  />
+                  <label
+                    htmlFor="cashOnDelivery"
+                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                    {t("cart.cashOnDelivery")}
+                  </label>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right Column: Cart Items and Summary */}
+          <div className="space-y-8">
+            {/* Cart Items */}
             <AnimatePresence>
               {cartItems.map((item) => (
                 <motion.div
@@ -110,14 +217,12 @@ const CartPage = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
-          </div>
 
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
+            {/* Order Summary */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md sticky top-24">
+              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-medium text-gray-800 dark:text-white mb-6">
                 {t("cart.summary")}
               </h2>

@@ -6,7 +6,6 @@ import {
   BrowseBooksPage,
   BookDetailPage,
   CartPage,
-  CheckoutPage,
   ProfilePage,
   LoginPage,
   RegisterPage,
@@ -49,7 +48,7 @@ function App() {
         <Route path="/books" element={<BrowseBooksPage />} />
         <Route path="/books/:id" element={<BookDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

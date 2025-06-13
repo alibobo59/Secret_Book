@@ -173,17 +173,7 @@ const CouponManagement = () => {
 
           {/* Status Filter */}
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Vô hiệu hóa</option>
-            <option value="expired">Đã hết hạn</option>
-            <option value="upcoming">Sắp diễn ra</option>
-            <option value="used_up">Hết lượt sử dụng</option>
-          </select>
+          
 
           {/* Type Filter */}
           <select

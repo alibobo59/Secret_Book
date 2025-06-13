@@ -167,19 +167,29 @@ const CouponManagement = () => {
               placeholder="Tìm kiếm mã hoặc tên..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent focus:ring-offset-2 dark:focus:ring-offset-gray-800 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
           {/* Status Filter */}
           <select
-          
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent focus:ring-offset-2 dark:focus:ring-offset-gray-800 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Vô hiệu hóa</option>
+            <option value="expired">Đã hết hạn</option>
+            <option value="upcoming">Sắp diễn ra</option>
+            <option value="used_up">Hết lượt sử dụng</option>
+          </select>
 
           {/* Type Filter */}
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent focus:ring-offset-2 dark:focus:ring-offset-gray-800 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="all">Tất cả loại</option>
             <option value="percentage">Phần trăm</option>
@@ -189,7 +199,7 @@ const CouponManagement = () => {
           {/* Refresh */}
           <button
             onClick={loadCoupons}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300"
           >
             <RefreshCw className="w-4 h-4" />
             Làm mới
@@ -277,13 +287,13 @@ const CouponManagement = () => {
                         <div className="flex items-center gap-1">
                           {coupon.type === 'percentage' ? (
                             <>
-                              <Percent className="w-4 h-4 text-blue-500" />
-                              <span className="font-medium">{coupon.value}%</span>
+                              <Percent className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                              <span className="font-medium text-gray-900 dark:text-white">{coupon.value}%</span>
                             </>
                           ) : (
                             <>
-                              <DollarSign className="w-4 h-4 text-green-500" />
-                              <span className="font-medium">{coupon.value.toLocaleString()}đ</span>
+                              <DollarSign className="w-4 h-4 text-green-500 dark:text-green-400" />
+                              <span className="font-medium text-gray-900 dark:text-white">{coupon.value.toLocaleString()}đ</span>
                             </>
                           )}
                         </div>

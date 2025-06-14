@@ -206,5 +206,102 @@ const CheckoutPage = () => {
       </form>
     </div>
   );
-}
+ const [cart, setCart] = useState([
+    { id: 1, name: "Sản phẩm A", price: 100000, qty: 1 },
+    { id: 2, name: "Sản phẩm B", price: 200000, qty: 2 },
+  ]);
+
+  const [payment, setPayment] = useState("cod");
+  const [coupon, setCoupon] = useState("");
+  const [discount, setDiscount] = useState(0);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleQtyChange = (id, delta) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
+      )
+    );
+  };
+
+  const applyCoupon = () => {
+    if (coupon === "GIAM10") {
+      setDiscount(0.1);
+      alert("Áp dụng mã giảm 10%");
+    } else {
+      setDiscount(0);
+      alert("Mã không hợp lệ");
+    }
+  };
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = subtotal - subtotal * discount;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const order = { form, cart, payment, total };
+    console.log("Đơn hàng:", order);
+    alert("Đặt hàng thành công!");
+    // TODO: gọi API lưu order
+  };
+
+  return (
+    <div className="checkout-page">
+      <h2>Thông tin giao hàng</h2>
+      <form onSubmit={handleSubmit}>
+        <input name="name" placeholder="Họ tên" value={form.name} onChange={handleChange} />
+        <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+        <input name="phone" placeholder="Số điện thoại" value={form.phone} onChange={handleChange} />
+        <input name="city" placeholder="Tỉnh/Thành phố" value={form.city} onChange={handleChange} />
+        <input name="address" placeholder="Địa chỉ" value={form.address} onChange={handleChange} />
+        <textarea name="note" placeholder="Ghi chú" value={form.note} onChange={handleChange} />
+
+        <h3>Giỏ hàng</h3>
+        {cart.map((item) => (
+          <div key={item.id}>
+            <span>{item.name}</span> - {item.price.toLocaleString()}đ
+            <button type="button" onClick={() => handleQtyChange(item.id, -1)}>-</button>
+            {item.qty}
+            <button type="button" onClick={() => handleQtyChange(item.id, 1)}>+</button>
+          </div>
+        ))}
+        <p>Tạm tính: {subtotal.toLocaleString()}đ</p>
+
+        <div>
+          <input
+            placeholder="Nhập mã giảm giá"
+            value={coupon}
+            onChange={(e) => setCoupon(e.target.value)}
+          />
+          <button type="button" onClick={applyCoupon}>Áp dụng</button>
+        </div>
+
+        <h4>Phương thức thanh toán</h4>
+        <label>
+          <input
+            type="radio"
+            value="cod"
+            checked={payment === "cod"}
+            onChange={() => setPayment("cod")}
+          />
+          Thanh toán khi nhận hàng
+        </label>
+        <label>
+          <input
+            type="radio"
+            value="vnpay"
+            checked={payment === "vnpay"}
+            onChange={() => setPayment("vnpay")}
+          />
+          Thanh toán VNPay
+        </label>
+
+        <p><b>Tổng cộng:</b> {total.toLocaleString()}đ</p>
+        <button type="submit">Đặt hàng</button>
+      </form>
+    </div>
+  );
 export default CheckoutPage;

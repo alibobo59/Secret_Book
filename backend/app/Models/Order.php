@@ -166,7 +166,8 @@ class Order extends Model
     /**
      * Get metadata for update events
      */
-    protected function getUpdateMetadata($changes)
+   
+ protected function getUpdateMetadata($changes)
     {
         $metadata = [
             'action_type' => 'order_updated',

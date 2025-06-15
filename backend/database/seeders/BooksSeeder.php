@@ -7,15 +7,13 @@ use Illuminate\Support\Facades\DB;
 
 class BooksSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         DB::table('books')->insert([
             [
                 'title' => 'The Great Gatsby',
-                'price' => 10.99,
+                'price' => 250000, // VND
+                'stock' => 50,
                 'category_id' => 1,
                 'author_id' => 1,
                 'publisher_id' => 1,
@@ -24,7 +22,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => '1984',
-                'price' => 8.99,
+                'price' => 200000, // VND
+                'stock' => 30,
                 'category_id' => 2,
                 'author_id' => 2,
                 'publisher_id' => 2,
@@ -33,7 +32,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'To Kill a Mockingbird',
-                'price' => 12.49,
+                'price' => 280000, // VND
+                'stock' => 40,
                 'category_id' => 3,
                 'author_id' => 3,
                 'publisher_id' => 3,
@@ -42,7 +42,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Moby-Dick',
-                'price' => 15.99,
+                'price' => 370000, // VND
+                'stock' => 25,
                 'category_id' => 4,
                 'author_id' => 4,
                 'publisher_id' => 4,
@@ -51,7 +52,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'War and Peace',
-                'price' => 20.00,
+                'price' => 460000, // VND
+                'stock' => 15,
                 'category_id' => 5,
                 'author_id' => 5,
                 'publisher_id' => 5,
@@ -60,7 +62,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Pride and Prejudice',
-                'price' => 9.99,
+                'price' => 230000, // VND
+                'stock' => 35,
                 'category_id' => 1,
                 'author_id' => 6,
                 'publisher_id' => 1,
@@ -69,7 +72,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Catcher in the Rye',
-                'price' => 11.99,
+                'price' => 280000, // VND
+                'stock' => 45,
                 'category_id' => 2,
                 'author_id' => 7,
                 'publisher_id' => 2,
@@ -78,7 +82,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Hobbit',
-                'price' => 14.99,
+                'price' => 350000, // VND
+                'stock' => 20,
                 'category_id' => 3,
                 'author_id' => 8,
                 'publisher_id' => 3,
@@ -87,7 +92,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Brave New World',
-                'price' => 10.49,
+                'price' => 250000, // VND
+                'stock' => 30,
                 'category_id' => 4,
                 'author_id' => 9,
                 'publisher_id' => 4,
@@ -96,7 +102,8 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Odyssey',
-                'price' => 13.99,
+                'price' => 330000, // VND
+                'stock' => 25,
                 'category_id' => 5,
                 'author_id' => 10,
                 'publisher_id' => 5,

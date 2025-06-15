@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +8,16 @@ class Book extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'isbn', 'price', 'category_id', 'author_id', 'publisher_id'];
+    protected $fillable = [
+        'title',
+
+        'price',
+        'stock',
+        'category_id',
+        'author_id',
+        'publisher_id',
+        'image',
+    ];
 
     public function category()
     {
@@ -21,7 +29,8 @@ class Book extends Model
         return $this->belongsTo(Author::class);
     }
 
-    public function publisher()    {
+    public function publisher()
+    {
         return $this->belongsTo(Publisher::class);
     }
 }

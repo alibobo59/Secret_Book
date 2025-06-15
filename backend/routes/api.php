@@ -9,16 +9,13 @@ use App\Http\Controllers\API\AuthorController;
 use App\Http\Controllers\API\AuditLogController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\PublisherController;
-<<<<<<< HEAD
-use App\Http\Controllers\API\AuditLogController;
-=======
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\CartController;
->>>>>>> safety-checkpoint
+use App\Http\Controllers\API\ProfileController;
 
 // Root route
 Route::get('/', function () {
@@ -67,8 +64,6 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     // Publishers
     Route::apiResource('publishers', PublisherController::class)->except(['index', 'show']);
 
-<<<<<<< HEAD
-=======
     // Orders (Admin)
     Route::get('/admin/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
     Route::get('/admin/orders/{order}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
@@ -81,15 +76,11 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     // Analytics
     Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboardStats'])->name('analytics.dashboard');
 
->>>>>>> safety-checkpoint
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/stats', [AuditLogController::class, 'getStats'])->name('audit-logs.stats');
     Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::get('/audit-logs/{modelType}/{modelId}', [AuditLogController::class, 'getModelAuditLogs'])->name('audit-logs.model');
-<<<<<<< HEAD
-});
-=======
 
     // Coupons (Admin)
     Route::apiResource('coupons', CouponController::class);
@@ -140,4 +131,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
 });
->>>>>>> safety-checkpoint
+
+
+// Profile (me)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [ProfileController::class, 'me']);
+    Route::put('/me/password', [ProfileController::class, 'changePassword']);
+    Route::put('/me/avatar', [ProfileController::class, 'updateAvatar']);
+});
+
+// also accept POST for file uploads (some servers drop files on PUT)
+Route::middleware('auth:sanctum')->post('/me/avatar', [\App\Http\Controllers\API\ProfileController::class, 'updateAvatar']);

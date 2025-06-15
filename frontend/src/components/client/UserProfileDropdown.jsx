@@ -4,11 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
 import { User, Settings, Package, Shield, LogOut, X } from "lucide-react";
 
-<<<<<<< HEAD
-const UserProfileDropdown = ({ className = "", isMobile = false, onClose }) => {
-=======
 const UserProfileDropdown = ({ className = "" }) => {
->>>>>>> safety-checkpoint
   const { user, logout, isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -34,12 +30,6 @@ const UserProfileDropdown = ({ className = "" }) => {
   const handleLogout = () => {
     logout();
     setIsOpen(false);
-    if (onClose) onClose(); // For mobile menu
-  };
-
-  const handleLinkClick = () => {
-    setIsOpen(false);
-    if (onClose) onClose(); // For mobile menu
   };
 
   // Helper function to get user initial safely
@@ -58,70 +48,20 @@ const UserProfileDropdown = ({ className = "" }) => {
     return null;
   }
 
-  // Mobile version - render as inline content
-  if (isMobile) {
-    return (
-      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
-            {user.name.charAt(0)}
-          </div>
-          <span className="font-medium text-gray-800 dark:text-white text-sm">
-            {user.name}
-          </span>
-        </div>
-        <div className="flex flex-col space-y-3">
-          <Link
-            to={`/profile/${user.username}`}
-            className="text-gray-700 dark:text-gray-300 text-sm"
-            onClick={handleLinkClick}>
-            Profile
-          </Link>
-          <Link
-            to="/my-books"
-            className="text-gray-700 dark:text-gray-300 text-sm"
-            onClick={handleLinkClick}>
-            My Books
-          </Link>
-          <Link
-            to="/orders"
-            className="text-gray-700 dark:text-gray-300 text-sm"
-            onClick={handleLinkClick}>
-            My Orders
-          </Link>
-          {isAdmin() && (
-            <Link
-              to="/admin"
-              className="text-gray-700 dark:text-gray-300 text-sm"
-              onClick={handleLinkClick}>
-              Admin Dashboard
-            </Link>
-          )}
-          <button
-            onClick={handleLogout}
-            className="text-left text-red-600 dark:text-red-500 text-sm">
-            Logout
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop version - existing dropdown code
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Profile Button */}
       <button
         onClick={toggleDropdown}
         className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-<<<<<<< HEAD
-        aria-label="User profile menu">
-=======
         aria-label="Menu hồ sơ người dùng">
->>>>>>> safety-checkpoint
-        <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
-          {getUserInitial()}
-        </div>
+        {(user?.avatarUrl || user?.avatar_url) ? (
+          <img src={user?.avatarUrl || user?.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover ring-1 ring-white/60" />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
+            {getUserInitial()}
+          </div>
+        )}
       </button>
 
       {/* Dropdown Menu */}
@@ -164,10 +104,7 @@ const UserProfileDropdown = ({ className = "" }) => {
                 <User className="h-4 w-4" />
                 Hồ sơ
               </Link>
-<<<<<<< HEAD
-=======
 
->>>>>>> safety-checkpoint
               <Link
                 to="/orders"
                 onClick={() => setIsOpen(false)}
@@ -176,11 +113,7 @@ const UserProfileDropdown = ({ className = "" }) => {
                 Đơn hàng của tôi
               </Link>
 
-<<<<<<< HEAD
-              {isAdmin() && ( // Change from user.isAdmin to isAdmin()
-=======
               {isAdmin() && (
->>>>>>> safety-checkpoint
                 <Link
                   to="/admin"
                   onClick={() => setIsOpen(false)}
@@ -189,13 +122,9 @@ const UserProfileDropdown = ({ className = "" }) => {
                   Bảng điều khiển quản trị
                 </Link>
               )}
-<<<<<<< HEAD
-              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-=======
 
               <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
 
->>>>>>> safety-checkpoint
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">

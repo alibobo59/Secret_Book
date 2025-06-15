@@ -2,16 +2,7 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
-use App\Traits\Auditable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
-class Coupon extends Model
-{
-    use HasFactory, Auditable;
-=======
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Coupon extends Model
 {
     use HasFactory;
->>>>>>> safety-checkpoint
 
     protected $fillable = [
         'code',
@@ -56,8 +46,8 @@ class Coupon extends Model
     public function orders()
     {
         return $this->belongsToMany(Order::class, 'coupon_usages')
-                    ->withPivot('discount_amount')
-                    ->withTimestamps();
+            ->withPivot('discount_amount')
+            ->withTimestamps();
     }
 
     // Scopes
@@ -70,31 +60,31 @@ class Coupon extends Model
     {
         $now = Carbon::now();
         return $query->where('is_active', true)
-                    ->where('start_date', '<=', $now)
-                    ->where('end_date', '>=', $now);
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now);
     }
 
     public function scopeAvailable($query)
     {
         return $query->valid()
-                    ->where(function ($q) {
-                        $q->whereNull('usage_limit')
-                          ->orWhereRaw('used_count < usage_limit');
-                    });
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')
+                    ->orWhereRaw('used_count < usage_limit');
+            });
     }
 
     // Helper methods
     public function isValid()
     {
         $now = Carbon::now();
-        return $this->is_active 
-            && $this->start_date <= $now 
+        return $this->is_active
+            && $this->start_date <= $now
             && $this->end_date >= $now;
     }
 
     public function isAvailable()
     {
-        return $this->isValid() 
+        return $this->isValid()
             && (is_null($this->usage_limit) || $this->used_count < $this->usage_limit);
     }
 
@@ -124,11 +114,11 @@ class Coupon extends Model
 
         if ($this->type === 'percentage') {
             $discount = ($orderAmount * $this->value) / 100;
-            
+
             if ($this->maximum_discount) {
                 $discount = min($discount, $this->maximum_discount);
             }
-            
+
             return $discount;
         }
 
@@ -139,23 +129,23 @@ class Coupon extends Model
     public function getStatusAttribute()
     {
         $now = Carbon::now();
-        
+
         if (!$this->is_active) {
             return 'inactive';
         }
-        
+
         if ($this->start_date > $now) {
             return 'upcoming';
         }
-        
+
         if ($this->end_date < $now) {
             return 'expired';
         }
-        
+
         if ($this->usage_limit && $this->used_count >= $this->usage_limit) {
             return 'used_up';
         }
-        
+
         return 'active';
     }
 
@@ -169,7 +159,7 @@ class Coupon extends Model
         if ($this->type === 'percentage') {
             return $this->value . '%';
         }
-        
+
         return number_format($this->value, 0, ',', '.') . ' VND';
     }
 

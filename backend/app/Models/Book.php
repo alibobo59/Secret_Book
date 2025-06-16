@@ -9,13 +9,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-<<<<<<< HEAD
-        'title', 'isbn', 'description', 'price', 'sku', 'stock_quantity',
-        'category_id', 'author_id', 'publisher_id', 'image'
-    ];
 
-    protected $appends = ['image_url'];
-=======
         'title',
 
         'price',
@@ -25,7 +19,6 @@ class Book extends Model
         'publisher_id',
         'image',
     ];
->>>>>>> 9d6a090 (khong biet noi gi)
 
     public function category()
     {

@@ -9,7 +9,12 @@ class Book extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'isbn', 'price', 'category_id', 'author_id', 'publisher_id'];
+    protected $fillable = [
+        'title', 'isbn', 'description', 'price', 'sku', 'stock_quantity',
+        'category_id', 'author_id', 'publisher_id', 'image'
+    ];
+
+    protected $appends = ['image_url'];
 
     public function category()
     {
@@ -21,7 +26,18 @@ class Book extends Model
         return $this->belongsTo(Author::class);
     }
 
-    public function publisher()    {
+    public function publisher()
+    {
         return $this->belongsTo(Publisher::class);
+    }
+
+    public function variations()
+    {
+        return $this->hasMany(BookVariation::class);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? url('storage/' . $this->image) : null;
     }
 }

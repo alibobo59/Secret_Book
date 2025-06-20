@@ -62,4 +62,54 @@ class PublisherController extends Controller
 
         return response()->json(['data' => $publisher], Response::HTTP_CREATED);
     }
+    /**
+     * Update the specified publisher in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        $publisher = Publisher::find($id);
+
+        if (!$publisher) {
+            return response()->json(['error' => 'Publisher not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $publisher->update([
+            'name' => $request->name,
+            'address' => $request->address,
+        ]);
+
+        return response()->json(['data' => $publisher], Response::HTTP_OK);
+    }
+
+    /**
+     * Remove the specified publisher from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        $publisher = Publisher::find($id);
+
+        if (!$publisher) {
+            return response()->json(['error' => 'Publisher not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $publisher->delete();
+
+        return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
 }

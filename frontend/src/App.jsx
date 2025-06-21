@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { ClientLayout, AdminLayout } from "./layouts";
 import {
+  OrderManagement as OrderManagementClient,
   HomePage,
   BrowseBooksPage,
   BookDetailPage,
@@ -51,6 +52,7 @@ function App() {
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/orders" element={<OrderManagementClient />} />
       </Route>
 
       <Route

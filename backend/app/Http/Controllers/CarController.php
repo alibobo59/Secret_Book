@@ -327,7 +327,7 @@ class CartController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Không thể hợp nhất giỏ hàng',
+                'message' => 'Lỗi xảy ra khi merge giỏ hàng',
                 'error' => $e->getMessage()
             ], 500);
         }

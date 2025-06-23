@@ -31,7 +31,6 @@ const CheckoutPage = () => {
     phone: "",
     address: "",
     city: "",
-    postalCode: "",
     notes: "",
   });
 
@@ -62,8 +61,6 @@ const CheckoutPage = () => {
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.postalCode.trim())
-      newErrors.postalCode = "Postal code is required";
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -95,7 +92,6 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
-    // In the handleSubmit function, around line 101-130
     try {
       const orderData = {
         items: cartItems.map((item) => ({
@@ -104,13 +100,11 @@ const CheckoutPage = () => {
           author: item.author,
           price: item.price,
           quantity: item.quantity,
-          coverImage: item.cover_image,
         })),
         shippingAddress: {
           name: formData.name,
           address: formData.address,
           city: formData.city,
-          postalCode: formData.postalCode,
         },
         contactInfo: {
           email: formData.email,
@@ -220,56 +214,6 @@ const CheckoutPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-white ${
-                          errors.firstName
-                            ? "border-red-500"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                        placeholder="Enter your first name"
-                      />
-                      {errors.firstName && (
-                        <p className="mt-1 text-sm text-red-500 flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-1" />
-                          {errors.firstName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-white ${
-                          errors.lastName
-                            ? "border-red-500"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                        placeholder="Enter your last name"
-                      />
-                      {errors.lastName && (
-                        <p className="mt-1 text-sm text-red-500 flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-1" />
-                          {errors.lastName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Email Address *
                       </label>
                       <div className="relative">
@@ -358,7 +302,7 @@ const CheckoutPage = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           City *
@@ -379,30 +323,6 @@ const CheckoutPage = () => {
                           <p className="mt-1 text-sm text-red-500 flex items-center">
                             <AlertCircle className="h-4 w-4 mr-1" />
                             {errors.city}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Postal Code *
-                        </label>
-                        <input
-                          type="text"
-                          name="postalCode"
-                          value={formData.postalCode}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-white ${
-                            errors.postalCode
-                              ? "border-red-500"
-                              : "border-gray-300 dark:border-gray-600"
-                          }`}
-                          placeholder="Enter postal code"
-                        />
-                        {errors.postalCode && (
-                          <p className="mt-1 text-sm text-red-500 flex items-center">
-                            <AlertCircle className="h-4 w-4 mr-1" />
-                            {errors.postalCode}
                           </p>
                         )}
                       </div>

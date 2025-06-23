@@ -36,7 +36,9 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     // Books
-    Route::apiResource('books', BookController::class)->except(['index', 'show']);
+    Route::post('/books', [BookController::class, 'store'])->name('books.store');
+    Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update');
+    Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
 
     // Authors
     Route::apiResource('authors', AuthorController::class)->except(['index', 'show']);

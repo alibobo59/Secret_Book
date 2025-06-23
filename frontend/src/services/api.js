@@ -4,7 +4,6 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "/api", // Vite's proxy for /api routes
   headers: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
   withCredentials: true, // Enable cookies for CSRF and session
@@ -36,6 +35,7 @@ const fetchCsrfToken = async () => {
 // Request interceptor to add auth token and handle CSRF
 api.interceptors.request.use(
   async (config) => {
+    // Only fetch CSRF token for non-GET requests
     if (
       ["post", "put", "delete", "patch"].includes(config.method.toLowerCase())
     ) {
@@ -45,10 +45,27 @@ api.interceptors.request.use(
       }
     }
 
+    // Set Content-Type based on data type
+    if (config.data instanceof FormData) {
+      // Remove Content-Type header to let browser set multipart/form-data
+      delete config.headers["Content-Type"];
+    } else {
+      // Set JSON for non-FormData requests
+      config.headers["Content-Type"] = "application/json";
+    }
+
     const token = localStorage.getItem("token");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+
+    console.log("Request config:", {
+      method: config.method,
+      url: config.url,
+      headers: config.headers,
+      data: config.data instanceof FormData ? "[FormData]" : config.data,
+    });
+
     return config;
   },
   (error) => Promise.reject(error)

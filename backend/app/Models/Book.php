@@ -9,8 +9,15 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'price', 'sku', 'stock_quantity',
-        'category_id', 'author_id', 'publisher_id', 'image'
+        'title',
+        'sku',
+        'description',
+        'price',
+        'stock_quantity', // Changed from 'stock' to match frontend
+        'category_id',
+        'author_id',
+        'publisher_id',
+        'image',
     ];
 
     protected $appends = ['image_url'];

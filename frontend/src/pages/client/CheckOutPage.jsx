@@ -95,8 +95,8 @@ const CheckoutPage = () => {
     try {
       const orderData = {
         items: cartItems.map((item) => ({
-          bookId: item.id,
-          price: item.price,
+          bookId: item.book.id,
+          variationId: item.selectedVariation?.id || null,
           quantity: item.quantity,
         })),
         shippingAddress: {
@@ -390,34 +390,48 @@ const CheckoutPage = () => {
 
                 {/* Cart Items */}
                 <div className="space-y-4 mb-6">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-3">
+                  {cartItems.map((item) => {
+                    const itemKey = item.selectedVariation 
+                      ? `${item.book.id}-${item.selectedVariation.id}`
+                      : `${item.book.id}`;
+                    const price = item.selectedVariation ? item.selectedVariation.price : item.book.price;
+                    
+                    return (
+                    <div key={itemKey} className="flex gap-3">
                       <img
-                        src={item.cover_image}
-                        alt={item.title}
+                        src={item.book.cover_image}
+                        alt={item.book.title}
                         className="w-12 h-16 object-cover rounded"
                       />
                       <div className="flex-grow">
                         <h4 className="font-medium text-gray-800 dark:text-white text-sm">
-                          {item.title}
+                          {item.book.title}
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           by{" "}
-                          {typeof item.author === "object"
-                            ? item.author?.name || "Unknown Author"
-                            : item.author}
+                          {typeof item.book.author === "object"
+                            ? item.book.author?.name || "Unknown Author"
+                            : item.book.author}
                         </p>
+                        {item.selectedVariation && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            {Object.entries(item.selectedVariation.attributes || {}).map(([key, value]) => 
+                              `${key}: ${value}`
+                            ).join(', ')}
+                          </p>
+                        )}
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-sm text-gray-600 dark:text-gray-400">
                             Qty: {item.quantity}
                           </span>
                           <span className="font-medium text-gray-800 dark:text-white">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ${(price * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Order Totals */}

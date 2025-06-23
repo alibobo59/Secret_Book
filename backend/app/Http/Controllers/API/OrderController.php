@@ -67,10 +67,25 @@ class OrderController extends Controller
                 ->get()
                 ->keyBy('id');
 
+            // Get variations if any items have variationId
+            $variationIds = collect($request->items)
+                ->pluck('variationId')
+                ->filter()
+                ->unique();
+            
+            $variations = [];
+            if ($variationIds->isNotEmpty()) {
+                $variations = BookVariation::whereIn('id', $variationIds)
+                    ->get()
+                    ->keyBy('id');
+            }
+
             $subtotal = 0;
 
             foreach ($request->items as $item) {
                 $bookId = $item['bookId'];
+                $variationId = $item['variationId'] ?? null;
+                
                 if (!isset($books[$bookId])) {
                     return response()->json([
                         'message' => "Invalid book ID: {$bookId}",
@@ -78,13 +93,36 @@ class OrderController extends Controller
                 }
 
                 $book = $books[$bookId];
-                if ($book->stock_quantity < $item['quantity']) {
+                $price = $book->price;
+                $stockQuantity = $book->stock_quantity;
+                
+                // Handle variation if specified
+                if ($variationId) {
+                    if (!isset($variations[$variationId])) {
+                        return response()->json([
+                            'message' => "Invalid variation ID: {$variationId}",
+                        ], Response::HTTP_BAD_REQUEST);
+                    }
+                    
+                    $variation = $variations[$variationId];
+                    if ($variation->book_id !== $bookId) {
+                        return response()->json([
+                            'message' => "Variation {$variationId} does not belong to book {$bookId}",
+                        ], Response::HTTP_BAD_REQUEST);
+                    }
+                    
+                    $price = $variation->price;
+                    $stockQuantity = $variation->stock_quantity;
+                }
+                
+                if ($stockQuantity < $item['quantity']) {
+                    $itemType = $variationId ? "variation ID {$variationId}" : "book ID {$bookId}";
                     return response()->json([
-                        'message' => "Insufficient stock for book ID {$bookId}",
+                        'message' => "Insufficient stock for {$itemType}",
                     ], Response::HTTP_BAD_REQUEST);
                 }
 
-                $itemTotal = $book->price * $item['quantity'];
+                $itemTotal = $price * $item['quantity'];
                 $subtotal += $itemTotal;
             }
 
@@ -103,13 +141,32 @@ class OrderController extends Controller
 
             foreach ($request->items as $item) {
                 $book = $books[$item['bookId']];
+                $variationId = $item['variationId'] ?? null;
+                $price = $book->price;
+                $variationAttributes = null;
+                
+                if ($variationId) {
+                    $variation = $variations[$variationId];
+                    $price = $variation->price;
+                    $variationAttributes = $variation->attributes;
+                    
+                    // Update variation stock
+                    BookVariation::where('id', $variationId)
+                        ->decrement('stock_quantity', $item['quantity']);
+                } else {
+                    // Update book stock for simple products
+                    Book::where('id', $item['bookId'])
+                        ->decrement('stock_quantity', $item['quantity']);
+                }
+                
                 OrderItem::create([
                     'order_id' => $order->id,
                     'book_id' => $item['bookId'],
+                    'book_variation_id' => $variationId,
                     'quantity' => $item['quantity'],
-                    'price' => $book->price,
+                    'price' => $price,
+                    'variation_attributes' => $variationAttributes,
                 ]);
-                Book::where('id', $item['bookId'])->decrement('stock_quantity', $item['quantity']);
             }
 
             Address::create([
@@ -141,7 +198,7 @@ class OrderController extends Controller
             return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
 
-        $order->load(['items.book', 'address', 'user']);
+        $order->load(['items.book', 'items.bookVariation', 'address', 'user']);
 
         return response()->json([
             'id' => $order->id,
@@ -155,9 +212,12 @@ class OrderController extends Controller
             'customerEmail' => $order->user->email ?? 'N/A',
             'items' => $order->items->map(fn($item) => [
                 'book_id' => $item->book_id,
+                'book_variation_id' => $item->book_variation_id,
                 'title' => $item->book->title,
                 'quantity' => $item->quantity,
                 'price' => $item->price,
+                'variation_attributes' => $item->variation_attributes,
+                'variation_sku' => $item->bookVariation?->sku,
             ]),
             'shipping_address' => [
                 'name' => $order->address->name,

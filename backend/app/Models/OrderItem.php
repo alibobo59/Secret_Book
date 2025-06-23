@@ -11,12 +11,15 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'book_id',
+        'book_variation_id',
         'quantity',
         'price',
+        'variation_attributes',
     ];
 
     protected $casts = [
         'price' => 'integer',
+        'variation_attributes' => 'array',
     ];
 
     public function order()
@@ -27,5 +30,10 @@ class OrderItem extends Model
     public function book()
     {
         return $this->belongsTo(Book::class);
+    }
+
+    public function bookVariation()
+    {
+        return $this->belongsTo(BookVariation::class);
     }
 }

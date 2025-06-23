@@ -27,6 +27,8 @@ const BookDetailPage = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedVariation, setSelectedVariation] = useState(null);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -89,7 +91,63 @@ const BookDetailPage = () => {
   }
 
   const handleAddToCart = () => {
-    addToCart(book, quantity);
+    addToCart(book, quantity, selectedVariation);
+  };
+
+  // Helper function to get available attribute values for a given attribute
+  const getAvailableAttributeValues = (attributeName) => {
+    if (!book?.variations) return [];
+    
+    const values = new Set();
+    book.variations.forEach(variation => {
+      if (variation.attributes && variation.attributes[attributeName]) {
+        values.add(variation.attributes[attributeName]);
+      }
+    });
+    return Array.from(values);
+  };
+
+  // Helper function to get all unique attribute names
+  const getAttributeNames = () => {
+    if (!book?.variations) return [];
+    
+    const attributeNames = new Set();
+    book.variations.forEach(variation => {
+      if (variation.attributes) {
+        Object.keys(variation.attributes).forEach(attr => attributeNames.add(attr));
+      }
+    });
+    return Array.from(attributeNames);
+  };
+
+  // Handle attribute selection
+  const handleAttributeChange = (attributeName, value) => {
+    const newSelectedAttributes = {
+      ...selectedAttributes,
+      [attributeName]: value
+    };
+    setSelectedAttributes(newSelectedAttributes);
+
+    // Find matching variation
+    const matchingVariation = book.variations?.find(variation => {
+      if (!variation.attributes) return false;
+      
+      return Object.keys(newSelectedAttributes).every(attr => 
+        variation.attributes[attr] === newSelectedAttributes[attr]
+      );
+    });
+
+    setSelectedVariation(matchingVariation || null);
+  };
+
+  // Get current price (variation price or book price)
+  const getCurrentPrice = () => {
+    return selectedVariation ? selectedVariation.price : book.price;
+  };
+
+  // Get current stock (variation stock or book stock)
+  const getCurrentStock = () => {
+    return selectedVariation ? selectedVariation.stock_quantity : book.stock_quantity;
   };
 
   const handleSubmitReview = async (e) => {
@@ -192,25 +250,59 @@ const BookDetailPage = () => {
             {book.description || "No description available"}
           </p>
 
+          {/* Variations */}
+          {book.variations && book.variations.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                {t("selectOptions")}
+              </h3>
+              {getAttributeNames().map(attributeName => (
+                <div key={attributeName} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+                    {attributeName}
+                  </label>
+                  <select
+                    value={selectedAttributes[attributeName] || ""}
+                    onChange={(e) => handleAttributeChange(attributeName, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">{t("selectOption", { option: attributeName })}</option>
+                    {getAvailableAttributeValues(attributeName).map(value => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              {selectedVariation && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>SKU:</strong> {selectedVariation.sku}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Price and Add to Cart */}
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">
-                ${book.price || "0.00"}{" "}
-                {/* Display string directly with fallback */}
+                ${getCurrentPrice() || "0.00"}
               </span>
               <span
                 className={`ml-4 px-3 py-1 rounded-full text-sm ${
-                  parseInt(book.stock) > 10
+                  getCurrentStock() > 10
                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : parseInt(book.stock) > 0
+                    : getCurrentStock() > 0
                     ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
-                {parseInt(book.stock) > 10
+                {getCurrentStock() > 10
                   ? t("inStock")
-                  : parseInt(book.stock) > 0
-                  ? t("onlyXLeft", { count: parseInt(book.stock) })
+                  : getCurrentStock() > 0
+                  ? t("onlyXLeft", { count: getCurrentStock() })
                   : t("outOfStock")}
               </span>
             </div>
@@ -224,7 +316,7 @@ const BookDetailPage = () => {
                   type="number"
                   id="quantity"
                   min="1"
-                  max={parseInt(book.stock) || 1}
+                  max={getCurrentStock() || 1}
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -232,10 +324,16 @@ const BookDetailPage = () => {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={parseInt(book.stock) === 0}
+                disabled={
+                  getCurrentStock() === 0 || 
+                  (book.variations && book.variations.length > 0 && !selectedVariation)
+                }
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {t("addToCart")}
+                {book.variations && book.variations.length > 0 && !selectedVariation
+                  ? t("selectOptionsFirst")
+                  : t("addToCart")
+                }
               </button>
             </div>
           </div>

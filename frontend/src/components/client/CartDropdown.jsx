@@ -21,6 +21,7 @@ const CartDropdown = ({ className = "" }) => {
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     productId: null,
+    variationId: null,
     productTitle: "",
   });
 
@@ -38,32 +39,39 @@ const CartDropdown = ({ className = "" }) => {
     };
   }, []);
 
-  const handleQuantityChange = (id, newQuantity) => {
+  const handleQuantityChange = (bookId, newQuantity, variationId = null) => {
     if (newQuantity <= 0) {
-      const item = cartItems.find((item) => item.id === id);
+      const itemKey = variationId ? `${bookId}-${variationId}` : `${bookId}`;
+      const item = cartItems.find((item) => {
+        const existingKey = item.selectedVariation 
+          ? `${item.book.id}-${item.selectedVariation.id}`
+          : `${item.book.id}`;
+        return existingKey === itemKey;
+      });
       setConfirmModal({
         isOpen: true,
-        productId: id,
-        productTitle: item?.title || "this item",
+        productId: bookId,
+        variationId: variationId,
+        productTitle: item?.book?.title || "this item",
       });
     } else {
-      updateQuantity(id, newQuantity);
+      updateQuantity(bookId, newQuantity, variationId);
     }
   };
 
   const handleConfirmRemove = () => {
     if (confirmModal.productId) {
-      removeFromCart(confirmModal.productId);
+      removeFromCart(confirmModal.productId, confirmModal.variationId);
     }
-    setConfirmModal({ isOpen: false, productId: null, productTitle: "" });
+    setConfirmModal({ isOpen: false, productId: null, variationId: null, productTitle: "" });
   };
 
   const handleCancelRemove = () => {
-    setConfirmModal({ isOpen: false, productId: null, productTitle: "" });
+    setConfirmModal({ isOpen: false, productId: null, variationId: null, productTitle: "" });
   };
 
-  const handleRemoveItem = (id) => {
-    removeFromCart(id);
+  const handleRemoveItem = (bookId, variationId = null) => {
+    removeFromCart(bookId, variationId);
   };
 
   const toggleDropdown = () => {
@@ -134,17 +142,23 @@ const CartDropdown = ({ className = "" }) => {
                 </div>
               ) : (
                 <div className="p-2">
-                  {cartItems.map((item) => (
+                  {cartItems.map((item) => {
+                    const itemKey = item.selectedVariation 
+                      ? `${item.book.id}-${item.selectedVariation.id}`
+                      : `${item.book.id}`;
+                    const price = item.selectedVariation ? item.selectedVariation.price : item.book.price;
+                    
+                    return (
                     <motion.div
-                      key={item.id}
+                      key={itemKey}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="flex gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                       {/* Book Image */}
                       <div className="shrink-0">
                         <img
-                          src={item.image}
-                          alt={item.title}
+                          src={item.book.image}
+                          alt={item.book.title}
                           className="w-12 h-16 object-cover rounded"
                         />
                       </div>
@@ -152,15 +166,22 @@ const CartDropdown = ({ className = "" }) => {
                       {/* Book Details */}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-gray-800 dark:text-white line-clamp-1">
-                          {item.title}
+                          {item.book.title}
                         </h4>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {typeof item.author === "object"
-                            ? item.author?.name || "Unknown Author"
-                            : item.author}
+                          {typeof item.book.author === "object"
+                            ? item.book.author?.name || "Unknown Author"
+                            : item.book.author}
                         </p>
+                        {item.selectedVariation && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            {Object.entries(item.selectedVariation.attributes || {}).map(([key, value]) => 
+                              `${key}: ${value}`
+                            ).join(', ')}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          ${(parseFloat(item.price) || 0).toFixed(2)} each
+                          ${(parseFloat(price) || 0).toFixed(2)} each
                         </p>
 
                         {/* Quantity Controls */}
@@ -168,7 +189,7 @@ const CartDropdown = ({ className = "" }) => {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
-                                handleQuantityChange(item.id, item.quantity - 1)
+                                handleQuantityChange(item.book.id, item.quantity - 1, item.selectedVariation?.id)
                               }
                               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
                               <Minus className="h-3 w-3" />
@@ -178,7 +199,7 @@ const CartDropdown = ({ className = "" }) => {
                             </span>
                             <button
                               onClick={() =>
-                                handleQuantityChange(item.id, item.quantity + 1)
+                                handleQuantityChange(item.book.id, item.quantity + 1, item.selectedVariation?.id)
                               }
                               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
                               <Plus className="h-3 w-3" />
@@ -189,12 +210,12 @@ const CartDropdown = ({ className = "" }) => {
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
                               $
-                              {(
-                                (parseFloat(item.price) || 0) * item.quantity
-                              ).toFixed(2)}
+                              {
+                                ((parseFloat(price) || 0) * item.quantity).toFixed(2)
+                              }
                             </span>
                             <button
-                              onClick={() => handleRemoveItem(item.id)}
+                              onClick={() => handleRemoveItem(item.book.id, item.selectedVariation?.id)}
                               className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 rounded transition-colors"
                               title="Remove item">
                               <Trash2 className="h-3 w-3" />
@@ -203,7 +224,8 @@ const CartDropdown = ({ className = "" }) => {
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

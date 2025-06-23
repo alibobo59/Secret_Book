@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBook } from "../../contexts/BookContext";
 import { api } from "../../services/api";
-import { Loading } from "../../components/admin";
+import Loading from "../../components/admin/Loading";
 
 const BookCreate = () => {
   const { loading, error, setError } = useOutletContext();
@@ -29,10 +29,19 @@ const BookCreate = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [localLoading, setLocalLoading] = useState(false);
 
+  // Debug: Monitor form.image changes
+  useEffect(() => {
+    console.log("Form image changed:", form.image);
+  }, [form.image]);
+
   // Toggle between simple and variable product
   const toggleProductType = () => {
     setIsVariableProduct(!isVariableProduct);
-    setForm({ ...form, variations: [], stock_quantity: "" });
+    setForm({
+      ...form,
+      variations: [],
+      stock_quantity: isVariableProduct ? "" : null, // Only clear stock_quantity when switching to variable
+    });
     setAttributes([{ name: "", values: "" }]);
     setAttributeErrors([]);
   };
@@ -223,19 +232,25 @@ const BookCreate = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log("Selected file:", file);
-    if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      console.log("Valid image file:", file.name, file.type);
-      setForm({ ...form, image: file });
-      setValidationErrors((prev) => ({ ...prev, image: null }));
+    console.log("File input changed:", file);
+    if (file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+      if (allowedTypes.includes(file.type)) {
+        console.log("Selected valid file:", file);
+        console.log("Current form before update:", form);
+        setForm((prevForm) => {
+          const newForm = { ...prevForm, image: file };
+          console.log("New form after update:", newForm);
+          return newForm;
+        });
+        setValidationErrors((prev) => ({ ...prev, image: null }));
+      } else {
+        alert("Please select a valid image file (JPEG, PNG, JPG).");
+        e.target.value = "";
+      }
     } else {
-      console.warn("Invalid file selected:", file ? file.type : "No file");
-      setValidationErrors((prev) => ({
-        ...prev,
-        image: ["Please select a valid image (JPEG, PNG, JPG)."],
-      }));
-      setForm({ ...form, image: null });
-      e.target.value = "";
+      console.log("No file selected, clearing image");
+      setForm((prevForm) => ({ ...prevForm, image: null }));
     }
   };
 

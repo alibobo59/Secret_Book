@@ -26,8 +26,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    firstName: user?.name?.split(" ")[0] || "",
-    lastName: user?.name?.split(" ").slice(1).join(" ") || "",
+    name: user?.name || "",
     email: user?.email || "",
     phone: "",
     address: "",
@@ -58,9 +57,7 @@ const CheckoutPage = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
@@ -98,6 +95,7 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true);
 
+    // In the handleSubmit function, around line 101-130
     try {
       const orderData = {
         items: cartItems.map((item) => ({
@@ -109,8 +107,7 @@ const CheckoutPage = () => {
           coverImage: item.cover_image,
         })),
         shippingAddress: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+          name: formData.name,
           address: formData.address,
           city: formData.city,
           postalCode: formData.postalCode,
@@ -120,9 +117,8 @@ const CheckoutPage = () => {
           phone: formData.phone,
         },
         subtotal: getCartTotal(),
-        shipping: 0, // Free shipping
-        tax: getCartTotal() * 0.1, // 10% tax
-        total: getCartTotal() + getCartTotal() * 0.1,
+        shipping: 0,
+        total: getCartTotal(),
         notes: formData.notes,
       };
 
@@ -193,6 +189,35 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Full Name *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          className={`w-full px-3 py-2 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-white ${
+                            errors.name
+                              ? "border-red-500"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}
+                          placeholder="Enter your full name"
+                        />
+                        <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                      </div>
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-500 flex items-center">
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          {errors.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         First Name *
@@ -483,19 +508,18 @@ const CheckoutPage = () => {
                     <span>Subtotal</span>
                     <span>${getCartTotal().toFixed(2)}</span>
                   </div>
+
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
                     <span>Free</span>
                   </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Tax (10%)</span>
-                    <span>${(getCartTotal() * 0.1).toFixed(2)}</span>
-                  </div>
+
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                     <div className="flex justify-between text-lg font-semibold text-gray-800 dark:text-white">
                       <span>Total</span>
                       <span>
-                        ${(getCartTotal() + getCartTotal() * 0.1).toFixed(2)}
+                        ${getCartTotal().toFixed(2)}{" "}
+                        {/* Remove tax from total calculation */}
                       </span>
                     </div>
                   </div>

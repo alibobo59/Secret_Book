@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
+import CancelOrderModal from "../../components/common/CancelOrderModal";
 import {
   Package,
   Truck,
@@ -289,12 +290,12 @@ const OrderManagementPage = () => {
     setIsCancelModalOpen(true);
   };
 
-  const confirmCancelOrder = async () => {
+  const confirmCancelOrder = async (cancellationReason) => {
     if (!selectedOrder) return;
 
     setCancellingOrderId(selectedOrder.id);
     try {
-      await cancelOrder(selectedOrder.id);
+      await cancelOrder(selectedOrder.id, cancellationReason);
 
       // Update local state
       const updatedOrders = orders.map((order) =>
@@ -827,52 +828,16 @@ const OrderManagementPage = () => {
         </AnimatePresence>
 
         {/* Cancel Order Modal */}
-        <AnimatePresence>
-          {isCancelModalOpen && selectedOrder && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <AlertCircle className="h-6 w-6 text-red-500" />
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Cancel Order
-                  </h2>
-                </div>
-
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Are you sure you want to cancel order{" "}
-                  <strong>{selectedOrder.id}</strong>? This action cannot be
-                  undone.
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsCancelModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    Keep Order
-                  </button>
-                  <button
-                    onClick={confirmCancelOrder}
-                    disabled={cancellingOrderId === selectedOrder.id}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center">
-                    {cancellingOrderId === selectedOrder.id ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      "Cancel Order"
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <CancelOrderModal
+          isOpen={isCancelModalOpen}
+          onClose={() => {
+            setIsCancelModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onConfirm={confirmCancelOrder}
+          orderNumber={selectedOrder?.id}
+          loading={cancellingOrderId === selectedOrder?.id}
+        />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('restrict'); // Authenticated users only
             $table->string('order_number')->unique(); // e.g., ORD-2025-0001
             $table->unsignedBigInteger('subtotal'); // Store in VND
-            $table->unsignedBigInteger('tax');      // Store in VND
+
             $table->unsignedBigInteger('shipping'); // Store in VND
             $table->unsignedBigInteger('total');    // Store in VND
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'failed'])->default('pending');

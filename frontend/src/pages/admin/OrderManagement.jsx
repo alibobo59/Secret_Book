@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-
 import { PageHeader, Table, SearchFilter, Modal } from "../../components/admin";
+import CancelOrderModal from "../../components/common/CancelOrderModal";
 import {
   Eye,
   Package,
@@ -21,6 +21,7 @@ const OrderManagement = () => {
     getAllOrders,
     updateOrderStatus,
     getOrderById,
+    cancelOrder,
     loading: contextLoading,
     error: contextError,
   } = useOrder();
@@ -32,11 +33,13 @@ const OrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [loading, setLoading] = useState(false);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [error, setError] = useState(null);
 
   // Load orders from API on component mount
@@ -160,6 +163,44 @@ const OrderManagement = () => {
     }
   };
 
+  const handleCancelOrder = (order) => {
+    setSelectedOrder(order);
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmCancelOrder = async (cancellationReason) => {
+    if (!selectedOrder) return;
+
+    setCancellingOrderId(selectedOrder.id);
+    try {
+      await cancelOrder(selectedOrder.id, cancellationReason);
+
+      // Update local state
+      const updatedOrders = orders.map((order) =>
+        order.id === selectedOrder.id
+          ? {
+              ...order,
+              status: "cancelled",
+              updatedAt: new Date().toISOString(),
+            }
+          : order
+      );
+      setOrders(updatedOrders);
+
+      setIsCancelModalOpen(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      alert("Failed to cancel order. Please try again or contact support.");
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
+  const canCancelOrder = (order) => {
+    return order.status === "pending" || order.status === "processing";
+  };
+
   const refreshOrders = async () => {
     try {
       setLoading(true);
@@ -217,7 +258,6 @@ const OrderManagement = () => {
     { value: "processing", label: "Processing" },
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
   ];
 
   const columns = [
@@ -343,6 +383,13 @@ const OrderManagement = () => {
                   className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400">
                   <Package className="h-4 w-4" />
                 </button>
+                {canCancelOrder(order) && (
+                  <button
+                    onClick={() => handleCancelOrder(order)}
+                    className="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400">
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </td>
           </tr>
@@ -525,6 +572,18 @@ const OrderManagement = () => {
           </div>
         )}
       </Modal>
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        isOpen={isCancelModalOpen}
+        onClose={() => {
+          setIsCancelModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        onConfirm={confirmCancelOrder}
+        orderNumber={selectedOrder?.id}
+        loading={cancellingOrderId === selectedOrder?.id}
+      />
     </div>
   );
 };

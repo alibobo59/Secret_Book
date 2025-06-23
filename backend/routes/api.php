@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Http\Request;
@@ -7,8 +8,8 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\AuthorController;
 use App\Http\Controllers\API\PublisherController;
+use App\Http\Controllers\API\OrderController;
 
-// Root route
 Route::get('/', function () {
     return 'API';
 });
@@ -28,6 +29,15 @@ Route::get('/authors/{author}', [AuthorController::class, 'show'])->name('author
 Route::get('/publishers', [PublisherController::class, 'index'])->name('publishers.index');
 Route::get('/publishers/{publisher}', [PublisherController::class, 'show'])->name('publishers.show');
 
+// Authenticated user routes (protected by auth:sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    // Orders
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder'])->name('orders.cancel');
+});
+
 // Admin/Mod routes (protected by auth:sanctum and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     // Categories
@@ -45,4 +55,8 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
 
     // Publishers
     Route::apiResource('publishers', PublisherController::class)->except(['index', 'show']);
+
+    // Orders
+    Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
+

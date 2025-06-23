@@ -166,7 +166,7 @@ export const OrderProvider = ({ children }) => {
     return orders.filter((order) => order.status === status);
   };
 
-  const cancelOrder = async (orderId) => {
+  const cancelOrder = async (orderId, cancellationReason) => {
     const order = orders.find((order) => order.id === orderId);
     if (!order) {
       throw new Error("Order not found");
@@ -176,7 +176,37 @@ export const OrderProvider = ({ children }) => {
       throw new Error("Cannot cancel this order");
     }
 
-    return updateOrderStatus(orderId, "cancelled");
+    if (!cancellationReason || cancellationReason.trim().length < 10) {
+      throw new Error("Cancellation reason must be at least 10 characters long");
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.post(`/orders/${orderId}/cancel`, {
+        cancellation_reason: cancellationReason
+      });
+      
+      const updatedOrder = response.data;
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) => {
+          if (order.id === orderId) {
+            return updatedOrder;
+          }
+          return order;
+        })
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      setError("Failed to cancel order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {

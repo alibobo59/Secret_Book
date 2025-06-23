@@ -76,6 +76,7 @@ export const AuthProvider = ({ children }) => {
   const getToken = () => localStorage.getItem("token"); // Add token retrieval
 
   const isAdmin = () => user?.role === "admin";
+  console.log(user?.role);
   const isMod = () => user?.role === "mod";
   const isUser = () => user?.role === "user";
   const hasRole = (roles) =>

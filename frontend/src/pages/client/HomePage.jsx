@@ -11,27 +11,16 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const { t } = useLanguage();
 
-  useEffect(() => {
-    console.log(
-      "HomePage updated - books:",
-      books,
-      "categories:",
-      categories,
-      "loading:",
-      loading,
-      "error:",
-      error
-    );
-  }, [books, categories, loading, error]);
+  useEffect(() => {}, [books, categories, loading, error]);
 
   const featuredBooks = React.useMemo(() => {
-    console.log("Computing featuredBooks, books length:", books?.length);
+    // console.log("Computing featuredBooks, books length:", books?.length);
     if (!books) return [];
     return [...books].slice(0, 5);
   }, [books]);
 
   const newReleases = React.useMemo(() => {
-    console.log("Computing newReleases, books length:", books?.length);
+    // console.log("Computing newReleases, books length:", books?.length);
     if (!books) return [];
     return [...books].slice(5, 10); // Adjusted to avoid duplicating featuredBooks
   }, [books]);

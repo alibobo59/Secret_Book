@@ -11,6 +11,7 @@ import {
   RegisterPage,
   NotFoundPage,
   CheckOutPage,
+  OrderConfirmationPage,
 } from "./pages/client";
 import {
   DashboardHome,
@@ -49,6 +50,10 @@ function App() {
         <Route path="/books" element={<BrowseBooksPage />} />
         <Route path="/books/:id" element={<BookDetailPage />} />
         <Route path="/checkout" element={<CheckOutPage />} />
+        <Route
+          path="/order-confirmation/:orderId"
+          element={<OrderConfirmationPage />}
+        />
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

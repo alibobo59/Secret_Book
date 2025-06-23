@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
-import { useNotification } from "./NotificationContext";
+import { api } from "../services/api";
 
 const OrderContext = createContext();
 
@@ -12,37 +12,44 @@ export const useOrder = () => {
 export const OrderProvider = ({ children }) => {
   const { user } = useAuth();
   const { clearCart } = useCart();
-  const {
-    notifyOrderPlaced,
-    notifyOrderConfirmed,
-    notifyOrderShipped,
-    notifyOrderDelivered,
-    notifyNewOrder,
-  } = useNotification();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load orders from localStorage when component mounts
+  // Load orders from API when component mounts
   useEffect(() => {
-    const loadOrders = () => {
-      try {
-        const storedOrders = localStorage.getItem("orders");
-        if (storedOrders) {
-          setOrders(JSON.parse(storedOrders));
-        }
-      } catch (error) {
-        console.error("Failed to load orders from localStorage:", error);
-      }
-    };
+    if (user) {
+      fetchUserOrders();
+    }
+  }, [user]);
 
-    loadOrders();
-  }, []);
+  const fetchUserOrders = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const response = await api.get('/orders');
+      setOrders(response.data);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+      setError("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Save orders to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
+  const fetchAllOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/orders');
+      setOrders(response.data);
+    } catch (error) {
+      console.error("Failed to fetch all orders:", error);
+      setError("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const createOrder = async (orderData) => {
     if (!user) {
@@ -53,41 +60,26 @@ export const OrderProvider = ({ children }) => {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const newOrder = {
-        id: `ORD-${Date.now()}`,
-        userId: user.id,
+      const newOrderData = {
         customerName: user.name,
         customerEmail: user.email,
         ...orderData,
         status: "pending",
         paymentMethod: "cod",
         paymentStatus: "pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        estimatedDelivery: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 7 days from now
       };
+
+      const response = await api.post('/orders', newOrderData);
+      const newOrder = response.data;
 
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
 
       // Clear the cart after successful order creation
       clearCart();
 
-      // Send notifications
-      notifyOrderPlaced(newOrder.id);
-
-      // Notify admin about new order (simulate admin notification)
-      if (user.isAdmin !== true) {
-        // In a real app, this would be sent to all admin users
-        notifyNewOrder(newOrder.id, newOrder.customerName);
-      }
-
       return newOrder;
     } catch (error) {
+      console.error("Failed to create order:", error);
       setError("Failed to create order");
       throw error;
     } finally {
@@ -100,34 +92,15 @@ export const OrderProvider = ({ children }) => {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await api.put(`/orders/${orderId}/status`, {
+        status: newStatus
+      });
+      
+      const updatedOrder = response.data;
 
       setOrders((prevOrders) =>
         prevOrders.map((order) => {
           if (order.id === orderId) {
-            const updatedOrder = {
-              ...order,
-              status: newStatus,
-              updatedAt: new Date().toISOString(),
-              // Update payment status if order is confirmed
-              paymentStatus:
-                newStatus === "confirmed" ? "pending" : order.paymentStatus,
-            };
-
-            // Send status update notifications to customer
-            switch (newStatus) {
-              case "confirmed":
-                notifyOrderConfirmed(orderId);
-                break;
-              case "shipped":
-                notifyOrderShipped(orderId);
-                break;
-              case "delivered":
-                notifyOrderDelivered(orderId);
-                break;
-            }
-
             return updatedOrder;
           }
           return order;
@@ -136,6 +109,7 @@ export const OrderProvider = ({ children }) => {
 
       return true;
     } catch (error) {
+      console.error("Failed to update order status:", error);
       setError("Failed to update order status");
       throw error;
     } finally {
@@ -148,23 +122,21 @@ export const OrderProvider = ({ children }) => {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await api.put(`/orders/${orderId}/payment`, {
+        paymentStatus
+      });
+      
+      const updatedOrder = response.data;
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === orderId
-            ? {
-                ...order,
-                paymentStatus,
-                updatedAt: new Date().toISOString(),
-              }
-            : order
+          order.id === orderId ? updatedOrder : order
         )
       );
 
       return true;
     } catch (error) {
+      console.error("Failed to update payment status:", error);
       setError("Failed to update payment status");
       throw error;
     } finally {
@@ -172,8 +144,14 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const getOrderById = (orderId) => {
-    return orders.find((order) => order.id === orderId);
+  const getOrderById = async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch order:", error);
+      return orders.find((order) => order.id === orderId); // Fallback to local state
+    }
   };
 
   const getUserOrders = (userId) => {
@@ -189,7 +167,7 @@ export const OrderProvider = ({ children }) => {
   };
 
   const cancelOrder = async (orderId) => {
-    const order = getOrderById(orderId);
+    const order = orders.find((order) => order.id === orderId);
     if (!order) {
       throw new Error("Order not found");
     }
@@ -213,6 +191,8 @@ export const OrderProvider = ({ children }) => {
     getAllOrders,
     getOrdersByStatus,
     cancelOrder,
+    fetchUserOrders,
+    fetchAllOrders,
   };
 
   return (

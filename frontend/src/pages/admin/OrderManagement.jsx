@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import { PageHeader, Table, SearchFilter, Modal } from "../../components/admin";
 import {
   Eye,
@@ -13,158 +14,19 @@ import {
   MapPin,
   CreditCard,
 } from "lucide-react";
-
-// Fake order data
-const fakeOrders = [
-  {
-    id: "ORD001",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    createdAt: "2025-06-15T10:30:00Z",
-    updatedAt: "2025-06-15T12:45:00Z",
-    total: 59.98,
-    status: "pending",
-    paymentMethod: "COD",
-    contactInfo: { phone: "+1-555-123-4567" },
-    shippingAddress: {
-      firstName: "John",
-      lastName: "Doe",
-      address: "123 Maple Street",
-      city: "Springfield",
-      postalCode: "62701",
-    },
-    items: [
-      {
-        bookId: "BOOK001",
-        title: "The Great Gatsby",
-        author: "F. Scott Fitzgerald",
-        bookImage: "https://example.com/images/gatsby.jpg",
-        price: 29.99,
-        quantity: 2,
-      },
-    ],
-    notes: "Please deliver before noon.",
-  },
-  {
-    id: "ORD002",
-    customerName: "Jane Smith",
-    customerEmail: "jane.smith@example.com",
-    createdAt: "2025-06-14T14:20:00Z",
-    updatedAt: "2025-06-15T09:10:00Z",
-    total: 89.97,
-    status: "processing",
-    paymentMethod: "COD",
-    contactInfo: { phone: "+1-555-987-6543" },
-    shippingAddress: {
-      firstName: "Jane",
-      lastName: "Smith",
-      address: "456 Oak Avenue",
-      city: "Metropolis",
-      postalCode: "10001",
-    },
-    items: [
-      {
-        bookId: "BOOK002",
-        title: "1984",
-        author: "George Orwell",
-        bookImage: "https://example.com/images/1984.jpg",
-        price: 29.99,
-        quantity: 3,
-      },
-    ],
-    notes: "Gift wrap requested.",
-  },
-  {
-    id: "ORD003",
-    customerName: "Alice Johnson",
-    customerEmail: "alice.johnson@example.com",
-    createdAt: "2025-06-13T08:15:00Z",
-    updatedAt: "2025-06-14T16:30:00Z",
-    total: 45.98,
-    status: "shipped",
-    paymentMethod: "COD",
-    contactInfo: { phone: "+1-555-456-7890" },
-    shippingAddress: {
-      firstName: "Alice",
-      lastName: "Johnson",
-      address: "789 Pine Road",
-      city: "Gotham",
-      postalCode: "07001",
-    },
-    items: [
-      {
-        bookId: "BOOK003",
-        title: "Pride and Prejudice",
-        author: "Jane Austen",
-        bookImage: "https://example.com/images/pride.jpg",
-        price: 22.99,
-        quantity: 2,
-      },
-    ],
-  },
-  {
-    id: "ORD004",
-    customerName: "Bob Williams",
-    customerEmail: "bob.williams@example.com",
-    createdAt: "2025-06-12T16:45:00Z",
-    updatedAt: "2025-06-13T10:20:00Z",
-    total: 119.96,
-    status: "delivered",
-    paymentMethod: "COD",
-    contactInfo: { phone: "+1-555-321-0987" },
-    shippingAddress: {
-      firstName: "Bob",
-      lastName: "Williams",
-      address: "321 Elm Street",
-      city: "Star City",
-      postalCode: "90001",
-    },
-    items: [
-      {
-        bookId: "BOOK004",
-        title: "Dune",
-        author: "Frank Herbert",
-        bookImage: "https://example.com/images/dune.jpg",
-        price: 29.99,
-        quantity: 4,
-      },
-    ],
-    notes: "Leave package at front door.",
-  },
-  {
-    id: "ORD005",
-    customerName: "Carol Brown",
-    customerEmail: "carol.brown@example.com",
-    createdAt: "2025-06-11T11:00:00Z",
-    updatedAt: "2025-06-11T15:30:00Z",
-    total: 29.99,
-    status: "cancelled",
-    paymentMethod: "COD",
-    contactInfo: { phone: "+1-555-654-3210" },
-    shippingAddress: {
-      firstName: "Carol",
-      lastName: "Brown",
-      address: "654 Cedar Lane",
-      city: "Central City",
-      postalCode: "20001",
-    },
-    items: [
-      {
-        bookId: "BOOK005",
-        title: "To Kill a Mockingbird",
-        author: "Harper Lee",
-        bookImage: "https://example.com/images/mockingbird.jpg",
-        price: 29.99,
-        quantity: 1,
-      },
-    ],
-    notes: "Cancelled due to change of mind.",
-  },
-];
+import { useOrder } from "../../contexts/OrderContext";
 
 const OrderManagement = () => {
-  const [orders, setOrders] = useState(fakeOrders);
-  const [filteredOrders, setFilteredOrders] = useState(fakeOrders);
+  const {
+    getAllOrders,
+    updateOrderStatus,
+    getOrderById,
+    loading: contextLoading,
+    error: contextError,
+  } = useOrder();
+
+  const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -174,9 +36,33 @@ const OrderManagement = () => {
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [loading, setLoading] = useState(false);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Load orders from API on component mount
   useEffect(() => {
-    // Filter and search orders
+    const loadOrders = async () => {
+      try {
+        setIsLoadingOrders(true);
+        setError(null);
+        const ordersData = await getAllOrders();
+        setOrders(ordersData || []);
+        setFilteredOrders(ordersData || []);
+      } catch (error) {
+        console.error("Failed to load orders:", error);
+        setError("Failed to load orders. Please try again.");
+        setOrders([]);
+        setFilteredOrders([]);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    loadOrders();
+  }, [getAllOrders]);
+
+  // Filter and search orders
+  useEffect(() => {
     let filtered = orders;
 
     // Apply search filter
@@ -184,8 +70,10 @@ const OrderManagement = () => {
       filtered = filtered.filter(
         (order) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+          order.customerName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -223,9 +111,20 @@ const OrderManagement = () => {
     }
   };
 
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setIsViewModalOpen(true);
+  const handleViewOrder = async (order) => {
+    try {
+      setLoading(true);
+      // Fetch detailed order information
+      const detailedOrder = await getOrderById(order.id);
+      setSelectedOrder(detailedOrder || order);
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error("Failed to fetch order details:", error);
+      setSelectedOrder(order); // Fallback to basic order data
+      setIsViewModalOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateStatus = (order) => {
@@ -239,8 +138,8 @@ const OrderManagement = () => {
 
     try {
       setLoading(true);
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
+      // Call API to update order status
+      await updateOrderStatus(selectedOrder.id, newStatus);
 
       // Update local state
       const updatedOrders = orders.map((order) =>
@@ -261,12 +160,26 @@ const OrderManagement = () => {
     }
   };
 
+  const refreshOrders = async () => {
+    try {
+      setLoading(true);
+      const ordersData = await getAllOrders();
+      setOrders(ordersData || []);
+      setFilteredOrders(ordersData || []);
+      setError(null);
+    } catch (error) {
+      console.error("Failed to refresh orders:", error);
+      setError("Failed to refresh orders. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "confirmed":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+
       case "processing":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "shipped":
@@ -284,8 +197,7 @@ const OrderManagement = () => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4" />;
-      case "confirmed":
-        return <CheckCircle className="h-4 w-4" />;
+
       case "processing":
         return <Package className="h-4 w-4" />;
       case "shipped":
@@ -301,7 +213,7 @@ const OrderManagement = () => {
 
   const statusOptions = [
     { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
+
     { value: "processing", label: "Processing" },
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
@@ -318,9 +230,55 @@ const OrderManagement = () => {
     { id: "actions", label: "Actions", sortable: false },
   ];
 
+  // Loading state
+  if (isLoadingOrders) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Order Management" hideAddButton />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">
+            Loading orders...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Order Management" hideAddButton />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={refreshOrders}
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Order Management" hideAddButton />
+      <div className="flex justify-between items-center">
+        <PageHeader title="Order Management" hideAddButton />
+        <button
+          onClick={refreshOrders}
+          disabled={loading}
+          className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-amber-400 disabled:cursor-not-allowed flex items-center gap-2">
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : null}
+          Refresh
+        </button>
+      </div>
 
       <SearchFilter
         searchTerm={searchTerm}
@@ -345,50 +303,45 @@ const OrderManagement = () => {
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
               {order.id}
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <td className="px-6 py-4 whitespace-nowrap">
               <div>
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {order.customerName}
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {order.customerName || "N/A"}
                 </div>
-                <div className="text-gray-500 dark:text-gray-400">
-                  {order.customerEmail}
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {order.customerEmail || "N/A"}
                 </div>
               </div>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {new Date(order.createdAt).toLocaleDateString()}
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+              {new Date(order.created_at).toLocaleDateString()}
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              ${order.total.toFixed(2)}
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+              ${order.total?.toFixed(2) || "0.00"}
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+            <td className="px-6 py-4 whitespace-nowrap">
               <span
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                   order.status
                 )}`}>
                 {getStatusIcon(order.status)}
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                {order.status}
               </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-                <CreditCard className="h-3 w-3" />
-                COD
-              </span>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+              {order.paymentMethod || "N/A"}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <div className="flex items-center gap-2">
+              <div className="flex space-x-2">
                 <button
                   onClick={() => handleViewOrder(order)}
-                  className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                  title="View Details">
-                  <Eye className="h-5 w-5" />
+                  className="text-amber-600 hover:text-amber-900 dark:text-amber-500 dark:hover:text-amber-400">
+                  <Eye className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(order)}
-                  className="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
-                  title="Update Status">
-                  <Package className="h-5 w-5" />
+                  className="text-blue-600 hover:text-blue-900 dark:text-blue-500 dark:hover:text-blue-400">
+                  <Package className="h-4 w-4" />
                 </button>
               </div>
             </td>
@@ -400,135 +353,128 @@ const OrderManagement = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={`Order Details - ${selectedOrder?.id}`}>
+        title="Order Details">
         {selectedOrder && (
           <div className="space-y-6">
             {/* Order Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Order ID
-                </label>
-                <p className="text-gray-900 dark:text-white">
-                  {selectedOrder.id}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Status
-                </label>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    selectedOrder.status
-                  )}`}>
-                  {getStatusIcon(selectedOrder.status)}
-                  {selectedOrder.status.charAt(0).toUpperCase() +
-                    selectedOrder.status.slice(1)}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Order Date
-                </label>
-                <p className="text-gray-900 dark:text-white">
-                  {new Date(selectedOrder.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Total Amount
-                </label>
-                <p className="text-gray-900 dark:text-white font-semibold">
-                  ${selectedOrder.total.toFixed(2)}
-                </p>
-              </div>
-            </div>
-
-            {/* Customer Info */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                Customer Information
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {selectedOrder.customerEmail}
-                  </span>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Order Information
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <p>
+                    <span className="font-medium">Order ID:</span>{" "}
+                    {selectedOrder.id}
+                  </p>
+                  <p>
+                    <span className="font-medium">Date:</span>{" "}
+                    {new Date(selectedOrder.createdAt).toLocaleString()}
+                  </p>
+                  <p>
+                    <span className="font-medium">Status:</span>
+                    <span
+                      className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                        selectedOrder.status
+                      )}`}>
+                      {getStatusIcon(selectedOrder.status)}
+                      {selectedOrder.status}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium">Total:</span> $
+                    {selectedOrder.total?.toFixed(2) || "0.00"}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {selectedOrder.contactInfo?.phone}
-                  </span>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Customer Information
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <p>
+                    <span className="font-medium">Name:</span>{" "}
+                    {selectedOrder.customerName || "N/A"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Email:</span>{" "}
+                    {selectedOrder.customerEmail || "N/A"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Phone:</span>{" "}
+                    {selectedOrder.contactInfo?.phone || "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Shipping Address */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                Shipping Address
-              </h3>
-              <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-gray-400 mt-1" />
-                <div className="text-gray-700 dark:text-gray-300">
+            {selectedOrder.shippingAddress && (
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Shipping Address
+                </h4>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <p>
-                    {selectedOrder.shippingAddress?.firstName}{" "}
-                    {selectedOrder.shippingAddress?.lastName}
+                    {selectedOrder.shippingAddress.name ||
+                      `${selectedOrder.shippingAddress.firstName} ${selectedOrder.shippingAddress.lastName}`}
                   </p>
-                  <p>{selectedOrder.shippingAddress?.address}</p>
+                  <p>{selectedOrder.shippingAddress.address}</p>
                   <p>
-                    {selectedOrder.shippingAddress?.city},{" "}
-                    {selectedOrder.shippingAddress?.postalCode}
+                    {selectedOrder.shippingAddress.city}{" "}
+                    {selectedOrder.shippingAddress.postalCode}
                   </p>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Order Items */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                Order Items
-              </h3>
-              <div className="space-y-3">
-                {selectedOrder.items?.map((item) => (
-                  <div
-                    key={item.bookId}
-                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded">
-                    <img
-                      src={item.bookImage}
-                      alt={item.title}
-                      className="w-12 h-16 object-cover rounded"
-                    />
-                    <div className="flex-grow">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        by {item.author}
-                      </p>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          Qty: {item.quantity}
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </span>
+            {selectedOrder.items && selectedOrder.items.length > 0 && (
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Order Items
+                </h4>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                      <div>
+                        <p className="font-medium">
+                          {item.title || `Book ID: ${item.bookId}`}
+                        </p>
+                        {item.author && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            by {item.author}
+                          </p>
+                        )}
+                        <p className="text-sm">Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">
+                          ${item.price?.toFixed(2) || "0.00"}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Total: $
+                          {((item.price || 0) * (item.quantity || 0)).toFixed(
+                            2
+                          )}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Order Notes */}
+            {/* Notes */}
             {selectedOrder.notes && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Order Notes
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Notes
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded">
                   {selectedOrder.notes}
                 </p>
               </div>
@@ -541,40 +487,18 @@ const OrderManagement = () => {
       <Modal
         isOpen={isStatusModalOpen}
         onClose={() => setIsStatusModalOpen(false)}
-        title="Update Order Status"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsStatusModalOpen(false)}>
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
-              onClick={handleStatusUpdate}
-              disabled={loading}>
-              {loading ? "Updating..." : "Update Status"}
-            </button>
-          </div>
-        }>
+        title="Update Order Status">
         {selectedOrder && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Order ID: {selectedOrder.id}
-              </label>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Current Status: {selectedOrder.status}
-              </label>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                New Status
-              </label>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Update status for order:{" "}
+                <span className="font-medium">{selectedOrder.id}</span>
+              </p>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -582,13 +506,21 @@ const OrderManagement = () => {
                 ))}
               </select>
             </div>
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">
-                  Changing the order status will notify the customer via email.
-                </span>
-              </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsStatusModalOpen(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
+                Cancel
+              </button>
+              <button
+                onClick={handleStatusUpdate}
+                disabled={loading || !newStatus}
+                className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-amber-400 disabled:cursor-not-allowed flex items-center gap-2">
+                {loading && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                )}
+                Update Status
+              </button>
             </div>
           </div>
         )}

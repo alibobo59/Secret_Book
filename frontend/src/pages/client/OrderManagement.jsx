@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../../contexts/AuthContext";
+import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package,
@@ -23,9 +23,183 @@ import {
   Mail,
 } from "lucide-react";
 
+// Fake orders data for testing
+const fakeOrders = [
+  {
+    id: "ORD-001",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "delivered",
+    paymentMethod: "cod",
+    paymentStatus: "completed",
+    createdAt: "2024-01-15T10:30:00Z",
+    updatedAt: "2024-01-20T14:45:00Z",
+    estimatedDelivery: "2024-01-22T00:00:00Z",
+    subtotal: 89.97,
+    shipping: 5.0,
+    tax: 9.5,
+    total: 104.47,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK001",
+        price: 29.99,
+        quantity: 3,
+      },
+    ],
+    notes: "Please deliver before 5 PM",
+  },
+  {
+    id: "ORD-002",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "shipped",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-18T14:20:00Z",
+    updatedAt: "2024-01-19T09:15:00Z",
+    estimatedDelivery: "2024-01-25T00:00:00Z",
+    subtotal: 45.98,
+    shipping: 5.0,
+    tax: 5.1,
+    total: 56.08,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK002",
+        price: 22.99,
+        quantity: 2,
+      },
+    ],
+    notes: "",
+  },
+  {
+    id: "ORD-003",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "processing",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-20T11:45:00Z",
+    updatedAt: "2024-01-20T11:45:00Z",
+    estimatedDelivery: "2024-01-27T00:00:00Z",
+    subtotal: 34.99,
+    shipping: 5.0,
+    tax: 4.0,
+    total: 43.99,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK003",
+        price: 34.99,
+        quantity: 1,
+      },
+    ],
+    notes: "Gift wrapping requested",
+  },
+  {
+    id: "ORD-004",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "pending",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-22T16:30:00Z",
+    updatedAt: "2024-01-22T16:30:00Z",
+    estimatedDelivery: "2024-01-29T00:00:00Z",
+    subtotal: 67.98,
+    shipping: 5.0,
+    tax: 7.3,
+    total: 80.28,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK004",
+        price: 19.99,
+        quantity: 2,
+      },
+      {
+        bookId: "BOOK005",
+        price: 27.99,
+        quantity: 1,
+      },
+    ],
+    notes: "",
+  },
+  {
+    id: "ORD-005",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "cancelled",
+    paymentMethod: "cod",
+    paymentStatus: "cancelled",
+    createdAt: "2024-01-10T09:15:00Z",
+    updatedAt: "2024-01-11T10:20:00Z",
+    estimatedDelivery: "2024-01-17T00:00:00Z",
+    subtotal: 25.99,
+    shipping: 5.0,
+    tax: 3.1,
+    total: 34.09,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK006",
+        price: 25.99,
+        quantity: 1,
+      },
+    ],
+    notes: "Cancelled due to change of mind",
+  },
+];
+
 const OrderManagementPage = () => {
   const { user } = useAuth();
-
+  const { getUserOrders, cancelOrder, loading, error } = useOrder();
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
@@ -37,6 +211,7 @@ const OrderManagementPage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -44,11 +219,24 @@ const OrderManagementPage = () => {
       return;
     }
 
-    // Load user's orders
-    const userOrders = getUserOrders(user.id);
-    setOrders(userOrders);
-    setFilteredOrders(userOrders);
-  }, [user, getUserOrders, navigate]);
+    // Load user's orders from API
+    const loadOrders = async () => {
+      try {
+        setIsLoadingOrders(true);
+        const userOrders = await getUserOrders();
+        setOrders(userOrders || []);
+        setFilteredOrders(userOrders || []);
+      } catch (error) {
+        console.error("Failed to load orders:", error);
+        setOrders([]);
+        setFilteredOrders([]);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    loadOrders();
+  }, [user, navigate, getUserOrders]);
 
   useEffect(() => {
     // Filter and search orders
@@ -61,8 +249,8 @@ const OrderManagementPage = () => {
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.items?.some(
             (item) =>
-              item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.author.toLowerCase().includes(searchTerm.toLowerCase())
+              item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.author?.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
     }
@@ -173,7 +361,7 @@ const OrderManagementPage = () => {
 
   const statusOptions = [
     { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
+
     { value: "processing", label: "Processing" },
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
@@ -187,6 +375,46 @@ const OrderManagementPage = () => {
     { value: "lowest", label: "Lowest Amount" },
   ];
 
+  // Loading state check
+  if (isLoadingOrders) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">
+              Loading orders...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state check
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 dark:text-red-400">
+                Failed to load orders
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main component return
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="container mx-auto px-4">
@@ -317,12 +545,12 @@ const OrderManagementPage = () => {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                        Order {order.id}
+                        Order {order.order_number}
                       </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span>
                           Placed on{" "}
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {new Date(order.created_at).toLocaleDateString()}
                         </span>
                         <span>•</span>
                         <span>
@@ -496,15 +724,13 @@ const OrderManagementPage = () => {
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedOrder.shippingAddress?.firstName}{" "}
-                        {selectedOrder.shippingAddress?.lastName}
+                        {selectedOrder.shippingAddress?.name}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400">
                         {selectedOrder.shippingAddress?.address}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.city},{" "}
-                        {selectedOrder.shippingAddress?.postalCode}
+                        {selectedOrder.shippingAddress?.city}
                       </p>
                     </div>
                   </div>

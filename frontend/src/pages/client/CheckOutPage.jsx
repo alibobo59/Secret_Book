@@ -117,7 +117,7 @@ const CheckoutPage = () => {
       const order = await createOrder(orderData);
 
       // Redirect to order confirmation page
-      navigate(`/order-confirmation/${order.id}`);
+      navigate(`/`);
     } catch (error) {
       console.error("Failed to create order:", error);
       alert("Failed to place order. Please try again.");

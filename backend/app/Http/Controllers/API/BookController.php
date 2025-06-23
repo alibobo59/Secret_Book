@@ -29,6 +29,22 @@ class BookController extends Controller
 
     public function store(Request $request)
     {
+        // Preprocess variations to decode JSON attributes
+        $input = $request->all();
+        if (isset($input['variations'])) {
+            foreach ($input['variations'] as &$variation) {
+                if (isset($variation['attributes']) && is_string($variation['attributes'])) {
+                    $variation['attributes'] = json_decode($variation['attributes'], true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        return response()->json([
+                            'error' => ['variations.*.attributes' => ['Invalid JSON format in attributes.']]
+                        ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                    }
+                }
+            }
+            $request->merge(['variations' => $input['variations']]);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -44,54 +60,57 @@ class BookController extends Controller
             'variations.*.stock_quantity' => 'required|integer|min:0',
             'variations.*.sku' => 'nullable|string|unique:book_variations,sku',
             'variations.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'category_id' => 'required|exists:categories,id',
-            'author_id' => 'required|exists:authors,id',
-            'publisher_id' => 'required|exists:publishers,id',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Required image, 2MB max
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Handle image upload
-        $imagePath = null;
+        // Create book
+        $book = Book::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'price' => $request->price,
+            'sku' => $request->sku,
+            'stock_quantity' => $request->stock_quantity,
+            'category_id' => $request->category_id,
+            'author_id' => $request->author_id,
+            'publisher_id' => $request->publisher_id,
+        ]);
+
+        // Handle book image
         if ($request->hasFile('image')) {
-            $book = Book::create([
-                'title' => $request->title,
-                'isbn' => $request->isbn,
-                'price' => $request->price,
-                'stock' => $request->stock,
-                'category_id' => $request->category_id,
-                'author_id' => $request->author_id,
-                'publisher_id' => $request->publisher_id,
-            ]);
-
-            $folder = storage_path('app/public/books/' . $book->id);
-            if (!file_exists($folder)) {
-                mkdir($folder, 0755, true);
-            }
-
+            $folder = 'books/' . $book->id;
             $image = $request->file('image');
             $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
-            $image->move($folder, $imageName);
-            $imagePath = 'books/' . $book->id . '/' . $imageName;
-
+            $imagePath = $image->storeAs($folder, $imageName, 'public');
             $book->update(['image' => $imagePath]);
         }
 
-        return response()->json(['data' => $book->load(['category', 'author', 'publisher'])], Response::HTTP_CREATED);
+        // Handle variations
+        if ($request->has('variations')) {
+            foreach ($request->variations as $index => $variationData) {
+                $variation = $book->variations()->create([
+                    'attributes' => $variationData['attributes'],
+                    'price' => $variationData['price'] ?? $book->price,
+                    'stock_quantity' => $variationData['stock_quantity'],
+                    'sku' => $variationData['sku'],
+                ]);
+
+                // Handle variation image
+                if ($request->hasFile("variations.{$index}.image")) {
+                    $folder = 'books/' . $book->id . '/variations/' . $variation->id;
+                    $image = $request->file("variations.{$index}.image");
+                    $imageName = 'variation-' . $variation->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+                    $imagePath = $image->storeAs($folder, $imageName, 'public');
+                    $variation->update(['image' => $imagePath]);
+                }
+            }
+        }
+
+        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations'])], Response::HTTP_CREATED);
     }
 
-    /**
-     * Update the specified book in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
     {
         $book = Book::find($id);
@@ -102,12 +121,13 @@ class BookController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'sku' => 'required|string|unique:books,sku,' . $book->id,
             'category_id' => 'required|exists:categories,id',
             'author_id' => 'required|exists:authors,id',
             'publisher_id' => 'required|exists:publishers,id',
             'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Optional for update
+            'stock_quantity' => 'required|integer|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -116,9 +136,9 @@ class BookController extends Controller
 
         $data = [
             'title' => $request->title,
-            'isbn' => $request->isbn,
+            'sku' => $request->sku,
             'price' => $request->price,
-            'stock' => $request->stock,
+            'stock_quantity' => $request->stock_quantity,
             'category_id' => $request->category_id,
             'author_id' => $request->author_id,
             'publisher_id' => $request->publisher_id,
@@ -146,12 +166,6 @@ class BookController extends Controller
         return response()->json(['data' => $book->load(['category', 'author', 'publisher'])], Response::HTTP_OK);
     }
 
-    /**
-     * Remove the specified book from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy($id)
     {
         $book = Book::find($id);

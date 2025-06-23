@@ -10,9 +10,10 @@ class Book extends Model
 
     protected $fillable = [
         'title',
-
+        'sku',
+        'description',
         'price',
-        'stock',
+        'stock_quantity', // Changed from 'stock' to match frontend
         'category_id',
         'author_id',
         'publisher_id',

@@ -96,8 +96,6 @@ const CheckoutPage = () => {
       const orderData = {
         items: cartItems.map((item) => ({
           bookId: item.id,
-          title: item.title,
-          author: item.author,
           price: item.price,
           quantity: item.quantity,
         })),

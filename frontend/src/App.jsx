@@ -6,11 +6,11 @@ import {
   HomePage,
   BrowseBooksPage,
   BookDetailPage,
-  CartPage,
   ProfilePage,
   LoginPage,
   RegisterPage,
   NotFoundPage,
+  CheckOutPage,
 } from "./pages/client";
 import {
   DashboardHome,
@@ -48,7 +48,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/books" element={<BrowseBooksPage />} />
         <Route path="/books/:id" element={<BookDetailPage />} />
-        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckOutPage />} />
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

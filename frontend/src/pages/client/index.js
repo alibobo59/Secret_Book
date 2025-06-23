@@ -1,6 +1,6 @@
 export { default as BookDetailPage } from "./BookDetailPage";
 export { default as BrowseBooksPage } from "./BrowseBooksPage";
-export { default as CartPage } from "./CartPage";
+export { default as CheckOutPage } from "./CheckOutPage";
 
 export { default as HomePage } from "./HomePage";
 export { default as LoginPage } from "./LoginPage";

@@ -3,6 +3,8 @@ import "./index.css";
 import { BookProvider } from "./contexts/BookContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { OrderProvider } from "./contexts/OrderContext";
 import LanguageProvider from "./contexts/LanguageContext";
 import ReactDOM from "react-dom/client";
 import React from "react";
@@ -16,11 +18,15 @@ root.render(
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
-            <BookProvider>
-              <CartProvider>
-                <App />
-              </CartProvider>
-            </BookProvider>
+            <NotificationProvider>
+              <BookProvider>
+                <CartProvider>
+                  <OrderProvider>
+                    <App />
+                  </OrderProvider>
+                </CartProvider>
+              </BookProvider>
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>

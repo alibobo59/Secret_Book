@@ -1,23 +1,13 @@
 <?php
-// Migrations
-// database/migrations/2025_06_16_000001_alter_books_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up()
+    public function up(): void
     {
         Schema::table('books', function (Blueprint $table) {
-            $table->text('description')->nullable()->after('title');
-            $table->decimal('price', 15, 0)->change();
 
-            $table->string('sku')->unique()->after('price');
-            $table->renameColumn('stock', 'stock_quantity');
-            $table->integer('stock_quantity')->nullable()->change();
-            $table->unsignedBigInteger('category_id')->nullable()->change();
-            $table->unsignedBigInteger('author_id')->nullable()->change();
-            $table->unsignedBigInteger('publisher_id')->nullable()->change();
             $table->dropForeign(['category_id']);
             $table->dropForeign(['author_id']);
             $table->dropForeign(['publisher_id']);
@@ -27,17 +17,10 @@ return new class extends Migration {
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::table('books', function (Blueprint $table) {
-            $table->dropColumn('description');
-            $table->unsignedBigInteger('price')->change();
-            $table->dropColumn('sku');
-            $table->renameColumn('stock_quantity', 'stock');
-            $table->integer('stock')->default(0)->change();
-            $table->unsignedBigInteger('category_id')->change();
-            $table->unsignedBigInteger('author_id')->change();
-            $table->unsignedBigInteger('publisher_id')->change();
+            // Reverse foreign key changes
             $table->dropForeign(['category_id']);
             $table->dropForeign(['author_id']);
             $table->dropForeign(['publisher_id']);

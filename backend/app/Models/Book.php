@@ -1,12 +1,14 @@
 <?php
+
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'title',
@@ -43,5 +45,23 @@ class Book extends Model
     public function getImageUrlAttribute()
     {
         return $this->image ? url('storage/' . $this->image) : null;
+    }
+
+    /**
+     * Get human-readable field names for audit logs
+     */
+    public function getAuditFieldLabels()
+    {
+        return [
+            'title' => 'Title',
+            'sku' => 'SKU',
+            'description' => 'Description',
+            'price' => 'Price',
+            'stock_quantity' => 'Stock Quantity',
+            'category_id' => 'Category',
+            'author_id' => 'Author',
+            'publisher_id' => 'Publisher',
+            'image' => 'Image',
+        ];
     }
 }

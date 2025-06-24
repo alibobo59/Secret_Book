@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,6 +11,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Activity,
 } from "lucide-react";
 
 function AdminSidebar({
@@ -64,6 +66,12 @@ function AdminSidebar({
       label: "Orders",
       icon: <ShoppingCart size={20} />,
       path: "/admin/orders",
+    },
+    {
+      id: "audit-logs",
+      label: "Audit Logs",
+      icon: <Activity size={20} />,
+      path: "/admin/audit-logs",
     },
   ];
 

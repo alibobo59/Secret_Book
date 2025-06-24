@@ -12,11 +12,15 @@ const BookEdit = () => {
   const { books, categories, authors, publishers, setBooks } = useBook();
   const [form, setForm] = useState({
     title: "",
-    published_year: "",
+    sku: "",
+    description: "",
+    price: "",
+    stock_quantity: "",
     category_id: "",
     author_id: "",
     publisher_id: "",
   });
+  const [imageFile, setImageFile] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const [localLoading, setLocalLoading] = useState(false);
   const navigate = useNavigate();
@@ -41,7 +45,10 @@ const BookEdit = () => {
       const bookData = response.data.data || response.data;
       setForm({
         title: bookData.title || "",
-        published_year: bookData.published_year?.toString() || "",
+        sku: bookData.sku || "",
+        description: bookData.description || "",
+        price: bookData.price?.toString() || "",
+        stock_quantity: bookData.stock_quantity?.toString() || "",
         category_id: bookData.category_id?.toString() || "",
         author_id: bookData.author_id?.toString() || "",
         publisher_id: bookData.publisher_id?.toString() || "",
@@ -52,7 +59,10 @@ const BookEdit = () => {
       console.error("Fetch error:", err);
       setForm({
         title: "",
-        published_year: "",
+        sku: "",
+        description: "",
+        price: "",
+        stock_quantity: "",
         category_id: "",
         author_id: "",
         publisher_id: "",
@@ -76,20 +86,30 @@ const BookEdit = () => {
     }
 
     try {
-      const payload = {
-        title: form.title,
-        published_year: parseInt(form.published_year),
-        category_id: parseInt(form.category_id),
-        author_id: parseInt(form.author_id),
-        publisher_id: parseInt(form.publisher_id),
-      };
+      const formData = new FormData();
+      formData.append('title', form.title);
+      formData.append('sku', form.sku);
+      formData.append('description', form.description);
+      formData.append('price', parseFloat(form.price));
+      formData.append('stock_quantity', parseInt(form.stock_quantity));
+      formData.append('category_id', parseInt(form.category_id));
+      formData.append('author_id', parseInt(form.author_id));
+      formData.append('publisher_id', parseInt(form.publisher_id));
+      
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      
       const config = {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
       };
 
       setValidationErrors({});
 
-      const response = await api.put(`/books/${id}`, payload, config);
+      const response = await api.put(`/books/${id}`, formData, config);
       setBooks(
         books.map((book) =>
           book.id === parseInt(id) ? response.data.data : book
@@ -151,20 +171,63 @@ const BookEdit = () => {
               </div>
               <div>
                 <input
-                  type="number"
-                  value={form.published_year}
-                  onChange={(e) =>
-                    setForm({ ...form, published_year: e.target.value })
-                  }
-                  placeholder="Published Year"
+                  type="text"
+                  value={form.sku}
+                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                  placeholder="SKU"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
                   required
-                  min="1000"
-                  max={new Date().getFullYear()}
                 />
-                {validationErrors.published_year && (
+                {validationErrors.sku && (
                   <p className="text-red-500 text-sm">
-                    {validationErrors.published_year[0]}
+                    {validationErrors.sku[0]}
+                  </p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Book Description"
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
+                  rows="3"
+                />
+                {validationErrors.description && (
+                  <p className="text-red-500 text-sm">
+                    {validationErrors.description[0]}
+                  </p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  placeholder="Price"
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+                {validationErrors.price && (
+                  <p className="text-red-500 text-sm">
+                    {validationErrors.price[0]}
+                  </p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  value={form.stock_quantity}
+                  onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
+                  placeholder="Stock Quantity"
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
+                  required
+                  min="0"
+                />
+                {validationErrors.stock_quantity && (
+                  <p className="text-red-500 text-sm">
+                    {validationErrors.stock_quantity[0]}
                   </p>
                 )}
               </div>
@@ -228,6 +291,20 @@ const BookEdit = () => {
                 {validationErrors.publisher_id && (
                   <p className="text-red-500 text-sm">
                     {validationErrors.publisher_id[0]}
+                  </p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <input
+                  type="file"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  accept="image/jpeg,image/png,image/jpg"
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
+                />
+                <p className="text-sm text-gray-500 mt-1">Upload a new image (optional). Accepted formats: JPEG, PNG, JPG. Max size: 2MB</p>
+                {validationErrors.image && (
+                  <p className="text-red-500 text-sm">
+                    {validationErrors.image[0]}
                   </p>
                 )}
               </div>

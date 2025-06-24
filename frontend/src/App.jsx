@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { ClientLayout, AdminLayout } from "./layouts";
@@ -24,6 +25,8 @@ import {
   PublisherEdit,
   BookCreate,
   BookEdit,
+  BookDetail,
+  AuditLogDashboard,
 } from "./pages/admin";
 
 function App() {
@@ -68,6 +71,7 @@ function App() {
         <Route path="books" element={<BookManagement />} />
         <Route path="books/create" element={<BookCreate />} />
         <Route path="books/edit/:id" element={<BookEdit />} />
+        <Route path="books/:id" element={<BookDetail />} />
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="authors" element={<AuthorManagement />} />
         <Route path="publishers" element={<PublisherManagement />} />
@@ -75,6 +79,7 @@ function App() {
         <Route path="publishers/edit/:id" element={<PublisherEdit />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
+        <Route path="audit-logs" element={<AuditLogDashboard />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

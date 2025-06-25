@@ -1,0 +1,27 @@
+import React from 'react';
+import { Tag } from 'lucide-react';
+import { handleCategoryChange } from './filterHandlers';
+
+const CategoryFilter = ({ filters, setFilters, uniqueCategories }) => (
+  <div>
+    <div className="flex items-center gap-2 mb-3">
+      <Tag className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+      <h3 className="font-medium text-gray-900 dark:text-white">Danh Mục</h3>
+    </div>
+    <div className="space-y-2 max-h-40 overflow-y-auto">
+      {uniqueCategories.map(category => (
+        <label key={category} className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={filters.categories.includes(category)}
+            onChange={() => handleCategoryChange(filters, setFilters, category)}
+            className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">{category}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+export default CategoryFilter;

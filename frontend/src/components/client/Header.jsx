@@ -326,7 +326,7 @@ const Header = () => {
                           onClick={() => setIsMenuOpen(false)}>
                           My Orders
                         </Link>
-                        {user.isAdmin && (
+                        {isAdmin && (
                           <Link
                             to="/admin"
                             className="text-gray-700 dark:text-gray-300 text-sm"

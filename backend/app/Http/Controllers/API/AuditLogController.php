@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\Controller;
 
 class AuditLogController extends Controller
 {
@@ -172,7 +173,7 @@ class AuditLogController extends Controller
         $auditLogs = $query->get();
 
         $filename = 'audit_logs_' . now()->format('Y-m-d_H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -180,7 +181,7 @@ class AuditLogController extends Controller
 
         $callback = function () use ($auditLogs) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
                 'ID',
@@ -198,7 +199,7 @@ class AuditLogController extends Controller
                 foreach ($log->formatted_changes as $change) {
                     $changes .= $change['field'] . ': ' . ($change['old'] ?? 'null') . ' → ' . ($change['new'] ?? 'null') . '; ';
                 }
-                
+
                 fputcsv($file, [
                     $log->id,
                     $log->auditable_type,
@@ -210,7 +211,7 @@ class AuditLogController extends Controller
                     rtrim($changes, '; ')
                 ]);
             }
-            
+
             fclose($file);
         };
 

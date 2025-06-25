@@ -7,7 +7,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\AuthorController;
 use App\Http\Controllers\API\PublisherController;
-use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\API\AuditLogController;
 
 // Root route
 Route::get('/', function () {
@@ -46,7 +46,7 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
 
     // Publishers
     Route::apiResource('publishers', PublisherController::class)->except(['index', 'show']);
-    
+
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/stats', [AuditLogController::class, 'getStats'])->name('audit-logs.stats');

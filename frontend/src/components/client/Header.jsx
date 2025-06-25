@@ -37,7 +37,7 @@ const Header = () => {
   });
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const {
     cartItems,
     updateQuantity,

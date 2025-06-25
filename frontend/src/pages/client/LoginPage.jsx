@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
@@ -9,7 +9,14 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Clear errors only when form is submitted or manually triggered
+  const clearErrors = () => {
+    setError("");
+    setValidationErrors({});
+  };
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,18 +24,72 @@ const LoginPage = () => {
 
   const from = location.state?.from?.pathname || "/";
 
+  const validateForm = () => {
+    const errors = {};
+    
+    // Email validation
+    if (!email.trim()) {
+      errors.email = t("form.required");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = t("form.error.email");
+    }
+    
+    // Password validation
+    if (!password.trim()) {
+      errors.password = t("form.required");
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+
+    // Clear any previous errors
+    clearErrors();
+
+    // First layer: Frontend validation
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (error) {
-      // Display more specific error message if available
-      const errorMessage = error.message || t("message.error.login");
-      setError(errorMessage);
+      // Second layer: Backend validation error handling
+      if (error.response && error.response.status === 422) {
+        // Handle Laravel validation errors (field-specific)
+        const backendErrors = error.response.data.errors || {};
+        const newValidationErrors = {};
+        
+        // Map backend field errors to frontend validation errors
+        if (backendErrors.email) {
+          newValidationErrors.email = backendErrors.email[0];
+        }
+        if (backendErrors.password) {
+          newValidationErrors.password = backendErrors.password[0];
+        }
+        
+        setValidationErrors(newValidationErrors);
+        
+        // If there are no field-specific errors, show general message
+        if (Object.keys(newValidationErrors).length === 0) {
+          setError(error.response.data.message || t("message.error.validation"));
+        }
+      } else if (error.response && error.response.status === 401) {
+        // Handle authentication errors (invalid credentials)
+        const errorMessage = error.response.data.message || t("login.error.invalidCredentials");
+        setError(errorMessage);
+        // Don't clear form fields - let user correct their input
+      } else {
+        // Handle other types of errors (500, network errors, etc.)
+        const errorMessage = error.response?.data?.message || error.message || t("message.error.login");
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -53,9 +114,9 @@ const LoginPage = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 p-4 rounded-lg flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            {error}
+            className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 p-4 rounded-lg flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">{error}</span>
           </motion.div>
         )}
 
@@ -69,15 +130,23 @@ const LoginPage = () => {
             <div className="relative">
               <input
                 id="email"
-                type="email"
-                required
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                className={`appearance-none block w-full px-3 py-2 pl-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white ${
+                  validationErrors.email
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
                 placeholder={t("form.email.placeholder")}
               />
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {validationErrors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -90,14 +159,22 @@ const LoginPage = () => {
               <input
                 id="password"
                 type="password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white"
+                className={`appearance-none block w-full px-3 py-2 pl-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white ${
+                  validationErrors.password
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
                 placeholder={t("form.password.placeholder")}
               />
               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {validationErrors.password}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between">

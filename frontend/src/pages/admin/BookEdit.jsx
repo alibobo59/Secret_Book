@@ -161,7 +161,6 @@ const BookEdit = () => {
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Book Title"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.title && (
                   <p className="text-red-500 text-sm">
@@ -176,7 +175,6 @@ const BookEdit = () => {
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
                   placeholder="SKU"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.sku && (
                   <p className="text-red-500 text-sm">
@@ -205,7 +203,6 @@ const BookEdit = () => {
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="Price"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required
                   min="0"
                   step="0.01"
                 />
@@ -222,7 +219,6 @@ const BookEdit = () => {
                   onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
                   placeholder="Stock Quantity"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required
                   min="0"
                 />
                 {validationErrors.stock_quantity && (
@@ -237,8 +233,7 @@ const BookEdit = () => {
                   onChange={(e) =>
                     setForm({ ...form, category_id: e.target.value })
                   }
-                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required>
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full">
                   <option value="">Select Category</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -258,8 +253,7 @@ const BookEdit = () => {
                   onChange={(e) =>
                     setForm({ ...form, author_id: e.target.value })
                   }
-                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required>
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full">
                   <option value="">Select Author</option>
                   {authors.map((author) => (
                     <option key={author.id} value={author.id}>
@@ -279,8 +273,7 @@ const BookEdit = () => {
                   onChange={(e) =>
                     setForm({ ...form, publisher_id: e.target.value })
                   }
-                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
-                  required>
+                  className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full">
                   <option value="">Select Publisher</option>
                   {publishers.map((publisher) => (
                     <option key={publisher.id} value={publisher.id}>

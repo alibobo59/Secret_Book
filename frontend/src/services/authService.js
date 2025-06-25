@@ -23,13 +23,13 @@ const authService = {
       }
       return { user, token };
     } catch (error) {
-      const message = error.response?.data?.message || "Registration failed";
       console.error("Register error:", {
-        message,
+        message: error.response?.data?.message,
         status: error.response?.status,
         data: error.response?.data,
       });
-      throw new Error(message);
+      // Preserve the original error structure for detailed handling
+      throw error;
     }
   },
 
@@ -45,13 +45,13 @@ const authService = {
       }
       return { user, token };
     } catch (error) {
-      const message = error.response?.data?.message || "Login failed";
       console.error("Login error:", {
-        message,
+        message: error.response?.data?.message,
         status: error.response?.status,
         data: error.response?.data,
       });
-      throw new Error(message);
+      // Preserve the original error structure for detailed handling
+      throw error;
     }
   },
 

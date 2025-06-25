@@ -429,7 +429,6 @@ const BookCreate = () => {
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Book title"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.title && (
                   <p className="text-red-500 text-sm mt-1">
@@ -460,7 +459,6 @@ const BookCreate = () => {
                   }}
                   placeholder="Unique SKU (e.g., BOOK001)"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.sku && (
                   <p className="text-red-500 text-sm mt-1">
@@ -498,7 +496,6 @@ const BookCreate = () => {
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   placeholder="Price (e.g., 12.99)"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                   min="0"
                   step="0.01"
                 />
@@ -525,7 +522,6 @@ const BookCreate = () => {
                     }
                     placeholder="Stock quantity (e.g., 100)"
                     className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                    required
                     min="0"
                   />
                   {validationErrors.stock_quantity && (
@@ -662,7 +658,6 @@ const BookCreate = () => {
                             }
                             placeholder="e.g., Format"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                           />
                           {attributeErrors[index]?.name && (
                             <p className="text-red-500 text-sm mt-1">
@@ -690,7 +685,6 @@ const BookCreate = () => {
                             }
                             placeholder="Comma-separated (e.g., Hardcover,Paperback)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                           />
                           {attributeErrors[index]?.values && (
                             <p className="text-red-500 text-sm mt-1">
@@ -754,7 +748,6 @@ const BookCreate = () => {
                                   }
                                   placeholder="Attribute name"
                                   className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                                  required
                                 />
                                 <input
                                   type="text"
@@ -769,7 +762,6 @@ const BookCreate = () => {
                                   }
                                   placeholder="Attribute value"
                                   className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                                  required
                                 />
                               </div>
                               <button
@@ -832,7 +824,6 @@ const BookCreate = () => {
                             }
                             placeholder="Stock quantity (e.g., 50)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                             min="0"
                           />
                           {validationErrors[

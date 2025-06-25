@@ -92,7 +92,6 @@ const CategoryManagement = () => {
             onChange={(e) => setForm({ name: e.target.value })}
             placeholder="Category Name"
             className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
-            required
           />
           <button
             type="submit"

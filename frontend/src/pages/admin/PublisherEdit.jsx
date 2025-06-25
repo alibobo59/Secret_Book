@@ -71,7 +71,6 @@ const PublisherEdit = () => {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Publisher Name"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
-                required
               />
               <input
                 type="text"

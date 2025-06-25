@@ -28,9 +28,10 @@ export const AuthProvider = ({ children }) => {
       setUser(response.user);
       return response.user;
     } catch (error) {
-      const message = error.message || "Failed to login";
+      const message = error.response?.data?.message || error.message || "Failed to login";
       setError(message);
-      throw new Error(message);
+      // Preserve the original error structure for detailed handling in components
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -49,9 +50,10 @@ export const AuthProvider = ({ children }) => {
       setUser(response.user);
       return response.user;
     } catch (error) {
-      const message = error.response?.data?.message || "Failed to register";
+      const message = error.response?.data?.message || error.message || "Failed to register";
       setError(message);
-      throw new Error(message);
+      // Preserve the original error structure for detailed handling in components
+      throw error;
     } finally {
       setLoading(false);
     }

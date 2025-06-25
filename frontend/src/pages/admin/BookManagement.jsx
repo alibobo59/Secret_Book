@@ -2,8 +2,9 @@ import React, { useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Eye } from "lucide-react";
 import { Loading } from "../../components/admin";
+import { api } from "../../services/api";
 
 const BookManagement = () => {
   const { user, getToken, hasRole } = useAuth();
@@ -50,6 +51,10 @@ const BookManagement = () => {
     navigate(`/admin/books/edit/${id}`);
   };
 
+  const handleViewDetail = (id) => {
+    navigate(`/admin/books/${id}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -82,16 +87,16 @@ const BookManagement = () => {
                     Title
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Published Year
+                    SKU
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Stock
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Author
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Publisher
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Actions
@@ -100,33 +105,41 @@ const BookManagement = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {books.map((book) => (
-                  <tr key={book.id}>
+                  <tr key={book.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       {book.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {book.published_year || "N/A"}
+                      {book.sku || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                      ${book.price || "0.00"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                      {book.stock_quantity || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       {book.category?.name || "Unknown"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {book.author?.name || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {book.publisher?.name || "Unknown"}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <button
+                        onClick={() => handleViewDetail(book.id)}
+                        className="text-blue-600 hover:text-blue-800 mr-4"
+                        title="View Details">
+                        <Eye size={18} />
+                      </button>
                       <button
                         onClick={() => handleEdit(book.id)}
                         className="text-amber-600 hover:text-amber-800 mr-4"
-                        disabled={!hasRole(["admin"])}>
+                        disabled={!hasRole(["admin"])}
+                        title="Edit Book">
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(book.id)}
                         className="text-red-600 hover:text-red-800"
-                        disabled={!hasRole(["admin"])}>
+                        disabled={!hasRole(["admin"])}
+                        title="Delete Book">
                         <Trash2 size={18} />
                       </button>
                     </td>

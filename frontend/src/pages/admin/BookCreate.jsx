@@ -223,13 +223,10 @@ const BookCreate = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log("Selected file:", file);
     if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      console.log("Valid image file:", file.name, file.type);
       setForm({ ...form, image: file });
       setValidationErrors((prev) => ({ ...prev, image: null }));
     } else {
-      console.warn("Invalid file selected:", file ? file.type : "No file");
       setValidationErrors((prev) => ({
         ...prev,
         image: ["Please select a valid image (JPEG, PNG, JPG)."],
@@ -241,19 +238,13 @@ const BookCreate = () => {
 
   const handleVariationFileChange = (index, e) => {
     const file = e.target.files[0];
-    console.log(`Variation ${index} selected file:`, file);
     if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      console.log(`Variation ${index} valid image file:`, file.name, file.type);
       updateVariation(index, "image", file);
       setValidationErrors((prev) => ({
         ...prev,
         [`variations.${index}.image`]: null,
       }));
     } else {
-      console.warn(
-        `Variation ${index} invalid file selected:`,
-        file ? file.type : "No file"
-      );
       setValidationErrors((prev) => ({
         ...prev,
         [`variations.${index}.image`]: [
@@ -293,16 +284,8 @@ const BookCreate = () => {
       if (form.author_id) formData.append("author_id", form.author_id);
       if (form.publisher_id) formData.append("publisher_id", form.publisher_id);
 
-      console.log(
-        "form.image:",
-        form.image,
-        form.image instanceof File ? form.image.name : "Not a File"
-      );
       if (form.image && form.image instanceof File) {
-        console.log("Appending image:", form.image.name, form.image.type);
         formData.append("image", form.image);
-      } else {
-        console.log("No valid image to append");
       }
 
       if (isVariableProduct) {
@@ -322,7 +305,6 @@ const BookCreate = () => {
             return;
           }
           const attributesJson = JSON.stringify(attributes);
-          console.log(`Variation ${index} attributes:`, attributesJson);
           formData.append(`variations[${index}][attributes]`, attributesJson);
           if (variation.price)
             formData.append(`variations[${index}][price]`, variation.price);
@@ -333,23 +315,9 @@ const BookCreate = () => {
           if (variation.sku)
             formData.append(`variations[${index}][sku]`, variation.sku);
           if (variation.image && variation.image instanceof File) {
-            console.log(
-              `Appending variation ${index} image:`,
-              variation.image.name
-            );
             formData.append(`variations[${index}][image]`, variation.image);
           }
         });
-      }
-
-      console.log("FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(
-          `${key}:`,
-          value instanceof File
-            ? `[File: ${value.name}, Type: ${value.type}]`
-            : value
-        );
       }
 
       const config = {
@@ -644,7 +612,6 @@ const BookCreate = () => {
                   type="file"
                   accept="image/jpeg,image/png,image/jpg"
                   onChange={handleFileChange}
-                  key={form.image ? form.image.name : "image-input"}
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                 />
                 {validationErrors.image && (
@@ -908,11 +875,6 @@ const BookCreate = () => {
                             accept="image/jpeg,image/png,image/jpg"
                             onChange={(e) =>
                               handleVariationFileChange(index, e)
-                            }
-                            key={
-                              variation.image
-                                ? variation.image.name
-                                : `variation-image-${index}`
                             }
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                           />

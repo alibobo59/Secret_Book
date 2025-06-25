@@ -1,12 +1,14 @@
 <?php
+
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'user_id',
@@ -38,5 +40,21 @@ class Order extends Model
     public function address()
     {
         return $this->hasOne(Address::class);
+    }
+
+    /**
+     * Get human-readable field names for audit logs
+     */
+    public function getAuditFieldLabels()
+    {
+        return [
+            'user_id' => 'User',
+            'order_number' => 'Order Number',
+            'subtotal' => 'Subtotal',
+            'shipping' => 'Shipping',
+            'total' => 'Total',
+            'status' => 'Status',
+            'notes' => 'Notes',
+        ];
     }
 }

@@ -1,11 +1,12 @@
 <?php
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Book;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
 class BookController extends Controller
@@ -67,6 +68,18 @@ class BookController extends Controller
         }
 
         // Create book
+        // Process image first if present
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            // Create a temporary book ID or use a different approach
+            $tempId = time() . rand(1000, 9999);
+            $folder = 'books/temp-' . $tempId;
+            $image = $request->file('image');
+            $imageName = 'book-temp-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+            $imagePath = $image->storeAs($folder, $imageName, 'public');
+        }
+
+        // Create book with image in one operation
         $book = Book::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -76,15 +89,18 @@ class BookController extends Controller
             'category_id' => $request->category_id,
             'author_id' => $request->author_id,
             'publisher_id' => $request->publisher_id,
+            'image' => $imagePath,
         ]);
 
-        // Handle book image
-        if ($request->hasFile('image')) {
-            $folder = 'books/' . $book->id;
-            $image = $request->file('image');
-            $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
-            $imagePath = $image->storeAs($folder, $imageName, 'public');
-            $book->update(['image' => $imagePath]);
+        // Rename the folder to use the actual book ID
+        if ($imagePath) {
+            $newFolder = 'books/' . $book->id;
+            $newImageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+            $newImagePath = str_replace('temp-' . $tempId, $book->id, $imagePath);
+            $newImagePath = str_replace(basename($imagePath), $newImageName, $newImagePath);
+
+            Storage::disk('public')->move($imagePath, $newImagePath);
+            $book->update(['image' => $newImagePath]); // Still one update, but cleaner
         }
 
         // Handle variations
@@ -118,10 +134,14 @@ class BookController extends Controller
         if (!$book) {
             return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
         }
+        // debug
+
+        // return response()->json($request->all());
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'sku' => 'required|string|unique:books,sku,' . $book->id,
+            'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'author_id' => 'required|exists:authors,id',
             'publisher_id' => 'required|exists:publishers,id',
@@ -137,6 +157,7 @@ class BookController extends Controller
         $data = [
             'title' => $request->title,
             'sku' => $request->sku,
+            'description' => $request->description,
             'price' => $request->price,
             'stock_quantity' => $request->stock_quantity,
             'category_id' => $request->category_id,

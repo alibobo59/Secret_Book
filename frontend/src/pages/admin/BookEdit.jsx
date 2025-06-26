@@ -87,29 +87,31 @@ const BookEdit = () => {
 
     try {
       const formData = new FormData();
-      formData.append('title', form.title);
-      formData.append('sku', form.sku);
-      formData.append('description', form.description);
-      formData.append('price', parseFloat(form.price));
-      formData.append('stock_quantity', parseInt(form.stock_quantity));
-      formData.append('category_id', parseInt(form.category_id));
-      formData.append('author_id', parseInt(form.author_id));
-      formData.append('publisher_id', parseInt(form.publisher_id));
-      
+      formData.append("_method", "PUT");
+      formData.append("title", form.title);
+      formData.append("sku", form.sku);
+      formData.append("description", form.description);
+      formData.append("price", parseFloat(form.price));
+      formData.append("stock_quantity", parseInt(form.stock_quantity));
+      formData.append("category_id", parseInt(form.category_id));
+      formData.append("author_id", parseInt(form.author_id));
+      formData.append("publisher_id", parseInt(form.publisher_id));
+
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append("image", imageFile);
       }
-      
+
+      // Remove Content-Type header - let browser set it automatically
       const config = {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          // Don't set Content-Type for FormData
         },
       };
 
       setValidationErrors({});
 
-      const response = await api.put(`/books/${id}`, formData, config);
+      const response = await api.post(`/books/${id}`, formData, config);
       setBooks(
         books.map((book) =>
           book.id === parseInt(id) ? response.data.data : book
@@ -185,7 +187,9 @@ const BookEdit = () => {
               <div className="md:col-span-2">
                 <textarea
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                   placeholder="Book Description"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
                   rows="3"
@@ -216,7 +220,9 @@ const BookEdit = () => {
                 <input
                   type="number"
                   value={form.stock_quantity}
-                  onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, stock_quantity: e.target.value })
+                  }
                   placeholder="Stock Quantity"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
                   min="0"
@@ -294,7 +300,10 @@ const BookEdit = () => {
                   accept="image/jpeg,image/png,image/jpg"
                   className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200 w-full"
                 />
-                <p className="text-sm text-gray-500 mt-1">Upload a new image (optional). Accepted formats: JPEG, PNG, JPG. Max size: 2MB</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Upload a new image (optional). Accepted formats: JPEG, PNG,
+                  JPG. Max size: 2MB
+                </p>
                 {validationErrors.image && (
                   <p className="text-red-500 text-sm">
                     {validationErrors.image[0]}

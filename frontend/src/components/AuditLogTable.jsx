@@ -53,7 +53,8 @@ const AuditLogTable = ({
         ...filters,
       };
 
-      if (modelType) params.model_type = modelType;
+      // In fetchAuditLogs function, change:
+      if (modelType) params.auditable_type = modelType; // Instead of model_type
       if (modelId) params.model_id = modelId;
       if (days) params.days = days;
 

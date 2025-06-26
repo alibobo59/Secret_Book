@@ -338,9 +338,10 @@ const AuditLogDashboard = () => {
           Audit Log Details
         </h3>
         <AuditLogTable
-          selectedModel={selectedModel}
+          modelType={selectedModel}
           searchTerm={searchTerm}
-          selectedTimeRange={selectedTimeRange}
+          days={selectedTimeRange}
+          showModelColumn={true}
         />
       </div>
     </div>

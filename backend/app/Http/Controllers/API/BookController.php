@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Models\Book;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -56,6 +57,7 @@ class BookController extends Controller
             'author_id' => 'nullable|exists:authors,id',
             'publisher_id' => 'nullable|exists:publishers,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'variations' => 'sometimes|array',
             'variations.*.attributes' => 'required|array',
             'variations.*.price' => 'nullable|numeric|min:0',
             'variations.*.stock_quantity' => 'required|integer|min:0',
@@ -67,43 +69,19 @@ class BookController extends Controller
             return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Create book
-        // Process image first if present
-        $imagePath = null;
+        // --- No changes to the main creation logic below, it is already good ---
+        $bookData = $request->except(['image', 'variations']);
+
+        $book = Book::create($bookData);
+
         if ($request->hasFile('image')) {
-            // Create a temporary book ID or use a different approach
-            $tempId = time() . rand(1000, 9999);
-            $folder = 'books/temp-' . $tempId;
+            $folder = 'books/' . $book->id;
             $image = $request->file('image');
-            $imageName = 'book-temp-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+            $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs($folder, $imageName, 'public');
+            $book->update(['image' => $imagePath]);
         }
 
-        // Create book with image in one operation
-        $book = Book::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'price' => $request->price,
-            'sku' => $request->sku,
-            'stock_quantity' => $request->stock_quantity,
-            'category_id' => $request->category_id,
-            'author_id' => $request->author_id,
-            'publisher_id' => $request->publisher_id,
-            'image' => $imagePath,
-        ]);
-
-        // Rename the folder to use the actual book ID
-        if ($imagePath) {
-            $newFolder = 'books/' . $book->id;
-            $newImageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
-            $newImagePath = str_replace('temp-' . $tempId, $book->id, $imagePath);
-            $newImagePath = str_replace(basename($imagePath), $newImageName, $newImagePath);
-
-            Storage::disk('public')->move($imagePath, $newImagePath);
-            $book->update(['image' => $newImagePath]); // Still one update, but cleaner
-        }
-
-        // Handle variations
         if ($request->has('variations')) {
             foreach ($request->variations as $index => $variationData) {
                 $variation = $book->variations()->create([
@@ -113,7 +91,6 @@ class BookController extends Controller
                     'sku' => $variationData['sku'],
                 ]);
 
-                // Handle variation image
                 if ($request->hasFile("variations.{$index}.image")) {
                     $folder = 'books/' . $book->id . '/variations/' . $variation->id;
                     $image = $request->file("variations.{$index}.image");
@@ -129,80 +106,139 @@ class BookController extends Controller
 
     public function update(Request $request, $id)
     {
-        $book = Book::find($id);
+        // --- START: ALL LOGIC IS NEW/HEAVILY MODIFIED ---
+        $book = Book::with('variations')->find($id);
 
         if (!$book) {
             return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
         }
-        // debug
 
-        // return response()->json($request->all());
+        // 1. Preprocess variations to decode JSON attributes, just like in store()
+        $input = $request->all();
+        if (isset($input['variations'])) {
+            foreach ($input['variations'] as &$variation) {
+                if (isset($variation['attributes']) && is_string($variation['attributes'])) {
+                    $variation['attributes'] = json_decode($variation['attributes'], true);
+                }
+            }
+            $request->merge(['variations' => $input['variations']]);
+        }
 
+        // 2. Update validation rules to handle variations and unique SKU check for update
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'sku' => 'required|string|unique:books,sku,' . $book->id,
             'description' => 'nullable|string',
-            'category_id' => 'required|exists:categories,id',
-            'author_id' => 'required|exists:authors,id',
-            'publisher_id' => 'required|exists:publishers,id',
             'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'stock_quantity' => 'required_without:variations|nullable|integer|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'author_id' => 'nullable|exists:authors,id',
+            'publisher_id' => 'nullable|exists:publishers,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'variations' => 'sometimes|array',
+            'variations.*.id' => 'sometimes|exists:book_variations,id', // For existing variations
+            'variations.*.attributes' => 'required|array',
+            'variations.*.price' => 'nullable|numeric|min:0',
+            'variations.*.stock_quantity' => 'required|integer|min:0',
+            // Unique SKU check must ignore the variation's own ID
+            'variations.*.sku' => 'nullable|string|unique:book_variations,sku,' . ($request->input('variations.*.id') ?? 'NULL') . ',id',
+            'variations.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $data = [
-            'title' => $request->title,
-            'sku' => $request->sku,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock_quantity' => $request->stock_quantity,
-            'category_id' => $request->category_id,
-            'author_id' => $request->author_id,
-            'publisher_id' => $request->publisher_id,
-        ];
+        // 3. Update the main book data
+        $book->update($request->only([
+            'title', 'sku', 'description', 'price', 'stock_quantity', 'category_id', 'author_id', 'publisher_id'
+        ]));
 
-        // Handle image update
+        // Handle main image update
         if ($request->hasFile('image')) {
-            $folder = storage_path('app/public/books/' . $book->id);
-            if (!file_exists($folder)) {
-                mkdir($folder, 0755, true);
+            // Delete old image
+            if ($book->image && Storage::disk('public')->exists($book->image)) {
+                Storage::disk('public')->delete($book->image);
             }
-
-            if ($book->image && file_exists(storage_path('app/public/' . $book->image))) {
-                unlink(storage_path('app/public/' . $book->image)); // Delete old image
-            }
-
+            // Store new image
+            $folder = 'books/' . $book->id;
             $image = $request->file('image');
             $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
-            $image->move($folder, $imageName);
-            $data['image'] = 'books/' . $book->id . '/' . $imageName;
+            $imagePath = $image->storeAs($folder, $imageName, 'public');
+            $book->update(['image' => $imagePath]);
         }
 
-        $book->update($data);
+        // 4. Sync Variations (Create, Update, Delete)
+        if ($request->has('variations')) {
+            $incomingVariationIds = [];
 
-        return response()->json(['data' => $book->load(['category', 'author', 'publisher'])], Response::HTTP_OK);
+            foreach ($request->variations as $index => $variationData) {
+                $variationData['price'] = $variationData['price'] ?? $book->price;
+
+                // Find existing or create new variation
+                $variation = $book->variations()->findOrNew($variationData['id'] ?? 0);
+                $variation->fill($variationData);
+                $variation->book_id = $book->id;
+                $variation->save();
+
+                $incomingVariationIds[] = $variation->id;
+
+                // Handle variation image
+                if ($request->hasFile("variations.{$index}.image")) {
+                    // Delete old image if it exists
+                    if ($variation->image && Storage::disk('public')->exists($variation->image)) {
+                        Storage::disk('public')->delete($variation->image);
+                    }
+                    $folder = 'books/' . $book->id . '/variations/' . $variation->id;
+                    $image = $request->file("variations.{$index}.image");
+                    $imageName = 'variation-' . $variation->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+                    $imagePath = $image->storeAs($folder, $imageName, 'public');
+                    $variation->update(['image' => $imagePath]);
+                }
+            }
+
+            // Delete variations that were removed on the frontend
+            $book->variations()->whereNotIn('id', $incomingVariationIds)->get()->each(function($variation) {
+                if ($variation->image && Storage::disk('public')->exists($variation->image)) {
+                    Storage::disk('public')->delete($variation->image);
+                }
+                $variation->delete();
+            });
+
+        } elseif ($request->has('stock_quantity')) {
+            // If switched from variable to simple, delete all variations
+            $book->variations()->get()->each(function($variation) {
+                if ($variation->image && Storage::disk('public')->exists($variation->image)) {
+                    Storage::disk('public')->delete($variation->image);
+                }
+                $variation->delete();
+            });
+        }
+        // --- END: MODIFIED LOGIC ---
+
+        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations'])], Response::HTTP_OK);
     }
 
     public function destroy($id)
     {
-        $book = Book::find($id);
+        // --- START: MODIFIED LOGIC ---
+        // Eager load variations to get their data
+        $book = Book::with('variations')->find($id);
         if (!$book) {
             return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($book->image && file_exists(storage_path('app/public/' . $book->image))) {
-            unlink(storage_path('app/public/' . $book->image)); // Delete image
-            $folder = dirname(storage_path('app/public/' . $book->image));
-            if (is_dir($folder) && count(scandir($folder)) <= 2) {
-                rmdir($folder); // Remove folder if empty
-            }
+        // Delete all variation images and the entire book folder
+        $bookDirectory = 'books/' . $book->id;
+        if (Storage::disk('public')->exists($bookDirectory)) {
+            Storage::disk('public')->deleteDirectory($bookDirectory);
         }
 
+        // The database cascade on delete should handle removing variation records.
+        // If not, you would manually delete them: $book->variations()->delete();
         $book->delete();
+
         return response()->json(null, Response::HTTP_NO_CONTENT);
+        // --- END: MODIFIED LOGIC ---
     }
 }

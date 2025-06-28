@@ -1,0 +1,34 @@
+import React from 'react';
+import { Search, Filter } from 'lucide-react';
+
+const SearchBar = ({ searchTerm, setSearchTerm, onToggleFilters }) => {
+  return (
+    <div className="flex flex-1 gap-4 items-center w-full lg:w-auto">
+      {/* Filter Toggle Button */}
+      <button
+        onClick={onToggleFilters}
+        className="lg:hidden flex items-center gap-2 px-3 py-2 border border-gray-300 
+                 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      >
+        <Filter className="h-4 w-4" />
+        <span className="text-sm">Bộ Lọc</span>
+      </button>
+
+      {/* Search Input */}
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Tìm kiếm sách, tác giả, mô tả..."
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 
+                   rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent 
+                   bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default SearchBar;

@@ -1,0 +1,49 @@
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Book extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'sku',
+        'description',
+        'price',
+        'stock_quantity', // Changed from 'stock' to match frontend
+        'category_id',
+        'author_id',
+        'publisher_id',
+        'image',
+    ];
+
+    protected $appends = ['image_url'];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function author()
+    {
+        return $this->belongsTo(Author::class);
+    }
+
+    public function publisher()
+    {
+        return $this->belongsTo(Publisher::class);
+    }
+
+    public function variations()
+    {
+        return $this->hasMany(BookVariation::class);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? url('storage/' . $this->image) : null;
+    }
+}

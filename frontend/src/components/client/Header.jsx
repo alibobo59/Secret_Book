@@ -49,6 +49,7 @@ const Header = () => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log(isAdmin(), "is admin");
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -298,52 +299,10 @@ const Header = () => {
                   </div>
 
                   {user ? (
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
-                          {user.name.charAt(0)}
-                        </div>
-                        <span className="font-medium text-gray-800 dark:text-white text-sm">
-                          {user.name}
-                        </span>
-                      </div>
-                      <div className="flex flex-col space-y-3">
-                        <Link
-                          to={`/profile/${user.username}`}
-                          className="text-gray-700 dark:text-gray-300 text-sm"
-                          onClick={() => setIsMenuOpen(false)}>
-                          Profile
-                        </Link>
-                        <Link
-                          to="/my-books"
-                          className="text-gray-700 dark:text-gray-300 text-sm"
-                          onClick={() => setIsMenuOpen(false)}>
-                          My Books
-                        </Link>
-                        <Link
-                          to="/orders"
-                          className="text-gray-700 dark:text-gray-300 text-sm"
-                          onClick={() => setIsMenuOpen(false)}>
-                          My Orders
-                        </Link>
-                        {isAdmin() && (
-                          <Link
-                            to="/admin"
-                            className="text-gray-700 dark:text-gray-300 text-sm"
-                            onClick={() => setIsMenuOpen(false)}>
-                            Admin Dashboard
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => {
-                            logout();
-                            setIsMenuOpen(false);
-                          }}
-                          className="text-left text-red-600 dark:text-red-500 text-sm">
-                          Logout
-                        </button>
-                      </div>
-                    </div>
+                    <UserProfileDropdown 
+                      isMobile={true} 
+                      onClose={() => setIsMenuOpen(false)} 
+                    />
                   ) : (
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                       <Link

@@ -62,11 +62,11 @@ const LoginPage = () => {
     } catch (error) {
       // Second layer: Backend validation error handling
       if (error.response && error.response.status === 422) {
-        // Handle Laravel validation errors (field-specific)
+        // Xử lý lỗi validation từ Laravel (theo từng trường)
         const backendErrors = error.response.data.errors || {};
         const newValidationErrors = {};
-        
-        // Map backend field errors to frontend validation errors
+
+        // Ánh xạ lỗi từ backend sang frontend
         if (backendErrors.email) {
           newValidationErrors.email = backendErrors.email[0];
         }
@@ -76,17 +76,17 @@ const LoginPage = () => {
         
         setValidationErrors(newValidationErrors);
         
-        // If there are no field-specific errors, show general message
+        // Nếu không có lỗi cụ thể theo trường, hiển thị thông báo chung
         if (Object.keys(newValidationErrors).length === 0) {
           setError(error.response.data.message || t("message.error.validation"));
         }
       } else if (error.response && error.response.status === 401) {
-        // Handle authentication errors (invalid credentials)
+        // Xử lý lỗi xác thực (thông tin đăng nhập không hợp lệ)
         const errorMessage = error.response.data.message || t("login.error.invalidCredentials");
         setError(errorMessage);
         // Don't clear form fields - let user correct their input
       } else {
-        // Handle other types of errors (500, network errors, etc.)
+        // Xử lý các loại lỗi khác (500, lỗi mạng, v.v.)
         const errorMessage = error.response?.data?.message || error.message || t("message.error.login");
         setError(errorMessage);
       }

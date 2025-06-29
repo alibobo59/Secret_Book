@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+// Added missing React import
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import { useNotification } from "./NotificationContext";
+import { api } from "../services/api";
+
+// Removed duplicate functions:
+// - Removed old synchronous getOrderById function
+// - Removed old cancelOrder function that used updateOrderStatus
+// - Kept the new async versions that work with the API
 
 const OrderContext = createContext();
 
@@ -39,10 +46,16 @@ export const OrderProvider = ({ children }) => {
     loadOrders();
   }, []);
 
-  // Save orders to localStorage whenever they change
+  // Save orders to localStorage whenever they change (but not on initial load)
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
   useEffect(() => {
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
+    }
     localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
+  }, [orders, isInitialLoad]);
 
   const createOrder = async (orderData) => {
     if (!user) {
@@ -172,13 +185,76 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const getOrderById = (orderId) => {
-    return orders.find((order) => order.id === orderId);
-  };
+  const getUserOrders = useCallback(async (forceRefresh = false) => {
+    if (!user) {
+      throw new Error("User must be logged in to fetch orders");
+    }
 
-  const getUserOrders = (userId) => {
-    return orders.filter((order) => order.userId === userId);
-  };
+    // If we already have orders and not forcing refresh, return cached orders
+    if (orders.length > 0 && !forceRefresh) {
+      return orders;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get("/orders");
+      const userOrders = response.data.data.data || response.data.data || [];
+      setOrders(userOrders);
+      return userOrders;
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+      setError("Failed to fetch orders");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, orders.length]); // Dependencies: user and orders.length for caching logic
+
+  const getOrderById = useCallback(async (orderId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch order:", error);
+      setError("Failed to fetch order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []); // No dependencies needed for this function
+
+  const cancelOrder = useCallback(async (orderId, cancellationReason) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.patch(`/orders/${orderId}/cancel`, {
+        cancellation_reason: cancellationReason
+      });
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'cancelled', updated_at: new Date().toISOString() }
+            : order
+        )
+      );
+      
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      setError("Failed to cancel order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []); // No dependencies needed for this function
 
   const getAllOrders = () => {
     return orders;
@@ -188,18 +264,7 @@ export const OrderProvider = ({ children }) => {
     return orders.filter((order) => order.status === status);
   };
 
-  const cancelOrder = async (orderId) => {
-    const order = getOrderById(orderId);
-    if (!order) {
-      throw new Error("Order not found");
-    }
 
-    if (order.status === "delivered" || order.status === "cancelled") {
-      throw new Error("Cannot cancel this order");
-    }
-
-    return updateOrderStatus(orderId, "cancelled");
-  };
 
   const value = {
     orders,

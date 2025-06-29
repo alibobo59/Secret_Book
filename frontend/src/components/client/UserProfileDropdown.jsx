@@ -42,7 +42,7 @@ const UserProfileDropdown = ({ className = "" }) => {
       <button
         onClick={toggleDropdown}
         className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-        aria-label="User profile menu">
+        aria-label="Menu hồ sơ người dùng">
         <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
           {user.name.charAt(0)}
         </div>

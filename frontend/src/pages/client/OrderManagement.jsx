@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../../contexts/AuthContext";
+import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
+import CancelOrderModal from "../../components/common/CancelOrderModal";
 import {
   Package,
   Truck,
@@ -23,9 +24,183 @@ import {
   Mail,
 } from "lucide-react";
 
+// Fake orders data for testing
+const fakeOrders = [
+  {
+    id: "ORD-001",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "delivered",
+    paymentMethod: "cod",
+    paymentStatus: "completed",
+    createdAt: "2024-01-15T10:30:00Z",
+    updatedAt: "2024-01-20T14:45:00Z",
+    estimatedDelivery: "2024-01-22T00:00:00Z",
+    subtotal: 89.97,
+    shipping: 5.0,
+    tax: 9.5,
+    total: 104.47,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK001",
+        price: 29.99,
+        quantity: 3,
+      },
+    ],
+    notes: "Please deliver before 5 PM",
+  },
+  {
+    id: "ORD-002",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "shipped",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-18T14:20:00Z",
+    updatedAt: "2024-01-19T09:15:00Z",
+    estimatedDelivery: "2024-01-25T00:00:00Z",
+    subtotal: 45.98,
+    shipping: 5.0,
+    tax: 5.1,
+    total: 56.08,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK002",
+        price: 22.99,
+        quantity: 2,
+      },
+    ],
+    notes: "",
+  },
+  {
+    id: "ORD-003",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "processing",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-20T11:45:00Z",
+    updatedAt: "2024-01-20T11:45:00Z",
+    estimatedDelivery: "2024-01-27T00:00:00Z",
+    subtotal: 34.99,
+    shipping: 5.0,
+    tax: 4.0,
+    total: 43.99,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK003",
+        price: 34.99,
+        quantity: 1,
+      },
+    ],
+    notes: "Gift wrapping requested",
+  },
+  {
+    id: "ORD-004",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "pending",
+    paymentMethod: "cod",
+    paymentStatus: "pending",
+    createdAt: "2024-01-22T16:30:00Z",
+    updatedAt: "2024-01-22T16:30:00Z",
+    estimatedDelivery: "2024-01-29T00:00:00Z",
+    subtotal: 67.98,
+    shipping: 5.0,
+    tax: 7.3,
+    total: 80.28,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK004",
+        price: 19.99,
+        quantity: 2,
+      },
+      {
+        bookId: "BOOK005",
+        price: 27.99,
+        quantity: 1,
+      },
+    ],
+    notes: "",
+  },
+  {
+    id: "ORD-005",
+    userId: "user1",
+    customerName: "John Doe",
+    customerEmail: "john.doe@example.com",
+    status: "cancelled",
+    paymentMethod: "cod",
+    paymentStatus: "cancelled",
+    createdAt: "2024-01-10T09:15:00Z",
+    updatedAt: "2024-01-11T10:20:00Z",
+    estimatedDelivery: "2024-01-17T00:00:00Z",
+    subtotal: 25.99,
+    shipping: 5.0,
+    tax: 3.1,
+    total: 34.09,
+    shippingAddress: {
+      name: "John Doe",
+      address: "123 Main Street, Apt 4B",
+      city: "New York",
+    },
+    contactInfo: {
+      email: "john.doe@example.com",
+      phone: "+1-555-123-4567",
+    },
+    items: [
+      {
+        bookId: "BOOK006",
+        price: 25.99,
+        quantity: 1,
+      },
+    ],
+    notes: "Cancelled due to change of mind",
+  },
+];
+
 const OrderManagementPage = () => {
   const { user } = useAuth();
-
+  const { getUserOrders, cancelOrder, loading, error } = useOrder();
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
@@ -37,18 +212,33 @@ const OrderManagementPage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
 
+  // In the useEffect where orders are loaded:
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    // Load user's orders
-    const userOrders = getUserOrders(user.id);
-    setOrders(userOrders);
-    setFilteredOrders(userOrders);
-  }, [user, getUserOrders, navigate]);
+    // Load user's orders from API
+    const loadOrders = async () => {
+      try {
+        setIsLoadingOrders(true);
+        const userOrders = await getUserOrders(); // Remove userId parameter
+        setOrders(userOrders || []);
+        setFilteredOrders(userOrders || []);
+      } catch (error) {
+        console.error("Không thể tải đơn hàng:", error);
+        setOrders([]);
+        setFilteredOrders([]);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    loadOrders();
+  }, [user, navigate]); // Removed getUserOrders from dependencies to prevent infinite loop
 
   useEffect(() => {
     // Filter and search orders
@@ -61,8 +251,8 @@ const OrderManagementPage = () => {
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.items?.some(
             (item) =>
-              item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.author.toLowerCase().includes(searchTerm.toLowerCase())
+              item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.author?.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
     }
@@ -101,12 +291,12 @@ const OrderManagementPage = () => {
     setIsCancelModalOpen(true);
   };
 
-  const confirmCancelOrder = async () => {
+  const confirmCancelOrder = async (cancellationReason) => {
     if (!selectedOrder) return;
 
     setCancellingOrderId(selectedOrder.id);
     try {
-      await cancelOrder(selectedOrder.id);
+      await cancelOrder(selectedOrder.id, cancellationReason);
 
       // Update local state
       const updatedOrders = orders.map((order) =>
@@ -123,8 +313,8 @@ const OrderManagementPage = () => {
       setIsCancelModalOpen(false);
       setSelectedOrder(null);
     } catch (error) {
-      console.error("Failed to cancel order:", error);
-      alert("Failed to cancel order. Please try again or contact support.");
+      console.error("Không thể hủy đơn hàng:", error);
+        alert("Không thể hủy đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
     } finally {
       setCancellingOrderId(null);
     }
@@ -172,21 +362,61 @@ const OrderManagementPage = () => {
   };
 
   const statusOptions = [
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "processing", label: "Processing" },
-    { value: "shipped", label: "Shipped" },
-    { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "pending", label: "Chờ Xử Lý" },
+    { value: "confirmed", label: "Đã Xác Nhận" },
+    { value: "processing", label: "Đang Xử Lý" },
+    { value: "shipped", label: "Đã Giao" },
+    { value: "delivered", label: "Đã Nhận" },
+    { value: "cancelled", label: "Đã Hủy" },
   ];
 
   const sortOptions = [
-    { value: "newest", label: "Newest First" },
-    { value: "oldest", label: "Oldest First" },
-    { value: "highest", label: "Highest Amount" },
-    { value: "lowest", label: "Lowest Amount" },
+    { value: "newest", label: "Mới Nhất Trước" },
+    { value: "oldest", label: "Cũ Nhất Trước" },
+    { value: "highest", label: "Số Tiền Cao Nhất" },
+    { value: "lowest", label: "Số Tiền Thấp Nhất" },
   ];
 
+  // Loading state check
+  if (isLoadingOrders) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">
+              Đang tải đơn hàng...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state check
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 dark:text-red-400">
+                Không thể tải đơn hàng
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main component return
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="container mx-auto px-4">
@@ -317,12 +547,12 @@ const OrderManagementPage = () => {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                        Order {order.id}
+                        Order {order.order_number}
                       </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span>
                           Placed on{" "}
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {new Date(order.created_at).toLocaleDateString()}
                         </span>
                         <span>•</span>
                         <span>
@@ -392,14 +622,14 @@ const OrderManagementPage = () => {
                       onClick={() => handleViewOrder(order)}
                       className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                       <Eye className="h-4 w-4" />
-                      View Details
+                      Xem Chi Tiết
                     </button>
 
                     <Link
                       to={`/order-confirmation/${order.id}`}
                       className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <Download className="h-4 w-4" />
-                      View Receipt
+                      Xem Hóa Đơn
                     </Link>
 
                     {canCancelOrder(order) && (
@@ -407,7 +637,7 @@ const OrderManagementPage = () => {
                         onClick={() => handleCancelOrder(order)}
                         className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <XCircle className="h-4 w-4" />
-                        Cancel Order
+                        Hủy Đơn Hàng
                       </button>
                     )}
 
@@ -416,7 +646,7 @@ const OrderManagementPage = () => {
                         to={`/books/${order.items?.[0]?.bookId}`}
                         className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                         <Package className="h-4 w-4" />
-                        Review Items
+                        Đánh Giá Sản Phẩm
                       </Link>
                     )}
                   </div>
@@ -491,20 +721,18 @@ const OrderManagementPage = () => {
                     <div className="flex items-center gap-3 mb-3">
                       <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                       <h3 className="font-medium text-gray-800 dark:text-white">
-                        Shipping Address
+                        Địa Chỉ Giao Hàng
                       </h3>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedOrder.shippingAddress?.firstName}{" "}
-                        {selectedOrder.shippingAddress?.lastName}
+                        {selectedOrder.shippingAddress?.name}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400">
                         {selectedOrder.shippingAddress?.address}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.city},{" "}
-                        {selectedOrder.shippingAddress?.postalCode}
+                        {selectedOrder.shippingAddress?.city}
                       </p>
                     </div>
                   </div>
@@ -601,52 +829,16 @@ const OrderManagementPage = () => {
         </AnimatePresence>
 
         {/* Cancel Order Modal */}
-        <AnimatePresence>
-          {isCancelModalOpen && selectedOrder && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <AlertCircle className="h-6 w-6 text-red-500" />
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Cancel Order
-                  </h2>
-                </div>
-
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Are you sure you want to cancel order{" "}
-                  <strong>{selectedOrder.id}</strong>? This action cannot be
-                  undone.
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsCancelModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    Keep Order
-                  </button>
-                  <button
-                    onClick={confirmCancelOrder}
-                    disabled={cancellingOrderId === selectedOrder.id}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center">
-                    {cancellingOrderId === selectedOrder.id ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      "Cancel Order"
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <CancelOrderModal
+          isOpen={isCancelModalOpen}
+          onClose={() => {
+            setIsCancelModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onConfirm={confirmCancelOrder}
+          orderNumber={selectedOrder?.id}
+          loading={cancellingOrderId === selectedOrder?.id}
+        />
       </div>
     </div>
   );

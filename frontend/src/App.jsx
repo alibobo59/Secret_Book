@@ -12,6 +12,9 @@ import {
   RegisterPage,
   NotFoundPage,
   CheckOutPage,
+  OrderSuccessPage,
+  OrderFailedPage,
+  OrderConfirmationPage,
 } from "./pages/client";
 import {
   DashboardHome,
@@ -38,7 +41,7 @@ function App() {
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">
-            Loading from main...
+            Đang tải từ trang chính...
           </p>
         </div>
       </div>
@@ -56,6 +59,9 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/orders" element={<OrderManagementClient />} />
+        <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+        <Route path="/order-failed/:orderId?" element={<OrderFailedPage />} />
+        <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
       </Route>
 
       <Route

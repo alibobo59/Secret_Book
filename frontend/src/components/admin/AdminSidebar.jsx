@@ -27,49 +27,49 @@ function AdminSidebar({
   const navItems = [
     {
       id: "dashboard",
-      label: "Dashboard",
+      label: "Bảng Điều Khiển",
       icon: <LayoutDashboard size={20} />,
       path: "/admin",
     },
     {
       id: "books",
-      label: "Books",
+      label: "Sách",
       icon: <BookOpen size={20} />,
       path: "/admin/books",
     },
     {
       id: "categories",
-      label: "Categories",
+      label: "Danh Mục",
       icon: <Tag size={20} />,
       path: "/admin/categories",
     },
     {
       id: "publishers",
-      label: "Publishers",
+      label: "Nhà Xuất Bản",
       icon: <Users size={20} />,
       path: "/admin/publishers",
     },
     {
       id: "authors",
-      label: "Authors",
+      label: "Tác Giả",
       icon: <Users size={20} />,
       path: "/admin/authors",
     },
     {
       id: "users",
-      label: "Users",
+      label: "Người Dùng",
       icon: <Users size={20} />,
       path: "/admin/users",
     },
     {
       id: "orders",
-      label: "Orders",
+      label: "Đơn Hàng",
       icon: <ShoppingCart size={20} />,
       path: "/admin/orders",
     },
     {
       id: "audit-logs",
-      label: "Audit Logs",
+      label: "Nhật Ký Kiểm Tra",
       icon: <Activity size={20} />,
       path: "/admin/audit-logs",
     },
@@ -89,9 +89,9 @@ function AdminSidebar({
             : "p-6 flex justify-between items-center"
         }>
         {!isSidebarCollapsed ? (
-          <h1 className="text-2xl font-bold text-amber-600">Admin Panel</h1>
+          <h1 className="text-2xl font-bold text-amber-600">Bảng Quản Trị</h1>
         ) : (
-          <h1 className="text-xl font-bold text-amber-600">AP</h1>
+          <h1 className="text-xl font-bold text-amber-600">BQT</h1>
         )}
         <button
           className="hidden md:block p-2 rounded-md bg-amber-600 text-white shadow-md hover:bg-amber-700 z-10"

@@ -18,6 +18,12 @@ class Order extends Model
         'total',
         'status',
         'notes',
+        'payment_method',
+        'payment_status',
+        'payment_transaction_id',
+        'payment_amount',
+        'payment_date',
+        'payment_details',
     ];
 
     protected $casts = [
@@ -25,6 +31,9 @@ class Order extends Model
         'subtotal' => 'integer',
         'shipping' => 'integer',
         'total' => 'integer',
+        'payment_amount' => 'decimal:2',
+        'payment_date' => 'datetime',
+        'payment_details' => 'array',
     ];
 
     public function user()

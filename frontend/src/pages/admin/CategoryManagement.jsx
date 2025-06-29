@@ -90,7 +90,7 @@ const CategoryManagement = () => {
             type="text"
             value={form.name}
             onChange={(e) => setForm({ name: e.target.value })}
-            placeholder="Category Name"
+            placeholder="Tên Danh Mục"
             className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
           />
           <button

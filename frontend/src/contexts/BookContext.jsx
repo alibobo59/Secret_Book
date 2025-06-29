@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from "../services/api";
 
 const BookContext = createContext();
@@ -11,7 +11,7 @@ export const BookProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,7 +70,7 @@ export const BookProvider = ({ children }) => {
         publishersLength: publishers.length,
       });
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -86,6 +86,7 @@ export const BookProvider = ({ children }) => {
         publishers,
         loading,
         error,
+        fetchBooks: fetchData,
       }}>
       {children}
     </BookContext.Provider>

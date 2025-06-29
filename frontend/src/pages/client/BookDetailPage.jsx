@@ -196,7 +196,7 @@ const BookDetailPage = () => {
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">
-                ${book.price || "0.00"}{" "}
+                {(parseInt(book.price) || 0).toLocaleString('vi-VN')} ₫
                 {/* Display string directly with fallback */}
               </span>
               <span

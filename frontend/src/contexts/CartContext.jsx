@@ -9,6 +9,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -51,7 +52,8 @@ export const CartProvider = ({ children }) => {
         };
         return updatedItems;
       } else {
-        // Add new item to cart
+        // Add new item to cart and automatically select it
+        setSelectedItems(prev => new Set([...prev, book.id]));
         return [...prevItems, { ...book, quantity }];
       }
     });
@@ -72,33 +74,98 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = (bookId) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== bookId));
+    // Also remove from selected items
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(bookId);
+      return newSet;
+    });
   };
 
   const clearCart = () => {
     setCartItems([]);
+    setSelectedItems(new Set());
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartItems.reduce((total, item) => {
+      // Keep price as integer (cents)
+      const price = parseInt(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 0;
+      return total + (price * quantity);
+    }, 0);
   };
 
   const getItemCount = () => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
-  const value = {
-    cartItems,
-    loading,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    getCartTotal,
-    getItemCount
+  // Selection functions
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
   };
 
+  const selectAllItems = () => {
+    setSelectedItems(new Set(cartItems.map(item => item.id)));
+  };
+
+  const deselectAllItems = () => {
+    setSelectedItems(new Set());
+  };
+
+  const getSelectedItems = () => {
+    return cartItems.filter(item => selectedItems.has(item.id));
+  };
+
+  const getSelectedTotal = () => {
+    return getSelectedItems().reduce((total, item) => {
+      const price = parseInt(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 0;
+      return total + (price * quantity);
+    }, 0);
+  };
+
+  const getSelectedItemsCount = () => {
+    return selectedItems.size;
+  };
+
+  const clearSelectedItems = () => {
+    const selectedItemIds = Array.from(selectedItems);
+    setCartItems(prevItems => 
+      prevItems.filter(item => !selectedItemIds.includes(item.id))
+    );
+    setSelectedItems(new Set());
+  };
+  
   return (
-    <CartContext.Provider value={value}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        selectedItems,
+        loading,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        getCartTotal,
+        getItemCount,
+        toggleItemSelection,
+        selectAllItems,
+        deselectAllItems,
+        getSelectedItems,
+        getSelectedTotal,
+        getSelectedItemsCount,
+        clearSelectedItems,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

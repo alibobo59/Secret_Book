@@ -262,7 +262,7 @@ const NotificationDropdown = ({ className = "" }) => {
                                   deleteNotification(notification.id);
                                 }}
                                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                                title="Delete notification"
+                                title="Xóa Thông Báo"
                               >
                                 <Trash2 className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
                               </button>

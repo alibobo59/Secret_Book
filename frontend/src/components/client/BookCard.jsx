@@ -72,7 +72,7 @@ const BookCard = ({ book }) => {
           </div>
           <div className="flex justify-between items-center">
             <span className="font-bold text-gray-800 dark:text-white">
-              ${book.price}
+              {(parseInt(book.price) || 0).toLocaleString('vi-VN')} ₫
             </span>
             <span
               className={`text-xs px-2 py-1 rounded ${

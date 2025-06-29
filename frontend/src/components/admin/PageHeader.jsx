@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { PlusCircle } from "lucide-react";
 
 /**
@@ -13,7 +13,7 @@ import { PlusCircle } from "lucide-react";
 const PageHeader = ({
   title,
   onAddNew,
-  addNewLabel = "Add New",
+  addNewLabel = "Thêm Mới",
   hideAddButton = false,
 }) => {
   return (

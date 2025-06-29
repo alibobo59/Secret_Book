@@ -16,7 +16,6 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import LanguageSwitcher from "../common/LanguageSwitcher";
 import NotificationDropdown from "./NotificationDropdown";
 import CartDropdown from "./CartDropdown";
 import UserProfileDropdown from "./UserProfileDropdown";
@@ -157,13 +156,13 @@ const Header = () => {
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </form>
 
-              <LanguageSwitcher />
+
 
               <button
                 onClick={toggleDarkMode}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 aria-label={
-                  darkMode ? "Switch to light mode" : "Switch to dark mode"
+                  darkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"
                 }>
                 {darkMode ? (
                   <Sun className="h-5 w-5 text-amber-500" />
@@ -221,9 +220,7 @@ const Header = () => {
                   </div>
                 </form>
 
-                <div className="mb-4">
-                  <LanguageSwitcher />
-                </div>
+
 
                 <nav className="flex flex-col space-y-4">
                   <Link
@@ -285,8 +282,8 @@ const Header = () => {
                         className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
                         aria-label={
                           darkMode
-                            ? "Switch to light mode"
-                            : "Switch to dark mode"
+                            ? "Chuyển sang chế độ sáng"
+                            : "Chuyển sang chế độ tối"
                         }>
                         {darkMode ? (
                           <Sun className="h-5 w-5 text-amber-500" />

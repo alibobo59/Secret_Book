@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
+import { useCart } from '../../contexts/CartContext';
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
+  const { clearCart } = useCart();
+  
+  // Clear cart when payment is successful
+  useEffect(() => {
+    clearCart();
+  }, [clearCart]);
   
   return (
     <div className="container mx-auto px-4 py-8 text-center">

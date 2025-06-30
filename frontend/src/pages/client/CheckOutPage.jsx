@@ -112,10 +112,10 @@ const CheckoutPage = () => {
         shipping: 0, // Add shipping calculation if needed
         notes: formData.notes,
       };
-  
-      const response = await api.post("/orders", orderData);
-      const order = response.data.data;
-  
+
+      // Use createOrder from OrderContext which automatically clears cart
+      const order = await createOrder(orderData);
+
       if (paymentMethod === "vnpay") {
         // Create VNPay payment
         const paymentResponse = await api.post("/payment/vnpay/create", {

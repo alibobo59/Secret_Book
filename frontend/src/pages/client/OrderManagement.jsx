@@ -220,10 +220,13 @@ const OrderManagementPage = () => {
   const hasReviewableItems = (order) => {
     if (!order.items || order.items.length === 0) return false;
     
-    return order.items.some(item => {
+    const result = order.items.some(item => {
       const bookId = item.book_id || item.bookId;
-      return bookId && reviewEligibility[bookId] === true;
+      const canReview = bookId && reviewEligibility[bookId] === true;
+      return canReview;
     });
+    
+    return result;
   };
 
   // In the useEffect where orders are loaded:
@@ -263,7 +266,7 @@ const OrderManagementPage = () => {
             if (bookId && !eligibilityMap[bookId]) {
               try {
                 const response = await reviewAPI.canReviewBook(bookId);
-                eligibilityMap[bookId] = response.data.canReview;
+                eligibilityMap[bookId] = response.data.can_review;
               } catch (error) {
                 console.error(`Failed to check review eligibility for book ${bookId}:`, error);
                 eligibilityMap[bookId] = false;
@@ -675,7 +678,7 @@ const OrderManagementPage = () => {
                         to={`/orders/${order.id}/review`}
                         className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                         <Package className="h-4 w-4" />
-                        Đánh Giá Sản Phẩm
+                        Đánh Giá Đơn Hàng
                       </Link>
                     )}
                   </div>

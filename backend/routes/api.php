@@ -10,6 +10,7 @@ use App\Http\Controllers\API\AuditLogController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\PublisherController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\ReviewController;
 
 // Root route
 Route::get('/', function () {
@@ -30,6 +31,9 @@ Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index'
 Route::get('/authors/{author}', [AuthorController::class, 'show'])->name('authors.show');
 Route::get('/publishers', [PublisherController::class, 'index'])->name('publishers.index');
 Route::get('/publishers/{publisher}', [PublisherController::class, 'show'])->name('publishers.show');
+
+// Public review routes
+Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
 // Admin/Mod routes (protected by auth:sanctum and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
@@ -53,8 +57,10 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::get('/admin/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
     Route::get('/admin/orders/{order}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
     Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update-status');
+    Route::patch('/admin/orders/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('admin.orders.update-payment');
+    Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
     Route::get('/admin/orders/stats', [OrderController::class, 'getStats'])->name('admin.orders.stats');
-    
+
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/stats', [AuditLogController::class, 'getStats'])->name('audit-logs.stats');
@@ -69,9 +75,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-    
+
     // Payment routes
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
+
+    // Review routes for authenticated users
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
 });
 
 // Public routes for VNPay

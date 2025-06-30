@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\OrderStatusChanged;
 use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
@@ -22,7 +25,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $query = Order::with(['items.book', 'user'])
+        $query = Order::with(['items.book', 'user', 'address'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -49,7 +52,7 @@ class OrderController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Order::with(['items.book', 'user'])
+        $query = Order::with(['items.book', 'user', 'address'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status if provided
@@ -67,7 +70,29 @@ class OrderController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        $orders = $query->paginate(15);
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('id', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('order_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                               ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('address', function($addressQuery) use ($searchTerm) {
+                      $addressQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('phone', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('address', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('city', 'like', '%' . $searchTerm . '%');
+                  });
+            });
+        }
+
+        // Get per_page from request, default to 15
+        $perPage = $request->get('per_page', 15);
+        $orders = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -138,8 +163,20 @@ class OrderController extends Controller
                 ]);
             }
 
+            // Create address if provided
+            if ($request->has('address')) {
+                Address::create([
+                    'order_id' => $order->id,
+                    'name' => $request->address['name'],
+                    'address' => $request->address['address'],
+                    'city' => $request->address['city'],
+                    'phone' => $request->address['phone'],
+                    'email' => $request->address['email'],
+                ]);
+            }
+
             // Load relationships for response
-            $order->load(['items.book', 'user']);
+            $order->load(['items.book', 'user', 'address']);
 
             return response()->json([
                 'success' => true,
@@ -153,18 +190,6 @@ class OrderController extends Controller
                 'message' => 'Failed to create order: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        // After creating order, save address
-        if ($request->has('address')) {
-            Address::create([
-                'order_id' => $order->id,
-                'name' => $request->address['name'],
-                'address' => $request->address['address'],
-                'city' => $request->address['city'],
-                'phone' => $request->address['phone'],
-                'email' => $request->address['email'],
-            ]);
-        }
     }
 
     /**
@@ -174,7 +199,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $order = Order::with(['items.book', 'user'])
+        $order = Order::with(['items.book', 'user', 'address'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->first();
@@ -197,7 +222,7 @@ class OrderController extends Controller
      */
     public function adminShow($id)
     {
-        $order = Order::with(['items.book', 'user'])->find($id);
+        $order = Order::with(['items.book', 'user', 'address'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -240,12 +265,27 @@ class OrderController extends Controller
         }
 
         try {
+            // Store old status before updating
+            $oldStatus = $order->status;
+            
             $order->update([
                 'status' => $request->status,
                 'notes' => $request->notes ?? $order->notes,
             ]);
 
-            $order->load(['items.book', 'user']);
+            $order->load(['items.book', 'user', 'address']);
+
+            // Send email notification if status changed and user has email
+            if ($oldStatus !== $request->status && $order->user && $order->user->email) {
+                try {
+                    Mail::to($order->user->email)->send(
+                        new OrderStatusChanged($order, $oldStatus, $request->status)
+                    );
+                } catch (\Exception $mailException) {
+                    // Log email error but don't fail the status update
+                    Log::error('Failed to send order status email: ' . $mailException->getMessage());
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -327,6 +367,70 @@ class OrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get order statistics: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update payment status (admin only)
+     */
+    public function updatePaymentStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'payment_status' => 'required|in:pending,completed,failed,refunded'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $order = Order::with(['items.book', 'user', 'address'])->findOrFail($id);
+            $oldPaymentStatus = $order->payment_status;
+            
+            $order->update([
+                'payment_status' => $request->payment_status
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment status updated successfully',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update payment status: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete an order (admin only)
+     */
+    public function destroy($id)
+    {
+        try {
+            $order = Order::findOrFail($id);
+            
+            // Delete related order items first
+            $order->items()->delete();
+            
+            // Delete the order
+            $order->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete order: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

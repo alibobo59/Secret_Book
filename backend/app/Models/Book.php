@@ -15,14 +15,14 @@ class Book extends Model
         'sku',
         'description',
         'price',
-        'stock_quantity', // Changed from 'stock' to match frontend
+        'stock_quantity', 
         'category_id',
         'author_id',
         'publisher_id',
         'image',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'average_rating', 'reviews_count'];
 
     public function category()
     {
@@ -44,9 +44,30 @@ class Book extends Model
         return $this->hasMany(BookVariation::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function verifiedReviews()
+    {
+        return $this->reviews()->verifiedPurchase();
+    }
+
     public function getImageUrlAttribute()
     {
         return $this->image ? url('storage/' . $this->image) : null;
+    }
+
+    // Calculate average rating from verified reviews only
+    public function getAverageRatingAttribute()
+    {
+        return $this->verifiedReviews()->avg('rating') ?? 0;
+    }
+
+    public function getReviewsCountAttribute()
+    {
+        return $this->verifiedReviews()->count();
     }
 
     /**

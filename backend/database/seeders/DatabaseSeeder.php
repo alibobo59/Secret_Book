@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             BooksSeeder::class,
             UserSeeder::class,
             BookVariationsSeeder::class,
+            OrderSeeder::class,
+            ReviewSeeder::class,
         ]);
     }
 }

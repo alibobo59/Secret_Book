@@ -215,6 +215,7 @@ const ReviewPage = () => {
             const reviewData = reviews[bookId] || { rating: 0, review: "", hoveredRating: 0 };
             const isSubmitted = submitted[bookId];
             const isSubmitting = submitting[bookId];
+            const isReviewable = bookId && reviews.hasOwnProperty(bookId);
 
             return (
               <motion.div

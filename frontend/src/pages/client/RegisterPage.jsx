@@ -81,36 +81,36 @@ const RegisterPage = () => {
       );
       navigate("/");
     } catch (error) {
-      // Lớp thứ hai: Xử lý lỗi validation từ Backend
-        if (error.response && error.response.status === 422) {
-          // Xử lý lỗi validation từ Laravel
-          const backendErrors = error.response.data.errors || {};
-          const newValidationErrors = {};
-
-          // Ánh xạ lỗi từ backend sang frontend
-          if (backendErrors.name) {
-            newValidationErrors.name = backendErrors.name[0];
-          }
-          if (backendErrors.email) {
-            newValidationErrors.email = backendErrors.email[0];
-          }
-          if (backendErrors.password) {
-            newValidationErrors.password = backendErrors.password[0];
-          }
-          if (backendErrors.password_confirmation) {
-            newValidationErrors.password_confirmation = backendErrors.password_confirmation[0];
-          }
+      // Second layer: Backend validation error handling
+      if (error.response && error.response.status === 422) {
+        // Handle Laravel validation errors
+        const backendErrors = error.response.data.errors || {};
+        const newValidationErrors = {};
+        
+        // Map backend field errors to frontend validation errors
+        if (backendErrors.name) {
+          newValidationErrors.name = backendErrors.name[0];
+        }
+        if (backendErrors.email) {
+          newValidationErrors.email = backendErrors.email[0];
+        }
+        if (backendErrors.password) {
+          newValidationErrors.password = backendErrors.password[0];
+        }
+        if (backendErrors.password_confirmation) {
+          newValidationErrors.password_confirmation = backendErrors.password_confirmation[0];
+        }
         
         setValidationErrors(newValidationErrors);
         
-        // Nếu không có lỗi cụ thể theo trường, hiển thị thông báo chung
-          if (Object.keys(newValidationErrors).length === 0) {
-            setError(error.response.data.message || t("message.error.validation"));
-          }
+        // If there are no field-specific errors, show general message
+        if (Object.keys(newValidationErrors).length === 0) {
+          setError(error.response.data.message || t("message.error.validation"));
+        }
       } else {
-        // Xử lý các loại lỗi khác (401, 500, v.v.)
-          const errorMessage = error.response?.data?.message || error.message || t("message.error.register");
-          setError(errorMessage);
+        // Handle other types of errors (401, 500, etc.)
+        const errorMessage = error.response?.data?.message || error.message || t("message.error.register");
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);

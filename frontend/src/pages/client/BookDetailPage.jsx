@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { api } from "../../services/api";
+import { api, reviewAPI } from "../../services/api";
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -27,7 +27,12 @@ const BookDetailPage = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewEligibility, setReviewEligibility] = useState(null);
 
+  // Fetch book details
   useEffect(() => {
     const fetchBook = async () => {
       setLoading(true);
@@ -47,6 +52,39 @@ const BookDetailPage = () => {
     };
     fetchBook();
   }, [id]);
+
+  // Fetch reviews for the book
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id) return;
+      setReviewsLoading(true);
+      try {
+        const response = await reviewAPI.getBookReviews(id);
+        setReviews(response.data.data || []);
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
+  // Check if user can review the book
+  useEffect(() => {
+    const checkReviewEligibility = async () => {
+      if (!user || !id) return;
+      try {
+        const response = await reviewAPI.canReviewBook(id);
+        setCanReview(response.data.can_review);
+        setReviewEligibility(response.data);
+      } catch (err) {
+        console.error("Failed to check review eligibility:", err);
+        setCanReview(false);
+      }
+    };
+    checkReviewEligibility();
+  }, [user, id]);
 
   if (loading) {
     return (
@@ -96,18 +134,35 @@ const BookDetailPage = () => {
     e.preventDefault();
     if (rating === 0) return;
 
-    // Assuming addRating is implemented in useBook or elsewhere
-    // For now, we'll simulate it locally; update with actual implementation
-    const success = await new Promise((resolve) =>
-      setTimeout(() => resolve(true), 500)
-    ); // Placeholder
-    if (success) {
+    try {
+      const reviewData = {
+        book_id: parseInt(id),
+        rating: rating,
+        review: review.trim() || null
+      };
+
+      await reviewAPI.submitReview(reviewData);
+      
+      // Reset form
       setRating(0);
       setReview("");
       setShowReviewForm(false);
-      // Optionally refetch book to update ratings
-      const response = await api.get(`/books/${id}`);
-      setBook(response.data.data || response.data);
+      
+      // Refresh reviews and book data
+      const [reviewsResponse, bookResponse] = await Promise.all([
+        reviewAPI.getBookReviews(id),
+        api.get(`/books/${id}`)
+      ]);
+      
+      setReviews(reviewsResponse.data.data || []);
+      setBook(bookResponse.data.data || bookResponse.data);
+      
+      // Update review eligibility
+      setCanReview(false);
+      
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+      alert(err.response?.data?.message || "Failed to submit review");
     }
   };
 
@@ -167,7 +222,7 @@ const BookDetailPage = () => {
               ))}
             </div>
             <span className="text-gray-600 dark:text-gray-400">
-              ({book.ratings?.length || 0} {t("reviews")})
+              ({book.reviews_count || 0} {t("reviews")})
             </span>
           </div>
 
@@ -248,12 +303,17 @@ const BookDetailPage = () => {
           <h2 className="text-2xl font-serif font-bold text-gray-800 dark:text-white">
             {t("customerReviews")}
           </h2>
-          {user && !showReviewForm && (
+          {user && canReview && !showReviewForm && (
             <button
               onClick={() => setShowReviewForm(true)}
               className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
               {t("writeReview")}
             </button>
+          )}
+          {user && !canReview && reviewEligibility && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {reviewEligibility.reason}
+            </p>
           )}
         </div>
 
@@ -317,10 +377,14 @@ const BookDetailPage = () => {
 
         {/* Reviews List */}
         <div className="space-y-6">
-          {book.ratings && book.ratings.length > 0 ? (
-            book.ratings.map((rating, index) => (
+          {reviewsLoading ? (
+            <div className="text-center text-gray-600 dark:text-gray-400">
+              Loading reviews...
+            </div>
+          ) : reviews && reviews.length > 0 ? (
+            reviews.map((review, index) => (
               <motion.div
-                key={rating.id}
+                key={review.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -328,26 +392,28 @@ const BookDetailPage = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="font-medium text-gray-800 dark:text-white">
-                      {rating.user_name}
+                      {review.user?.name || 'Anonymous'}
                     </p>
                     <div className="flex text-amber-500 mt-1">
-                      {[...Array(5)].map((_, index) => (
+                      {[...Array(5)].map((_, starIndex) => (
                         <Star
-                          key={index}
+                          key={starIndex}
                           className={`h-4 w-4 ${
-                            index < rating.rating ? "fill-current" : ""
+                            starIndex < review.rating ? "fill-current" : ""
                           }`}
                         />
                       ))}
                     </div>
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(rating.created_at).toLocaleDateString()}
+                    {new Date(review.created_at).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {rating.review}
-                </p>
+                {review.review && (
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {review.review}
+                  </p>
+                )}
               </motion.div>
             ))
           ) : (

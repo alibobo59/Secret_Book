@@ -16,6 +16,7 @@ import {
   OrderFailedPage,
   OrderConfirmationPage,
 } from "./pages/client";
+import ReviewPage from "./pages/client/ReviewPage";
 import {
   DashboardHome,
   BookManagement,
@@ -59,6 +60,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/orders" element={<OrderManagementClient />} />
+        <Route path="/orders/:orderId/review" element={<ReviewPage />} />
         <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
         <Route path="/order-failed/:orderId?" element={<OrderFailedPage />} />
         <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />

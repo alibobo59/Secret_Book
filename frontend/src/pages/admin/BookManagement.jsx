@@ -66,40 +66,40 @@ const BookManagement = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Book Management
+        Quản Lý Sách
       </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {!hasRole(["admin"]) && !error && (
-        <p className="text-red-500 mb-4">Only admins can manage books.</p>
+        <p className="text-red-500 mb-4">Chỉ quản trị viên mới có thể quản lý sách.</p>
       )}
       {hasRole(["admin"]) && (
         <>
           <button
             onClick={() => navigate("/admin/books/create")}
             className="mb-4 bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
-            Add New Book
+            Thêm Sách Mới
           </button>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Title
+                    Tiêu Đề
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     SKU
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Price
+                    Giá
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Stock
+                    Tồn Kho
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Category
+                    Danh Mục
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Actions
+                    Hành Động
                   </th>
                 </tr>
               </thead>
@@ -125,21 +125,21 @@ const BookManagement = () => {
                       <button
                         onClick={() => handleViewDetail(book.id)}
                         className="text-blue-600 hover:text-blue-800 mr-4"
-                        title="View Details">
+                        title="Xem Chi Tiết">
                         <Eye size={18} />
                       </button>
                       <button
                         onClick={() => handleEdit(book.id)}
                         className="text-amber-600 hover:text-amber-800 mr-4"
                         disabled={!hasRole(["admin"])}
-                        title="Edit Book">
+                        title="Chỉnh Sửa Sách">
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(book.id)}
                         className="text-red-600 hover:text-red-800"
                         disabled={!hasRole(["admin"])}
-                        title="Delete Book">
+                        title="Xóa Sách">
                         <Trash2 size={18} />
                       </button>
                     </td>

@@ -70,17 +70,10 @@ const CheckoutPage = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = "Họ và tên là bắt buộc";
-    if (!formData.email.trim()) newErrors.email = "Email là bắt buộc";
+    // Name and email are read-only and pre-filled from user profile, so no validation needed
     if (!formData.phone.trim()) newErrors.phone = "Số điện thoại là bắt buộc";
     if (!formData.city.trim()) newErrors.city = "Thành phố là bắt buộc";
     if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc";
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      newErrors.email = "Vui lòng nhập địa chỉ email hợp lệ";
-    }
 
     // Phone validation (basic)
     const phoneRegex = /^[0-9]{10,11}$/;
@@ -207,15 +200,11 @@ const CheckoutPage = () => {
                     type="text"
                     name="name"
                     value={formData.name}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    readOnly
+                    className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-500 cursor-not-allowed"
                     placeholder="Nhập họ và tên đầy đủ"
                   />
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This field cannot be changed during checkout</p>
                 </div>
 
                 <div>
@@ -227,15 +216,11 @@ const CheckoutPage = () => {
                     type="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
+                    readOnly
+                    className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-500 cursor-not-allowed"
                     placeholder="Nhập email của bạn"
                   />
-                  {errors.email && (
-                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This field cannot be changed during checkout</p>
                 </div>
 
                 <div>

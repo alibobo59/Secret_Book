@@ -57,21 +57,21 @@ const UserManagement = () => {
 
   // Define columns for the users table
   const columns = [
-    { id: "id", label: "ID", sortable: false },
-    { id: "name", label: "Name", sortable: false },
+    { id: "id", label: "Mã", sortable: false },
+    { id: "name", label: "Tên", sortable: false },
     { id: "email", label: "Email", sortable: false },
-    { id: "role", label: "Role", sortable: false },
-    { id: "status", label: "Status", sortable: false },
-    { id: "lastLogin", label: "Last Login", sortable: false },
-    { id: "actions", label: "Actions", sortable: false },
+    { id: "role", label: "Vai Trò", sortable: false },
+    { id: "status", label: "Trạng Thái", sortable: false },
+    { id: "lastLogin", label: "Đăng Nhập Cuối", sortable: false },
+    { id: "actions", label: "Hành Động", sortable: false },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="User Management"
+        title="Quản Lý Người Dùng"
         onAddNew={handleAddUser}
-        addNewLabel="Add New User"
+        addNewLabel="Thêm Người Dùng Mới"
       />
 
       <Table

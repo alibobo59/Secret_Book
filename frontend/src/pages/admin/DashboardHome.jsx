@@ -51,11 +51,11 @@ const DashboardHome = () => {
 
   // Define columns for the low stock books table
   const columns = [
-    { id: "id", label: "ID", sortable: false },
-    { id: "title", label: "Title", sortable: false },
-    { id: "author", label: "Author", sortable: false },
-    { id: "stock", label: "Stock", sortable: false },
-    { id: "price", label: "Price", sortable: false },
+    { id: "id", label: "Mã", sortable: false },
+    { id: "title", label: "Tiêu Đề", sortable: false },
+    { id: "author", label: "Tác Giả", sortable: false },
+    { id: "stock", label: "Tồn Kho", sortable: false },
+    { id: "price", label: "Giá", sortable: false },
   ];
 
   // Filter books with low stock
@@ -79,7 +79,7 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Dashboard</h2>
+      <h2 className="text-2xl font-bold">Bảng Điều Khiển</h2>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -87,7 +87,7 @@ const DashboardHome = () => {
           icon={<BookOpen className="h-6 w-6" />}
           iconBgColor="bg-amber-100"
           iconColor="text-amber-600"
-          title="Total Books"
+          title="Tổng Số Sách"
           value={totalBooks}
         />
 
@@ -95,7 +95,7 @@ const DashboardHome = () => {
           icon={<Tag className="h-6 w-6" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
-          title="Categories"
+          title="Danh Mục"
           value={totalCategories}
         />
 
@@ -103,7 +103,7 @@ const DashboardHome = () => {
           icon={<AlertCircle className="h-6 w-6" />}
           iconBgColor="bg-red-100"
           iconColor="text-red-600"
-          title="Low Stock"
+          title="Tồn Kho Thấp"
           value={lowStockBooks}
         />
 
@@ -111,7 +111,7 @@ const DashboardHome = () => {
           icon={<DollarSign className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
-          title="Inventory Value"
+          title="Giá Trị Tồn Kho"
           value={`$${totalValue.toFixed(2)}`}
         />
       </div>
@@ -121,7 +121,7 @@ const DashboardHome = () => {
 
       {/* Low Stock Alert */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Low Stock Alert</h3>
+        <h3 className="text-lg font-semibold mb-4">Cảnh Báo Tồn Kho Thấp</h3>
         {lowStockBooksData.length > 0 ? (
           <Table
             columns={columns}
@@ -157,7 +157,7 @@ const DashboardHome = () => {
         ) : (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <AlertCircle className="mx-auto h-12 w-12 mb-4" />
-            <p>No low stock items found</p>
+            <p>Không tìm thấy sản phẩm tồn kho thấp</p>
           </div>
         )}
       </div>

@@ -42,20 +42,20 @@ const BookCreatePage = () => {
   const [variations, setVariations] = useState([]);
 
   const tabs = [
-    { id: 'basic', label: 'Basic Information', icon: Package },
-    { id: 'variations', label: 'Variations', icon: Package, disabled: !createdBookId },
+    { id: 'basic', label: 'Thông Tin Cơ Bản', icon: Package },
+    { id: 'variations', label: 'Biến Thể', icon: Package, disabled: !createdBookId },
   ];
 
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.author.trim()) newErrors.author = 'Author is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (!formData.price || parseInt(formData.price) <= 0) newErrors.price = 'Valid price is required';
-    if (!formData.stock || parseInt(formData.stock) < 0) newErrors.stock = 'Valid stock quantity is required';
-    if (!formData.category_id) newErrors.category_id = 'Category is required';
-    if (!formData.isbn.trim()) newErrors.isbn = 'ISBN is required';
+    if (!formData.title.trim()) newErrors.title = 'Tiêu đề là bắt buộc';
+    if (!formData.author.trim()) newErrors.author = 'Tác giả là bắt buộc';
+    if (!formData.description.trim()) newErrors.description = 'Mô tả là bắt buộc';
+    if (!formData.price || parseInt(formData.price) <= 0) newErrors.price = 'Giá hợp lệ là bắt buộc';
+    if (!formData.stock || parseInt(formData.stock) < 0) newErrors.stock = 'Số lượng tồn kho hợp lệ là bắt buộc';
+    if (!formData.category_id) newErrors.category_id = 'Danh mục là bắt buộc';
+    if (!formData.isbn.trim()) newErrors.isbn = 'ISBN là bắt buộc';
     if (!formData.published_date) newErrors.published_date = 'Publication date is required';
     if (!formData.cover_image.trim()) newErrors.cover_image = 'Cover image URL is required';
     
@@ -67,7 +67,7 @@ const BookCreatePage = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.showError('Validation Error', 'Please fix the errors in the form before submitting.');
+      toast.showError('Lỗi Xác Thực', 'Vui lòng sửa các lỗi trong biểu mẫu trước khi gửi.');
       return;
     }
     
@@ -96,10 +96,10 @@ const BookCreatePage = () => {
       
       // Show success toast
       toast.showSuccess(
-        'Book Created Successfully',
-        `"${newBook.title}" has been added to the inventory.`,
+        'Tạo Sách Thành Công',
+        `"${newBook.title}" đã được thêm vào kho.`,
         {
-          actionText: 'View Book',
+          actionText: 'Xem Sách',
           actionUrl: `/admin/books/${newBook.id}`,
         }
       );
@@ -108,8 +108,8 @@ const BookCreatePage = () => {
       setActiveTab('variations');
     } catch (error) {
       console.error('Failed to create book:', error);
-      toast.showError('Creation Failed', 'Failed to create book. Please try again.');
-      setErrors({ submit: 'Failed to create book. Please try again.' });
+      toast.showError('Tạo Thất Bại', 'Không thể tạo sách. Vui lòng thử lại.');
+      setErrors({ submit: 'Không thể tạo sách. Vui lòng thử lại.' });
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ const BookCreatePage = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <PageHeader title="Create New Book" hideAddButton />
+        <PageHeader title="Tạo Sách Mới" hideAddButton />
       </div>
 
       {/* Progress Indicator */}
@@ -199,14 +199,14 @@ const BookCreatePage = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Title"
+                  label="Tiêu Đề"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   error={errors.title}
                   required
                 />
                 <FormField
-                  label="Author"
+                  label="Tác Giả"
                   value={formData.author}
                   onChange={(e) => handleInputChange('author', e.target.value)}
                   error={errors.author}
@@ -214,7 +214,7 @@ const BookCreatePage = () => {
                 />
                 <div className="md:col-span-2">
                   <FormField
-                    label="Description"
+                    label="Mô Tả"
                     type="textarea"
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
@@ -233,17 +233,17 @@ const BookCreatePage = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
-                  label="Price ($)"
+                  label="Giá ($)"
                   type="number"
-                  step="0.01"
                   min="0"
+                  step="0.01"
                   value={formData.price}
                   onChange={(e) => handleInputChange('price', e.target.value)}
                   error={errors.price}
                   required
                 />
                 <FormField
-                  label="Số Lượng Tồn Kho"
+                  label="Tồn Kho"
                   type="number"
                   min="0"
                   value={formData.stock}
@@ -253,8 +253,8 @@ const BookCreatePage = () => {
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category <span className="text-red-500">*</span>
-                  </label>
+                  Danh Mục <span className="text-red-500">*</span>
+                </label>
                   <select
                     value={formData.category_id}
                     onChange={(e) => handleInputChange('category_id', e.target.value)}
@@ -263,7 +263,7 @@ const BookCreatePage = () => {
                     }`}
                     required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">Chọn danh mục</option>
                     {categories.map(category => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -311,8 +311,8 @@ const BookCreatePage = () => {
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Language
-                  </label>
+                  Ngôn Ngữ
+                </label>
                   <select
                     value={formData.language}
                     onChange={(e) => handleInputChange('language', e.target.value)}
@@ -328,8 +328,8 @@ const BookCreatePage = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Format
-                  </label>
+                  Ngày Xuất Bản
+                </label>
                   <select
                     value={formData.format}
                     onChange={(e) => handleInputChange('format', e.target.value)}
@@ -396,7 +396,7 @@ const BookCreatePage = () => {
                 onClick={() => navigate('/admin/books')}
                 className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 type="submit"
@@ -408,7 +408,7 @@ const BookCreatePage = () => {
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                {loading ? 'Creating...' : 'Create Book'}
+                {loading ? 'Đang Tạo...' : 'Tạo Sách'}
               </button>
             </div>
           </form>
@@ -431,7 +431,7 @@ const BookCreatePage = () => {
               className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
               <Save className="h-4 w-4" />
-              Finish & View Book
+              Hoàn Thành & Xem Sách
             </button>
           </div>
         </div>

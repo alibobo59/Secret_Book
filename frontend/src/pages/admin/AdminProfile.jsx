@@ -81,9 +81,9 @@ const AdminProfile = () => {
   ]);
 
   const tabs = [
-    { id: 'profile', label: 'Profile Information', icon: User },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'activity', label: 'Login Activity', icon: Clock },
+    { id: 'profile', label: 'Thông Tin Hồ Sơ', icon: User },
+    { id: 'security', label: 'Bảo Mật', icon: Shield },
+    { id: 'activity', label: 'Hoạt Động Đăng Nhập', icon: Clock },
   ];
 
   const handleSaveProfile = async () => {
@@ -138,7 +138,7 @@ const AdminProfile = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Admin Profile" hideAddButton />
+      <PageHeader title="Hồ Sơ Quản Trị" hideAddButton />
 
       {/* Profile Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -146,28 +146,28 @@ const AdminProfile = () => {
           icon={<Calendar className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
-          title="Member Since"
+          title="Thành Viên Từ"
           value={new Date(profileData.joinDate).getFullYear()}
         />
         <StatCard
           icon={<Clock className="h-6 w-6" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
-          title="Last Login"
-          value="30 min ago"
+          title="Đăng Nhập Cuối"
+          value="30 phút trước"
         />
         <StatCard
           icon={<Shield className="h-6 w-6" />}
           iconBgColor="bg-purple-100"
           iconColor="text-purple-600"
-          title="Security Score"
+          title="Điểm Bảo Mật"
           value="85%"
         />
         <StatCard
           icon={<Eye className="h-6 w-6" />}
           iconBgColor="bg-amber-100"
           iconColor="text-amber-600"
-          title="Login Sessions"
+          title="Phiên Đăng Nhập"
           value={loginHistory.length}
         />
       </div>
@@ -218,7 +218,7 @@ const AdminProfile = () => {
                       {profileData.name}
                     </h2>
                     <span className="px-3 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full text-sm font-medium">
-                      Administrator
+                      Quản Trị Viên
                     </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 mb-1">{profileData.email}</p>
@@ -229,21 +229,21 @@ const AdminProfile = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
                 >
                   <Edit className="h-4 w-4" />
-                  {isEditing ? 'Cancel' : 'Edit Profile'}
+                  {isEditing ? 'Hủy' : 'Chỉnh Sửa Hồ Sơ'}
                 </button>
               </div>
 
               {/* Profile Form */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Full Name"
+                  label="Họ Tên"
                   value={profileData.name}
                   onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                   disabled={!isEditing}
                   required
                 />
                 <FormField
-                  label="Email Address"
+                  label="Địa Chỉ Email"
                   type="email"
                   value={profileData.email}
                   onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
@@ -251,20 +251,20 @@ const AdminProfile = () => {
                   required
                 />
                 <FormField
-                  label="Phone Number"
+                  label="Số Điện Thoại"
                   value={profileData.phone}
                   onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                   disabled={!isEditing}
                 />
                 <FormField
-                  label="Location"
+                  label="Địa Điểm"
                   value={profileData.location}
                   onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
                   disabled={!isEditing}
                 />
                 <div className="md:col-span-2">
                   <FormField
-                    label="Bio"
+                    label="Tiểu Sử"
                     type="textarea"
                     value={profileData.bio}
                     onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
@@ -280,14 +280,14 @@ const AdminProfile = () => {
                     onClick={() => setIsEditing(false)}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    Cancel
+                    Hủy
                   </button>
                   <button
                     onClick={handleSaveProfile}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
                     <Save className="h-4 w-4" />
-                    Save Changes
+                    Lưu Thay Đổi
                   </button>
                 </div>
               )}

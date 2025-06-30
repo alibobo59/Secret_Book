@@ -58,8 +58,7 @@ const OrderConfirmationPage = () => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "confirmed":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+
       case "processing":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "shipped":
@@ -75,11 +74,10 @@ const OrderConfirmationPage = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "pending":
-      case "confirmed":
-        return <Package className="h-5 w-5" />;
-      case "processing":
-        return <Package className="h-5 w-5" />;
+        case "pending":
+          return <Package className="h-5 w-5" />;
+        case "processing":
+          return <Package className="h-5 w-5" />;
       case "shipped":
         return <Truck className="h-5 w-5" />;
       case "delivered":

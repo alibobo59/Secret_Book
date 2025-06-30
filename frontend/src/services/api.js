@@ -89,4 +89,32 @@ api.interceptors.response.use(
   }
 );
 
+// Review API functions
+export const reviewAPI = {
+  // Get reviews for a specific book
+  getBookReviews: (bookId, page = 1) => {
+    return api.get(`/books/${bookId}/reviews?page=${page}`);
+  },
+
+  // Submit a new review
+  submitReview: (reviewData) => {
+    return api.post('/reviews', reviewData);
+  },
+
+  // Update an existing review
+  updateReview: (reviewId, reviewData) => {
+    return api.put(`/reviews/${reviewId}`, reviewData);
+  },
+
+  // Delete a review
+  deleteReview: (reviewId) => {
+    return api.delete(`/reviews/${reviewId}`);
+  },
+
+  // Check if user can review a book
+  canReviewBook: (bookId) => {
+    return api.get(`/books/${bookId}/can-review`);
+  }
+};
+
 export { api, fetchCsrfToken };

@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
 import CancelOrderModal from "../../components/common/CancelOrderModal";
+import { reviewAPI } from "../../services/api";
 import {
   Package,
   Truck,
@@ -24,7 +25,7 @@ import {
   Mail,
 } from "lucide-react";
 
-// Fake orders data for testing
+// Dữ liệu đơn hàng giả để kiểm tra
 const fakeOrders = [
   {
     id: "ORD-001",
@@ -57,7 +58,7 @@ const fakeOrders = [
         quantity: 3,
       },
     ],
-    notes: "Please deliver before 5 PM",
+    notes: "Vui lòng giao hàng trước 5 giờ chiều",
   },
   {
     id: "ORD-002",
@@ -123,7 +124,7 @@ const fakeOrders = [
         quantity: 1,
       },
     ],
-    notes: "Gift wrapping requested",
+    notes: "Yêu cầu gói quà",
   },
   {
     id: "ORD-004",
@@ -194,7 +195,7 @@ const fakeOrders = [
         quantity: 1,
       },
     ],
-    notes: "Cancelled due to change of mind",
+    notes: "Đã hủy do thay đổi ý định",
   },
 ];
 
@@ -213,6 +214,17 @@ const OrderManagementPage = () => {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [reviewEligibility, setReviewEligibility] = useState({});
+
+  // Hàm kiểm tra xem đơn hàng có sản phẩm nào có thể đánh giá không
+  const hasReviewableItems = (order) => {
+    if (!order.items || order.items.length === 0) return false;
+    
+    return order.items.some(item => {
+      const bookId = item.book_id || item.bookId;
+      return bookId && reviewEligibility[bookId] === true;
+    });
+  };
 
   // In the useEffect where orders are loaded:
   useEffect(() => {
@@ -221,13 +233,16 @@ const OrderManagementPage = () => {
       return;
     }
 
-    // Load user's orders from API
+    // Tải đơn hàng của người dùng từ API
     const loadOrders = async () => {
       try {
         setIsLoadingOrders(true);
-        const userOrders = await getUserOrders(); // Remove userId parameter
+        const userOrders = await getUserOrders(); // Xóa tham số userId
         setOrders(userOrders || []);
         setFilteredOrders(userOrders || []);
+        
+        // Kiểm tra tính đủ điều kiện đánh giá cho các đơn hàng đã giao
+        await checkReviewEligibility(userOrders || []);
       } catch (error) {
         console.error("Không thể tải đơn hàng:", error);
         setOrders([]);
@@ -237,14 +252,38 @@ const OrderManagementPage = () => {
       }
     };
 
+    // Hàm kiểm tra tính đủ điều kiện đánh giá cho tất cả sách trong đơn hàng đã giao
+    const checkReviewEligibility = async (ordersList) => {
+      const eligibilityMap = {};
+      
+      for (const order of ordersList) {
+        if (order.status === "delivered" && order.items) {
+          for (const item of order.items) {
+            const bookId = item.book_id || item.bookId;
+            if (bookId && !eligibilityMap[bookId]) {
+              try {
+                const response = await reviewAPI.canReviewBook(bookId);
+                eligibilityMap[bookId] = response.data.canReview;
+              } catch (error) {
+                console.error(`Failed to check review eligibility for book ${bookId}:`, error);
+                eligibilityMap[bookId] = false;
+              }
+            }
+          }
+        }
+      }
+      
+      setReviewEligibility(eligibilityMap);
+    };
+
     loadOrders();
-  }, [user, navigate]); // Removed getUserOrders from dependencies to prevent infinite loop
+  }, [user, navigate]); // Đã xóa getUserOrders khỏi dependencies để tránh vòng lặp vô hạn
 
   useEffect(() => {
-    // Filter and search orders
+    // Lọc và tìm kiếm đơn hàng
     let filtered = orders;
 
-    // Apply search filter
+    // Áp dụng bộ lọc tìm kiếm
     if (searchTerm) {
       filtered = filtered.filter(
         (order) =>
@@ -257,12 +296,12 @@ const OrderManagementPage = () => {
       );
     }
 
-    // Apply status filter
+    // Áp dụng bộ lọc trạng thái
     if (statusFilter) {
       filtered = filtered.filter((order) => order.status === statusFilter);
     }
 
-    // Apply sorting
+    // Áp dụng sắp xếp
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -298,7 +337,7 @@ const OrderManagementPage = () => {
     try {
       await cancelOrder(selectedOrder.id, cancellationReason);
 
-      // Update local state
+      // Cập nhật trạng thái cục bộ
       const updatedOrders = orders.map((order) =>
         order.id === selectedOrder.id
           ? {
@@ -358,12 +397,11 @@ const OrderManagementPage = () => {
   };
 
   const canCancelOrder = (order) => {
-    return order.status === "pending" || order.status === "confirmed";
+    return order.status === "pending";
   };
 
   const statusOptions = [
     { value: "pending", label: "Chờ Xử Lý" },
-    { value: "confirmed", label: "Đã Xác Nhận" },
     { value: "processing", label: "Đang Xử Lý" },
     { value: "shipped", label: "Đã Giao" },
     { value: "delivered", label: "Đã Nhận" },
@@ -407,7 +445,7 @@ const OrderManagementPage = () => {
               <button
                 onClick={() => window.location.reload()}
                 className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
-                Try Again
+                Thử Lại
               </button>
             </div>
           </div>
@@ -429,22 +467,22 @@ const OrderManagementPage = () => {
             to="/"
             className="inline-flex items-center text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mb-4">
             <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Home
+            Về Trang Chủ
           </Link>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                My Orders
+                Đơn Hàng Của Tôi
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Track and manage your book orders
+                Theo dõi và quản lý đơn hàng sách của bạn
               </p>
             </div>
             <button
               onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              Làm Mới
             </button>
           </div>
         </motion.div>
@@ -461,7 +499,7 @@ const OrderManagementPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search orders or books..."
+                placeholder="Tìm kiếm đơn hàng hoặc sách..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -475,7 +513,7 @@ const OrderManagementPage = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 appearance-none">
-                <option value="">All Statuses</option>
+                <option value="">Tất Cả Trạng Thái</option>
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -502,8 +540,7 @@ const OrderManagementPage = () => {
             {/* Results Count */}
             <div className="flex items-center justify-center md:justify-end">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {filteredOrders.length} order
-                {filteredOrders.length !== 1 ? "s" : ""} found
+                Tìm thấy {filteredOrders.length} đơn hàng
               </span>
             </div>
           </div>
@@ -518,18 +555,18 @@ const OrderManagementPage = () => {
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
               {orders.length === 0
-                ? "No orders yet"
-                : "No orders match your filters"}
+                ? "Chưa có đơn hàng nào"
+                : "Không có đơn hàng nào phù hợp với bộ lọc của bạn"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {orders.length === 0
-                ? "Start shopping to see your orders here"
-                : "Try adjusting your search or filter criteria"}
+                ? "Bắt đầu mua sắm để xem đơn hàng tại đây"
+                : "Thử điều chỉnh tiêu chí tìm kiếm hoặc bộ lọc của bạn"}
             </p>
             <Link
               to="/books"
               className="inline-flex items-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
-              Start Shopping
+              Bắt Đầu Mua Sắm
             </Link>
           </motion.div>
         ) : (
@@ -547,17 +584,16 @@ const OrderManagementPage = () => {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                        Order {order.order_number}
+                        Đơn Hàng {order.order_number || order.id}
                       </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span>
-                          Placed on{" "}
+                          Đặt hàng vào{" "}
                           {new Date(order.created_at).toLocaleDateString()}
                         </span>
                         <span>•</span>
                         <span>
-                          {order.items?.length || 0} item
-                          {(order.items?.length || 0) !== 1 ? "s" : ""}
+                          {order.items?.length || 0} sản phẩm
                         </span>
                       </div>
                     </div>
@@ -572,7 +608,7 @@ const OrderManagementPage = () => {
                           order.status.slice(1)}
                       </span>
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
-                        ${order.total.toFixed(2)}
+                        ${(order.total / 100).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -581,26 +617,26 @@ const OrderManagementPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {order.items?.slice(0, 3).map((item) => (
                       <div
-                        key={item.bookId}
+                        key={item.book_id || item.id}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <img
-                          src={item.coverImage}
-                          alt={item.title}
+                          src={item.book?.image_url || item.coverImage || '/placeholder-book.jpg'}
+                          alt={item.book?.title || item.title}
                           className="w-12 h-16 object-cover rounded"
                         />
                         <div className="flex-grow min-w-0">
                           <h4 className="font-medium text-gray-800 dark:text-white text-sm truncate">
-                            {item.title}
+                            {item.book?.title || item.title}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                            by {item.author}
+                            của {item.book?.author?.name || item.author}
                           </p>
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                              Qty: {item.quantity}
+                              SL: {item.quantity}
                             </span>
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ${((item.price / 100) * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -609,14 +645,13 @@ const OrderManagementPage = () => {
                     {(order.items?.length || 0) > 3 && (
                       <div className="flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          +{(order.items?.length || 0) - 3} more item
-                          {(order.items?.length || 0) - 3 !== 1 ? "s" : ""}
+                          +{(order.items?.length || 0) - 3} sản phẩm khác
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Order Actions */}
+                  {/* Hành Động Đơn Hàng */}
                   <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => handleViewOrder(order)}
@@ -641,9 +676,9 @@ const OrderManagementPage = () => {
                       </button>
                     )}
 
-                    {order.status === "delivered" && (
+                    {order.status === "delivered" && hasReviewableItems(order) && (
                       <Link
-                        to={`/books/${order.items?.[0]?.bookId}`}
+                        to={`/orders/${order.id}/review`}
                         className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                         <Package className="h-4 w-4" />
                         Đánh Giá Sản Phẩm
@@ -656,7 +691,7 @@ const OrderManagementPage = () => {
           </div>
         )}
 
-        {/* Order Detail Modal */}
+        {/* Modal Chi Tiết Đơn Hàng */}
         <AnimatePresence>
           {isDetailModalOpen && selectedOrder && (
             <motion.div
@@ -672,7 +707,7 @@ const OrderManagementPage = () => {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
                   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Order Details - {selectedOrder.id}
+                    Chi Tiết Đơn Hàng - {selectedOrder.order_number || selectedOrder.id}
                   </h2>
                   <button
                     onClick={() => setIsDetailModalOpen(false)}
@@ -681,13 +716,13 @@ const OrderManagementPage = () => {
                   </button>
                 </div>
 
-                {/* Modal Content */}
+                {/* Nội Dung Modal */}
                 <div className="p-6 space-y-6">
-                  {/* Order Info */}
+                  {/* Thông Tin Đơn Hàng */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Order Status
+                        Trạng Thái Đơn Hàng
                       </h3>
                       <span
                         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
@@ -699,24 +734,24 @@ const OrderManagementPage = () => {
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Order Date
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {new Date(selectedOrder.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+                        <h3 className="font-medium text-gray-800 dark:text-white mb-2">
+                          Ngày Đặt Hàng
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {new Date(selectedOrder.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Total Amount
+                        Tổng Tiền
                       </h3>
                       <p className="text-lg font-semibold text-gray-800 dark:text-white">
-                        ${selectedOrder.total.toFixed(2)}
+                        ${(selectedOrder.total / 100).toFixed(2)}
                       </p>
                     </div>
                   </div>
 
-                  {/* Shipping Address */}
+                  {/* Địa Chỉ Giao Hàng */}
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-500" />
@@ -724,68 +759,112 @@ const OrderManagementPage = () => {
                         Địa Chỉ Giao Hàng
                       </h3>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedOrder.shippingAddress?.name}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.address}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.city}
-                      </p>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Họ Và Tên
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.full_name || selectedOrder.shippingAddress?.name}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Thành Phố
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.city || selectedOrder.shippingAddress?.city}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Địa Chỉ
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.address_line_1 || selectedOrder.shippingAddress?.address}
+                        </p>
+                        {selectedOrder.address?.address_line_2 && (
+                          <p className="text-gray-600 dark:text-gray-400 mt-1">
+                            {selectedOrder.address.address_line_2}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {(selectedOrder.address?.state || selectedOrder.address?.postal_code) && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Tỉnh/Thành & Mã Bưu Điện
+                          </p>
+                          <p className="text-gray-800 dark:text-white">
+                            {selectedOrder.address?.state} {selectedOrder.address?.postal_code}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {selectedOrder.address?.country && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Quốc Gia
+                          </p>
+                          <p className="text-gray-800 dark:text-white">
+                            {selectedOrder.address.country}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Contact Information */}
+                  {/* Thông Tin Liên Hệ */}
                   <div>
                     <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                      Contact Information
+                      Thông Tin Liên Hệ
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-3">
                         <Mail className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.contactInfo?.email}
+                          {selectedOrder.user?.email || selectedOrder.contactInfo?.email}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.contactInfo?.phone}
+                          {selectedOrder.address?.phone || selectedOrder.contactInfo?.phone}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Order Items */}
+                  {/* Sản Phẩm Trong Đơn Hàng */}
                   <div>
                     <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                      Order Items
+                      Sản Phẩm Trong Đơn Hàng
                     </h3>
                     <div className="space-y-3">
                       {selectedOrder.items?.map((item) => (
                         <div
-                          key={item.bookId}
+                          key={item.book_id || item.id}
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
-                            src={item.coverImage}
-                            alt={item.title}
+                            src={item.book?.image_url || item.coverImage || '/placeholder-book.jpg'}
+                            alt={item.book?.title || item.title}
                             className="w-16 h-20 object-cover rounded"
                           />
                           <div className="flex-grow">
                             <h4 className="font-medium text-gray-800 dark:text-white">
-                              {item.title}
+                              {item.book?.title || item.title}
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              by {item.author}
+                              của {item.book?.author?.name || item.author}
                             </p>
                             <div className="flex justify-between items-center mt-2">
                               <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Quantity: {item.quantity}
+                                Số lượng: {item.quantity}
                               </span>
                               <span className="font-medium text-gray-800 dark:text-white">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                ${((item.price / 100) * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           </div>
@@ -794,30 +873,38 @@ const OrderManagementPage = () => {
                     </div>
                   </div>
 
-                  {/* Payment Method */}
+                  {/* Phương Thức Thanh Toán */}
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                       <h3 className="font-medium text-gray-800 dark:text-white">
-                        Payment Method
+                        Phương Thức Thanh Toán
                       </h3>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Cash on Delivery (COD)
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">
+                            {selectedOrder.payment_method || selectedOrder.paymentMethod?.type || 'Thanh toán khi nhận hàng (COD)'}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Trạng thái: {selectedOrder.payment_status || selectedOrder.paymentStatus || 'Đang chờ'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Order Notes */}
-                  {selectedOrder.notes && (
+                  {/* Ghi Chú Đơn Hàng */}
+                  {(selectedOrder.notes || selectedOrder.special_instructions) && (
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                        Order Notes
+                        Ghi Chú Đơn Hàng
                       </h3>
                       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.notes}
+                          {selectedOrder.notes || selectedOrder.special_instructions}
                         </p>
                       </div>
                     </div>
@@ -828,7 +915,7 @@ const OrderManagementPage = () => {
           )}
         </AnimatePresence>
 
-        {/* Cancel Order Modal */}
+        {/* Modal Hủy Đơn Hàng */}
         <CancelOrderModal
           isOpen={isCancelModalOpen}
           onClose={() => {

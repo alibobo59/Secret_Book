@@ -139,7 +139,7 @@ function AdminSidebar({
           <span className={isSidebarCollapsed ? "" : "mr-3"}>
             <LogOut size={20} />
           </span>
-          {!isSidebarCollapsed && "Logout"}
+          {!isSidebarCollapsed && "Đăng Xuất"}
         </button>
       </nav>
     </aside>

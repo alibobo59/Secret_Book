@@ -16,17 +16,27 @@ export const BookProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      // Fetch all required data in parallel
+      // Fetch all required data in parallel with individual error handling
+      const fetchWithTimeout = async (endpoint) => {
+        try {
+          const response = await api.get(endpoint);
+          return response;
+        } catch (error) {
+          console.error(`Error fetching ${endpoint}:`, error);
+          throw error;
+        }
+      };
+
       const [
         booksResponse,
         categoriesResponse,
         authorsResponse,
         publishersResponse,
       ] = await Promise.all([
-        api.get("/books"),
-        api.get("/categories"),
-        api.get("/authors"),
-        api.get("/publishers"),
+        fetchWithTimeout("/books"),
+        fetchWithTimeout("/categories"),
+        fetchWithTimeout("/authors"),
+        fetchWithTimeout("/publishers"),
       ]);
 
       // Extract data from responses
@@ -58,7 +68,19 @@ export const BookProvider = ({ children }) => {
       });
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError(err.response?.data?.error || "Failed to fetch data");
+      let errorMessage = "Failed to fetch data";
+      
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = "Connection timeout. Please try again.";
+      } else if (!err.response) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (err.response.status === 404) {
+        errorMessage = `Resource not found: ${err.config.url}`;
+      } else if (err.response.data?.error) {
+        errorMessage = err.response.data.error;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       console.log("Final state:", {

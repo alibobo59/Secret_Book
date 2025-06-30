@@ -7,6 +7,11 @@ const api = axios.create({
     Accept: "application/json",
   },
   withCredentials: true, // Enable cookies for CSRF and session
+  timeout: 30000, // 30 seconds timeout
+  timeoutErrorMessage: 'Request timeout - the server took too long to respond',
+  // Add retry logic
+  retry: 3,
+  retryDelay: 1000,
 });
 
 // Fetch CSRF token
@@ -71,20 +76,60 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for handling errors
+// Retry interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const { config } = error;
+    
+    // Skip retry for specific status codes
+    if (error.response?.status === 401 || error.response?.status === 419) {
+      return Promise.reject(error);
+    }
+
+    // Initialize retry count
+    config.retryCount = config.retryCount || 0;
+
+    // Check if we should retry the request
+    if (config.retryCount < config.retry) {
+      config.retryCount += 1;
+      
+      // Delay before retrying
+      await new Promise(resolve => setTimeout(resolve, config.retryDelay * config.retryCount));
+      
+      console.log(`Retrying request (${config.retryCount}/${config.retry}):`, config.url);
+      return api(config);
+    }
+
+    // If all retries failed, handle the error
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout:', error.message);
+      return Promise.reject(new Error('The request timed out. Please try again.'));
+    }
+
+    if (!error.response) {
+      console.error('Network error:', error.message);
+      return Promise.reject(new Error('Unable to connect to the server. Please check your connection.'));
+    }
+
     if (error.response?.status === 419) {
       console.error("CSRF token mismatch:", error.response?.data);
       return Promise.reject(new Error("CSRF token mismatch"));
     }
+
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.assign("/login");
       return null;
     }
+
+    console.error('API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url
+    });
+
     return Promise.reject(error);
   }
 );

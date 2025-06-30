@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import {
   Calendar,
   User,
@@ -8,6 +8,12 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  X,
+  Clock,
+  Info,
 } from "lucide-react";
 import { api } from "../services/api";
 import Loading from "./admin/Loading";
@@ -47,23 +53,29 @@ const AuditLogTable = ({
   const fetchAuditLogs = async () => {
     try {
       setLoading(true);
+
+      // --- START: CORRECTED LOGIC ---
+      const isModelSpecific = modelType && modelId;
+
+      const endpoint = isModelSpecific
+        ? `/audit-logs/${encodeURIComponent(modelType.replace(/\/\//g, '\\'))}/${modelId}`
+        : "/audit-logs";
+
+      // Base parameters that apply to both endpoints
       const params = {
         page: currentPage,
         per_page: itemsPerPage,
         ...filters,
       };
 
-      // In fetchAuditLogs function, change:
-      if (modelType) params.auditable_type = modelType; // Instead of model_type
-      if (modelId) params.model_id = modelId;
-      if (days) params.days = days;
+      // Only add these parameters if we are using the general endpoint
+      if (!isModelSpecific) {
+        if (modelType) params.auditable_type = modelType;
+        if (modelId) params.model_id = modelId;
+      }
 
-      const endpoint =
-        modelType && modelId
-          ? `/audit-logs/${encodeURIComponent(
-            modelType
-          )}/${modelId}`
-        : "/audit-logs";
+      if (days) params.days = days;
+      // --- END: CORRECTED LOGIC ---
 
       const response = await api.get(endpoint, { params });
 
@@ -86,10 +98,14 @@ const AuditLogTable = ({
   const handleExport = async () => {
     try {
       setExporting(true);
+
+      // --- START: CORRECTED LOGIC ---
       const params = { ...filters };
-      if (modelType) params.model_type = modelType;
+      // Use the correct and consistent parameter name: auditable_type
+      if (modelType) params.auditable_type = modelType;
       if (modelId) params.model_id = modelId;
       if (days) params.days = days;
+      // --- END: CORRECTED LOGIC ---
 
       const response = await api.get("/audit-logs/export", {
         params,
@@ -132,29 +148,135 @@ const AuditLogTable = ({
     return modelType ? modelType.split("\\").pop() : "Unknown";
   };
 
-  const renderChanges = (oldValues, newValues, event) => {
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  const toggleRowExpansion = (logId) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(logId)) {
+      newExpanded.delete(logId);
+    } else {
+      newExpanded.add(logId);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  const openDetailModal = (log) => {
+    setSelectedLog(log);
+    setShowDetailModal(true);
+  };
+
+  const closeDetailModal = () => {
+    setSelectedLog(null);
+    setShowDetailModal(false);
+  };
+
+  const getFieldLabel = (key) => {
+    const fieldLabels = {
+      title: 'Title',
+      name: 'Name',
+      description: 'Description',
+      price: 'Price',
+      stock_quantity: 'Stock Quantity',
+      category_id: 'Category',
+      author_id: 'Author',
+      publisher_id: 'Publisher',
+      email: 'Email',
+      status: 'Status',
+      payment_status: 'Payment Status',
+      total_amount: 'Total Amount',
+      shipping_address: 'Shipping Address',
+      bio: 'Biography',
+      address: 'Address',
+      sku: 'SKU',
+      image: 'Image',
+      created_at: 'Created At',
+      updated_at: 'Updated At'
+    };
+    return fieldLabels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatValue = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (typeof value === 'string' && value.length > 50) {
+      return value.substring(0, 50) + '...';
+    }
+    return String(value);
+  };
+
+  const renderChanges = (oldValues, newValues, event, logId, isModal = false) => {
+    const isExpanded = expandedRows.has(logId) || isModal;
+    
     if (event === "created") {
+      const entries = Object.entries(newValues || {});
+      const visibleEntries = isExpanded ? entries : entries.slice(0, 2);
+      
       return (
-        <div className="space-y-1">
-          {Object.entries(newValues || {}).map(([key, value]) => (
-            <div key={key} className="text-sm">
-              <span className="font-medium text-gray-600">{key}:</span>
-              <span className="ml-2 text-green-600">+ {String(value)}</span>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <div className="space-y-1">
+            {visibleEntries.map(([key, value]) => (
+              <div key={key} className="text-sm">
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {getFieldLabel(key)}:
+                </span>
+                <div className="ml-2 p-2 bg-green-50 dark:bg-green-900/20 rounded border-l-2 border-green-400">
+                  <span className="text-green-700 dark:text-green-300 font-mono text-xs">
+                    {formatValue(value)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {entries.length > 2 && !isModal && (
+             <button
+               onClick={() => toggleRowExpansion(logId)}
+               className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+             >
+               {isExpanded ? (
+                 <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+               ) : (
+                 <><ChevronDown className="w-3 h-3 mr-1" /> Show {entries.length - 2} More</>
+               )}
+             </button>
+           )}
         </div>
       );
     }
 
     if (event === "deleted") {
+      const entries = Object.entries(oldValues || {});
+      const visibleEntries = isExpanded ? entries : entries.slice(0, 2);
+      
       return (
-        <div className="space-y-1">
-          {Object.entries(oldValues || {}).map(([key, value]) => (
-            <div key={key} className="text-sm">
-              <span className="font-medium text-gray-600">{key}:</span>
-              <span className="ml-2 text-red-600">- {String(value)}</span>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <div className="space-y-1">
+            {visibleEntries.map(([key, value]) => (
+              <div key={key} className="text-sm">
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {getFieldLabel(key)}:
+                </span>
+                <div className="ml-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border-l-2 border-red-400">
+                  <span className="text-red-700 dark:text-red-300 font-mono text-xs line-through">
+                    {formatValue(value)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {entries.length > 2 && (
+            <button
+              onClick={() => toggleRowExpansion(logId)}
+              className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              {isExpanded ? (
+                <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+              ) : (
+                <><ChevronDown className="w-3 h-3 mr-1" /> Show {entries.length - 2} More</>
+              )}
+            </button>
+          )}
         </div>
       );
     }
@@ -174,23 +296,214 @@ const AuditLogTable = ({
         }
       });
 
+      if (changes.length === 0) {
+        return (
+          <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+            No changes detected
+          </div>
+        );
+      }
+
+      const visibleChanges = isExpanded ? changes : changes.slice(0, 2);
+
       return (
-        <div className="space-y-1">
-          {changes.map(({ key, oldVal, newVal }) => (
-            <div key={key} className="text-sm">
-              <span className="font-medium text-gray-600">{key}:</span>
-              <div className="ml-2">
-                <span className="text-red-600">- {String(oldVal)}</span>
-                <br />
-                <span className="text-green-600">+ {String(newVal)}</span>
+        <div className="space-y-2">
+          <div className="space-y-3">
+            {visibleChanges.map(({ key, oldVal, newVal }) => (
+              <div key={key} className="text-sm">
+                <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {getFieldLabel(key)}:
+                </div>
+                <div className="ml-2 space-y-1">
+                  <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded border-l-2 border-red-400">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Before:</span>
+                    <div className="text-red-700 dark:text-red-300 font-mono text-xs mt-1">
+                      {formatValue(oldVal)}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded border-l-2 border-green-400">
+                    <span className="text-xs text-green-600 dark:text-green-400 font-semibold">After:</span>
+                    <div className="text-green-700 dark:text-green-300 font-mono text-xs mt-1">
+                      {formatValue(newVal)}
+                    </div>
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+          {changes.length > 2 && (
+            <button
+              onClick={() => toggleRowExpansion(logId)}
+              className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              {isExpanded ? (
+                <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+              ) : (
+                <><ChevronDown className="w-3 h-3 mr-1" /> Show {changes.length - 2} More Changes</>
+              )}
+            </button>
+          )}
+          {changes.length > 0 && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {changes.length} field{changes.length !== 1 ? 's' : ''} changed
             </div>
-          ))}
+          )}
         </div>
       );
     }
 
     return null;
+  };
+
+  const renderDetailModal = () => {
+    if (!selectedLog || !showDetailModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-lg ${getEventTypeColor(selectedLog.event).replace('text-', 'text-').replace('bg-', 'bg-')}`}>
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Audit Log Details
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatModelName(selectedLog.auditable_type)} #{selectedLog.auditable_id}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={closeDetailModal}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* Basic Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Event Type
+                  </label>
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getEventTypeColor(selectedLog.event)}`}>
+                    {selectedLog.event.charAt(0).toUpperCase() + selectedLog.event.slice(1)}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Model Type
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">
+                    {formatModelName(selectedLog.auditable_type)}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Record ID
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
+                    #{selectedLog.auditable_id}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    User
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-900 dark:text-gray-100">
+                      {selectedLog.user_name || 'System'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    IP Address
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
+                    {selectedLog.ip_address || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Date & Time
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
+                      <div>{new Date(selectedLog.created_at).toLocaleDateString()}</div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        {new Date(selectedLog.created_at).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Changes Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-amber-500" />
+                Detailed Changes
+              </h4>
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                {renderChanges(selectedLog.old_values, selectedLog.new_values, selectedLog.event, selectedLog.id, true)}
+              </div>
+            </div>
+
+            {/* Raw Data Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Raw Data
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Old Values
+                    </label>
+                    <pre className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3 text-xs overflow-x-auto">
+                      {JSON.stringify(selectedLog.old_values, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      New Values
+                    </label>
+                    <pre className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3 text-xs overflow-x-auto">
+                      {JSON.stringify(selectedLog.new_values, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={closeDetailModal}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -199,8 +512,11 @@ const AuditLogTable = ({
 
   if (error) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 ${className}`}>
-        <div className="text-center text-red-600 dark:text-red-400">{error}</div>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6 ${className}`}>
+        <div className="text-center text-red-600 dark:text-red-400">
+          {error}
+        </div>
       </div>
     );
   }
@@ -271,22 +587,25 @@ const AuditLogTable = ({
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Event
               </th>
               {showModelColumn && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Model
                 </th>
               )}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 User
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Changes
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
               </th>
             </tr>
           </thead>
@@ -294,14 +613,16 @@ const AuditLogTable = ({
             {auditLogs.length === 0 ? (
               <tr>
                 <td
-                  colSpan={showModelColumn ? 5 : 4}
+                  colSpan={showModelColumn ? 6 : 5}
                   className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   No audit logs found
                 </td>
               </tr>
             ) : (
               auditLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr
+                  key={log.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEventTypeColor(
@@ -331,8 +652,8 @@ const AuditLogTable = ({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="max-w-xs">
-                      {renderChanges(log.old_values, log.new_values, log.event)}
+                    <div className="max-w-md">
+                      {renderChanges(log.old_values, log.new_values, log.event, log.id)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -347,6 +668,15 @@ const AuditLogTable = ({
                         </div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => openDetailModal(log)}
+                      className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      View Details
+                    </button>
                   </td>
                 </tr>
               ))
@@ -390,6 +720,9 @@ const AuditLogTable = ({
           </div>
         </div>
       )}
+      
+      {/* Detail Modal */}
+      {showDetailModal && selectedLog && renderDetailModal()}
     </div>
   );
 };

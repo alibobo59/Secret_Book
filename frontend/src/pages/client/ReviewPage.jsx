@@ -53,14 +53,24 @@ const ReviewPage = () => {
       
       // Initialize review states for each item
       const initialReviews = {};
-      foundOrder.items?.forEach(item => {
+      for (const item of foundOrder.items || []) {
         const bookId = item.book_id || item.bookId;
-        initialReviews[bookId] = {
-          rating: 0,
-          review: "",
-          hoveredRating: 0
-        };
-      });
+        try {
+          // Check if user can review this book
+          const canReviewResponse = await reviewAPI.canReviewBook(bookId);
+          if (canReviewResponse.data.can_review) {
+            initialReviews[bookId] = {
+              rating: 0,
+              review: "",
+              hoveredRating: 0
+            };
+          } else {
+            console.log(`Cannot review book ${bookId}: ${canReviewResponse.data.reason}`);
+          }
+        } catch (error) {
+          console.error(`Error checking review permission for book ${bookId}:`, error);
+        }
+      }
       setReviews(initialReviews);
       
     } catch (err) {
@@ -91,6 +101,13 @@ const ReviewPage = () => {
     setSubmitting(prev => ({ ...prev, [bookId]: true }));
     
     try {
+      // Check if user can still review the book
+      const canReviewResponse = await reviewAPI.canReviewBook(bookId);
+      if (!canReviewResponse.data.can_review) {
+        alert(canReviewResponse.data.reason);
+        return;
+      }
+
       await reviewAPI.submitReview({
         book_id: bookId,
         rating: reviewData.rating,
@@ -101,12 +118,17 @@ const ReviewPage = () => {
       alert("Review submitted successfully!");
       
       // Check if all items have been reviewed
-      const allItemsReviewed = order?.items?.every(item => {
+      const reviewableItems = order?.items?.filter(item => {
+        const itemBookId = item.book_id || item.bookId;
+        return reviews[itemBookId] !== undefined;
+      });
+      
+      const allItemsReviewed = reviewableItems?.every(item => {
         const itemBookId = item.book_id || item.bookId;
         return itemBookId === bookId || submitted[itemBookId];
       });
       
-      // If all items are reviewed, navigate back to orders after a short delay
+      // If all reviewable items are reviewed, navigate back to orders after a short delay
       if (allItemsReviewed) {
         setTimeout(() => {
           navigate("/orders");
@@ -115,7 +137,8 @@ const ReviewPage = () => {
       
     } catch (error) {
       console.error("Failed to submit review:", error);
-      alert("Failed to submit review. Please try again.");
+      const errorMessage = error.response?.data?.message || "Failed to submit review. Please try again.";
+      alert(errorMessage);
     } finally {
       setSubmitting(prev => ({ ...prev, [bookId]: false }));
     }
@@ -220,6 +243,12 @@ const ReviewPage = () => {
                       <span>•</span>
                       <span>Price: ${((item.price / 100) * item.quantity).toFixed(2)}</span>
                     </div>
+                    {!isReviewable && (
+                      <p className="mt-2 text-amber-600 dark:text-amber-500">
+                        <AlertCircle className="inline-block w-4 h-4 mr-1" />
+                        You have already reviewed this book
+                      </p>
+                    )}
                   </div>
                 </div>
 

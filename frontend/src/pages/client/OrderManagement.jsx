@@ -660,12 +660,6 @@ const OrderManagementPage = () => {
                       Xem Chi Tiết
                     </button>
 
-                    <Link
-                      to={`/order-confirmation/${order.id}`}
-                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <Download className="h-4 w-4" />
-                      Xem Hóa Đơn
-                    </Link>
 
                     {canCancelOrder(order) && (
                       <button

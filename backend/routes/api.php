@@ -11,6 +11,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\PublisherController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReviewController;
+use App\Http\Controllers\API\AnalyticsController;
 
 // Root route
 Route::get('/', function () {
@@ -60,6 +61,9 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::patch('/admin/orders/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('admin.orders.update-payment');
     Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
     Route::get('/admin/orders/stats', [OrderController::class, 'getStats'])->name('admin.orders.stats');
+
+    // Analytics
+    Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboardStats'])->name('analytics.dashboard');
 
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

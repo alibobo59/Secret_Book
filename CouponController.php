@@ -74,4 +74,34 @@ public function applyCoupon(Request $request)
     if (!$coupon) {
         return response()->json(['message' => 'Invalid coupon'], 404);
     }
+     if ($coupon->expires_at && $coupon->expires_at < now()) {
+        return response()->json(['message' => 'Coupon expired'], 400);
+    }
+
+    if ($coupon->max_uses && $coupon->usages()->count() >= $coupon->max_uses) {
+        return response()->json(['message' => 'Coupon usage limit reached'], 400);
+    }
+
+    $discount = $coupon->calculateDiscount($request->order_amount);
+
+    CouponUsage::create([
+        'coupon_id' => $coupon->id,
+        'user_id'   => auth()->id(),
+        'used_at'   => Carbon::now(),
+    ]);
+
+    return response()->json([
+        'discount'    => $discount,
+        'final_price' => $request->order_amount - $discount,
+    ]);
+}
+
+public function statistics($id)
+{
+    $coupon = Coupon::with('usages')->findOrFail($id);
+    return response()->json([
+        'coupon' => $coupon,
+        'total_uses' => $coupon->usages->count(),
+    ]);
+}
 }

@@ -1,5 +1,16 @@
 <?php
-
+/**
+ * -----------------------------------------------------------------------------
+ * CategoryController (Public API)
+ * -----------------------------------------------------------------------------
+ * Mục tiêu:
+ *  - Cung cấp API CRUD cho tài nguyên Danh mục (Category).
+ *  - Các thay đổi ở commit này chỉ thêm comment/docblock, không đổi logic.
+ *
+ * Tài liệu tham khảo:
+ *  - Laravel Controllers: https://laravel.com/docs/controllers
+ *  - Symfony HttpFoundation: https://symfony.com/doc/current/components/http_foundation.html
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;

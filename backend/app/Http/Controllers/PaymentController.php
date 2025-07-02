@@ -25,7 +25,7 @@ class PaymentController extends Controller
             ]);
 
             $order = Order::findOrFail($request->order_id);
-            
+
             // Check if order is eligible for payment
             if ($order->payment_status !== 'pending') {
                 return response()->json([
@@ -40,9 +40,18 @@ class PaymentController extends Controller
                 'payment_status' => 'processing'
             ]);
 
-            // Get client IP
+            // Get client IP và đảm bảo IPv4 format
             $ipAddr = $request->ip();
-            
+
+            // Validate và convert IP nếu cần
+            if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                // Nếu là IPv6 hoặc invalid, dùng IP mặc định
+                $ipAddr = '127.0.0.1';
+            }
+
+            // Nếu đang test, có thể dùng IP cố định
+            // $ipAddr = "183.80.234.255"; // Uncomment nếu cần test
+
             // Create VNPay payment URL
             $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
 
@@ -56,7 +65,7 @@ class PaymentController extends Controller
             Log::error('VNPay payment creation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Payment creation failed'
+                'message' => 'Payment creation failed: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -65,7 +74,7 @@ class PaymentController extends Controller
     {
         try {
             $inputData = $request->all();
-            
+
             // Validate VNPay response
             if (!$this->vnpayService->validateResponse($inputData)) {
                 Log::warning('VNPay invalid signature', $inputData);
@@ -82,7 +91,7 @@ class PaymentController extends Controller
 
             // Find order by order number
             $order = Order::where('order_number', $vnp_TxnRef)->first();
-            
+
             if (!$order) {
                 return response()->json([
                     'success' => false,

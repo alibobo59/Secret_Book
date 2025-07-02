@@ -1,3 +1,4 @@
+// No changes needed. This file is provided for completeness.
 import React, { useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -364,6 +365,7 @@ const BookCreate = () => {
     }
   };
 
+  // The JSX below is the template for the BookEdit component
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -902,3 +904,4 @@ const BookCreate = () => {
 };
 
 export default BookCreate;
+

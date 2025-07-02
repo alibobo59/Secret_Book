@@ -82,7 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment routes
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
-
+    Route::post('/payment/vnpay/verify', [PaymentController::class, 'verifyVNPayPayment']);
     // Review routes for authenticated users
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../contexts/OrderContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { motion } from "framer-motion";

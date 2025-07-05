@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../../contexts/OrderContext";
-
+import { useCoupon } from "../../contexts/CouponContext";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
+import CouponInput from "../../components/client/CouponInput";
 import {
   ArrowLeft,
   Package,
@@ -34,7 +35,7 @@ const CheckoutPage = () => {
   } = useCart();
   const { user } = useAuth();
   const { createOrder, loading } = useOrder();
-
+  const { validateCoupon } = useCoupon();
   const navigate = useNavigate();
   const { showError } = useToast();
 
@@ -50,6 +51,8 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,6 +114,7 @@ const CheckoutPage = () => {
         },
         shipping: 0, // Add shipping calculation if needed
         notes: formData.notes,
+        coupon_code: appliedCoupon?.code || null,
       };
 
       // Use createOrder from OrderContext which automatically clears cart
@@ -411,6 +415,19 @@ const CheckoutPage = () => {
               </div>
             </div>
 
+            {/* Coupon Input */}
+            <CouponInput
+              orderAmount={getSelectedTotal()}
+              onCouponApplied={(coupon, discount) => {
+                setAppliedCoupon(coupon);
+                setDiscountAmount(discount);
+              }}
+              onCouponRemoved={() => {
+                setAppliedCoupon(null);
+                setDiscountAmount(0);
+              }}
+            />
+
             {/* Order Total and Place Order Button */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
@@ -449,11 +466,25 @@ const CheckoutPage = () => {
               )}
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span className="text-gray-900 dark:text-white">Tổng Cộng</span>
-                  <span className="text-gray-900 dark:text-white">
-                    {getSelectedTotal().toLocaleString("vi-VN")} ₫
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Tạm tính</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {getSelectedTotal().toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
+                  {appliedCoupon && discountAmount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Giảm giá ({appliedCoupon.code})</span>
+                      <span>-{discountAmount.toLocaleString("vi-VN")} ₫</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-semibold border-t pt-2">
+                    <span className="text-gray-900 dark:text-white">Tổng Cộng</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {(getSelectedTotal() - discountAmount).toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
                 </div>
               </div>
 

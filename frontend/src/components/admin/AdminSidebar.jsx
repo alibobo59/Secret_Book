@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  Percent,
 } from "lucide-react";
 
 function AdminSidebar({
@@ -72,6 +73,12 @@ function AdminSidebar({
       label: "Nhật Ký Kiểm Tra",
       icon: <Activity size={20} />,
       path: "/admin/audit-logs",
+    },
+    {
+      id: "coupons",
+      label: "Mã Khuyến Mại",
+      icon: <Percent size={20} />,
+      path: "/admin/coupons",
     },
   ];
 

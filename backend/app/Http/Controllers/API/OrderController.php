@@ -6,6 +6,8 @@ use App\Models\Book;
 use App\Models\Order;
 use App\Models\Address;
 use App\Models\OrderItem;
+use App\Models\Coupon;
+use App\Models\CouponUsage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -112,6 +114,7 @@ class OrderController extends Controller
             'items.*.price' => 'required|numeric|min:0',
             'shipping' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
+            'coupon_code' => 'nullable|string|max:50',
             // Add address validation
             'address.name' => 'required|string|max:255',
             'address.address' => 'required|string|max:500',
@@ -139,7 +142,62 @@ class OrderController extends Controller
                 $subtotal += $item['price'] * $item['quantity'];
             }
 
-            $total = $subtotal + $shipping;
+            $orderAmount = $subtotal + $shipping;
+            $discountAmount = 0;
+            $coupon = null;
+
+            // Handle coupon if provided
+            if ($request->has('coupon_code') && !empty($request->coupon_code)) {
+                $coupon = Coupon::where('code', $request->coupon_code)->first();
+                
+                if (!$coupon) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Mã khuyến mại không tồn tại'
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+
+                if (!$coupon->canBeUsedByUser($user->id)) {
+                    $reasons = [];
+                    
+                    if (!$coupon->isValid()) {
+                        if (!$coupon->is_active) {
+                            $reasons[] = 'Mã khuyến mại đã bị vô hiệu hóa';
+                        } elseif ($coupon->start_date > now()) {
+                            $reasons[] = 'Mã khuyến mại chưa có hiệu lực';
+                        } elseif ($coupon->end_date < now()) {
+                            $reasons[] = 'Mã khuyến mại đã hết hạn';
+                        }
+                    }
+                    
+                    if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+                        $reasons[] = 'Mã khuyến mại đã hết lượt sử dụng';
+                    }
+                    
+                    if ($coupon->usage_limit_per_user) {
+                        $userUsageCount = $coupon->usages()->where('user_id', $user->id)->count();
+                        if ($userUsageCount >= $coupon->usage_limit_per_user) {
+                            $reasons[] = 'Bạn đã sử dụng hết lượt cho mã khuyến mại này';
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => implode('. ', $reasons)
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+
+                $discountAmount = $coupon->calculateDiscount($orderAmount);
+
+                if ($discountAmount <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng không đủ điều kiện áp dụng mã khuyến mại này'
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+            }
+
+            $total = $orderAmount - $discountAmount;
 
             // Create order
             $order = Order::create([
@@ -147,6 +205,7 @@ class OrderController extends Controller
                 'order_number' => 'ORD-' . strtoupper(Str::random(8)),
                 'subtotal' => $subtotal,
                 'shipping' => $shipping,
+                'discount_amount' => $discountAmount,
                 'total' => $total,
                 'status' => 'pending',
                 'payment_status' => 'pending',
@@ -173,6 +232,19 @@ class OrderController extends Controller
                     'phone' => $request->address['phone'],
                     'email' => $request->address['email'],
                 ]);
+            }
+
+            // Record coupon usage if coupon was applied
+            if ($coupon && $discountAmount > 0) {
+                CouponUsage::create([
+                    'coupon_id' => $coupon->id,
+                    'user_id' => $user->id,
+                    'order_id' => $order->id,
+                    'discount_amount' => $discountAmount,
+                ]);
+
+                // Increment coupon usage count
+                $coupon->increment('used_count');
             }
 
             // Load relationships for response
@@ -262,6 +334,27 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => 'Order not found'
             ], Response::HTTP_NOT_FOUND);
+        }
+
+        // Kiểm tra trình tự trạng thái hợp lệ
+        if (!$order->canTransitionTo($request->status)) {
+            $currentStatusName = Order::getStatusDisplayName($order->status);
+            $newStatusName = Order::getStatusDisplayName($request->status);
+            $allowedStatuses = $order->getAllowedNextStatuses();
+            $allowedStatusNames = array_map(function($status) {
+                return Order::getStatusDisplayName($status);
+            }, $allowedStatuses);
+            
+            return response()->json([
+                'success' => false,
+                'message' => "Không thể chuyển từ trạng thái '{$currentStatusName}' sang '{$newStatusName}'. Các trạng thái hợp lệ tiếp theo: " . (empty($allowedStatusNames) ? 'Không có' : implode(', ', $allowedStatusNames)),
+                'current_status' => $order->status,
+                'current_status_name' => $currentStatusName,
+                'requested_status' => $request->status,
+                'requested_status_name' => $newStatusName,
+                'allowed_next_statuses' => $allowedStatuses,
+                'allowed_next_status_names' => $allowedStatusNames
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -433,5 +526,39 @@ class OrderController extends Controller
                 'message' => 'Failed to delete order: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Lấy danh sách trạng thái có thể chuyển cho đơn hàng
+     */
+    public function getAllowedStatuses($id)
+    {
+        $order = Order::find($id);
+        
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+        
+        $allowedStatuses = $order->getAllowedNextStatuses();
+        $statusOptions = [];
+        
+        foreach ($allowedStatuses as $status) {
+            $statusOptions[] = [
+                'value' => $status,
+                'label' => Order::getStatusDisplayName($status)
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'current_status' => $order->status,
+                'current_status_name' => Order::getStatusDisplayName($order->status),
+                'allowed_next_statuses' => $statusOptions
+            ]
+        ]);
     }
 }

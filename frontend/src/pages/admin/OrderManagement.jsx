@@ -24,7 +24,8 @@ const OrderManagement = () => {
     error, 
     pagination,
     getAllOrders, 
-    updateOrderStatus 
+    updateOrderStatus,
+    getAllowedStatuses 
   } = useOrder();
   
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -37,6 +38,8 @@ const OrderManagement = () => {
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [statusLoading, setStatusLoading] = useState(false);
+  const [allowedStatuses, setAllowedStatuses] = useState([]);
+  const [loadingAllowedStatuses, setLoadingAllowedStatuses] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -79,10 +82,23 @@ const OrderManagement = () => {
     setIsViewModalOpen(true);
   };
 
-  const handleUpdateStatus = (order) => {
+  const handleUpdateStatus = async (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
     setIsStatusModalOpen(true);
+    
+    // Fetch allowed statuses for this order
+    try {
+      setLoadingAllowedStatuses(true);
+      const allowedStatusesData = await getAllowedStatuses(order.id);
+      setAllowedStatuses(allowedStatusesData.allowed_statuses || []);
+    } catch (error) {
+      console.error("Failed to fetch allowed statuses:", error);
+      // Fallback to all statuses if API fails
+      setAllowedStatuses(statusOptions);
+    } finally {
+      setLoadingAllowedStatuses(false);
+    }
   };
 
   const handleStatusUpdate = async () => {
@@ -101,9 +117,16 @@ const OrderManagement = () => {
       setIsStatusModalOpen(false);
       setSelectedOrder(null);
       setNewStatus("");
+      setAllowedStatuses([]);
     } catch (error) {
       console.error("Failed to update order status:", error);
-      alert("Failed to update order status. Please try again.");
+      
+      // Check if it's a validation error from our backend
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
+      }
     } finally {
       setStatusLoading(false);
     }
@@ -561,20 +584,28 @@ const OrderManagement = () => {
       {/* Update Status Modal */}
       <Modal
         isOpen={isStatusModalOpen}
-        onClose={() => setIsStatusModalOpen(false)}
+        onClose={() => {
+          setIsStatusModalOpen(false);
+          setAllowedStatuses([]);
+          setNewStatus("");
+        }}
         title="Cập Nhật Trạng Thái Đơn Hàng"
         footer={
           <div className="flex justify-end space-x-3">
             <button
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsStatusModalOpen(false)}>
+              onClick={() => {
+                setIsStatusModalOpen(false);
+                setAllowedStatuses([]);
+                setNewStatus("");
+              }}>
               Hủy
             </button>
             <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               onClick={handleStatusUpdate}
-              disabled={statusLoading}>
-              {statusLoading ? "Đang Cập Nhật..." : "Cập Nhật Trạng Thái"}
+              disabled={statusLoading || loadingAllowedStatuses || allowedStatuses.length === 0}>
+              {statusLoading ? "Đang Cập Nhật..." : loadingAllowedStatuses ? "Đang Tải..." : "Cập Nhật Trạng Thái"}
             </button>
           </div>
         }>
@@ -592,16 +623,32 @@ const OrderManagement = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Trạng Thái Mới
               </label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {loadingAllowedStatuses ? (
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                  Đang tải trạng thái được phép...
+                </div>
+              ) : (
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  disabled={allowedStatuses.length === 0}>
+                  {allowedStatuses.length === 0 ? (
+                    <option value="">Không có trạng thái nào được phép</option>
+                  ) : (
+                    allowedStatuses.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.display_name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              )}
+              {allowedStatuses.length === 0 && !loadingAllowedStatuses && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  Đơn hàng này không thể thay đổi trạng thái.
+                </p>
+              )}
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">

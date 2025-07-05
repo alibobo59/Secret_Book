@@ -51,6 +51,71 @@ class Order extends Model
         return $this->hasOne(Address::class);
     }
 
+    public function couponUsages()
+    {
+        return $this->hasMany(CouponUsage::class);
+    }
+
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_usages')
+                    ->withPivot('discount_amount')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Định nghĩa trình tự trạng thái hợp lệ
+     */
+    const STATUS_TRANSITIONS = [
+        'pending' => ['processing', 'cancelled'],
+        'processing' => ['shipped', 'cancelled'],
+        'shipped' => ['delivered'],
+        'delivered' => [], // Trạng thái cuối, không thể chuyển
+        'cancelled' => [] // Trạng thái cuối, không thể chuyển
+    ];
+
+    /**
+     * Kiểm tra xem có thể chuyển từ trạng thái hiện tại sang trạng thái mới không
+     */
+    public function canTransitionTo($newStatus)
+    {
+        $currentStatus = $this->status;
+        
+        // Nếu trạng thái không thay đổi, cho phép
+        if ($currentStatus === $newStatus) {
+            return true;
+        }
+        
+        // Kiểm tra xem trạng thái mới có trong danh sách cho phép không
+        $allowedTransitions = self::STATUS_TRANSITIONS[$currentStatus] ?? [];
+        
+        return in_array($newStatus, $allowedTransitions);
+    }
+
+    /**
+     * Lấy danh sách trạng thái có thể chuyển từ trạng thái hiện tại
+     */
+    public function getAllowedNextStatuses()
+    {
+        return self::STATUS_TRANSITIONS[$this->status] ?? [];
+    }
+
+    /**
+     * Lấy tên hiển thị của trạng thái
+     */
+    public static function getStatusDisplayName($status)
+    {
+        $statusNames = [
+            'pending' => 'Chờ xử lý',
+            'processing' => 'Đang xử lý', 
+            'shipped' => 'Đã giao hàng',
+            'delivered' => 'Đã giao thành công',
+            'cancelled' => 'Đã hủy'
+        ];
+        
+        return $statusNames[$status] ?? $status;
+    }
+
     /**
      * Get human-readable field names for audit logs
      */

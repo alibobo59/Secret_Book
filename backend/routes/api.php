@@ -7,6 +7,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\AuthorController;
 use App\Http\Controllers\API\PublisherController;
+use App\Http\Controllers\API\AuditLogController;
 
 // Root route
 Route::get('/', function () {
@@ -36,11 +37,19 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     // Books
-    Route::apiResource('books', BookController::class)->except(['index', 'show']);
+    Route::post('/books', [BookController::class, 'store'])->name('books.store');
+    Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update');
+    Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
 
     // Authors
     Route::apiResource('authors', AuthorController::class)->except(['index', 'show']);
 
     // Publishers
     Route::apiResource('publishers', PublisherController::class)->except(['index', 'show']);
+
+    // Audit Logs
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs/stats', [AuditLogController::class, 'getStats'])->name('audit-logs.stats');
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+    Route::get('/audit-logs/{modelType}/{modelId}', [AuditLogController::class, 'getModelAuditLogs'])->name('audit-logs.model');
 });

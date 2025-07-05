@@ -7,15 +7,14 @@ use Illuminate\Support\Facades\DB;
 
 class BooksSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         DB::table('books')->insert([
             [
                 'title' => 'The Great Gatsby',
-                'price' => 10.99,
+                'sku' => 'BOOK-GAT-001',
+                'price' => 250000, // VND
+                'stock_quantity' => 100,
                 'category_id' => 1,
                 'author_id' => 1,
                 'publisher_id' => 1,
@@ -24,7 +23,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => '1984',
-                'price' => 8.99,
+                'sku' => 'BOOK-NIN-002',
+                'price' => 200000, // VND
+                'stock_quantity' => 80,
                 'category_id' => 2,
                 'author_id' => 2,
                 'publisher_id' => 2,
@@ -33,7 +34,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'To Kill a Mockingbird',
-                'price' => 12.49,
+                'sku' => 'BOOK-MOC-003',
+                'price' => 280000, // VND
+                'stock_quantity' => 60,
                 'category_id' => 3,
                 'author_id' => 3,
                 'publisher_id' => 3,
@@ -42,7 +45,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Moby-Dick',
-                'price' => 15.99,
+                'sku' => 'BOOK-MOB-004',
+                'price' => 370000, // VND
+                'stock_quantity' => 50,
                 'category_id' => 4,
                 'author_id' => 4,
                 'publisher_id' => 4,
@@ -51,7 +56,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'War and Peace',
-                'price' => 20.00,
+                'sku' => 'BOOK-WAR-005',
+                'price' => 460000, // VND
+                'stock_quantity' => 30,
                 'category_id' => 5,
                 'author_id' => 5,
                 'publisher_id' => 5,
@@ -60,7 +67,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Pride and Prejudice',
-                'price' => 9.99,
+                'sku' => 'BOOK-PRI-006',
+                'price' => 230000, // VND
+                'stock_quantity' => 90,
                 'category_id' => 1,
                 'author_id' => 6,
                 'publisher_id' => 1,
@@ -69,7 +78,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Catcher in the Rye',
-                'price' => 11.99,
+                'sku' => 'BOOK-CAT-007',
+                'price' => 280000, // VND
+                'stock_quantity' => 70,
                 'category_id' => 2,
                 'author_id' => 7,
                 'publisher_id' => 2,
@@ -78,7 +89,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Hobbit',
-                'price' => 14.99,
+                'sku' => 'BOOK-HOB-008',
+                'price' => 350000, // VND
+                'stock_quantity' => 40,
                 'category_id' => 3,
                 'author_id' => 8,
                 'publisher_id' => 3,
@@ -87,7 +100,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'Brave New World',
-                'price' => 10.49,
+                'sku' => 'BOOK-BRA-009',
+                'price' => 250000, // VND
+                'stock_quantity' => 85,
                 'category_id' => 4,
                 'author_id' => 9,
                 'publisher_id' => 4,
@@ -96,7 +111,9 @@ class BooksSeeder extends Seeder
             ],
             [
                 'title' => 'The Odyssey',
-                'price' => 13.99,
+                'sku' => 'BOOK-ODY-010',
+                'price' => 330000, // VND
+                'stock_quantity' => 55,
                 'category_id' => 5,
                 'author_id' => 10,
                 'publisher_id' => 5,

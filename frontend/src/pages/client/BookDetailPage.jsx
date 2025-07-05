@@ -128,7 +128,7 @@ const BookDetailPage = () => {
           transition={{ duration: 0.5 }}>
           <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-lg">
             <img
-              src={book.cover_image}
+              src={`http://127.0.0.1:8000/storage/${book.image}`}
               alt={book.title}
               className="absolute inset-0 w-full h-full object-cover"
             />

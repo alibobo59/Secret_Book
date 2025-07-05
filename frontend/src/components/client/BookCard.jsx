@@ -8,7 +8,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();
   const { t } = useLanguage();
-  console.log("CardMounted");
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -18,6 +18,11 @@ const BookCard = ({ book }) => {
   const averageRating = book.average_rating || 0;
   const ratingsCount = book.ratings?.length || 0;
 
+  // Construct the full image URL
+  const imageUrl = book.image
+    ? `http://127.0.0.1:8000/storage/${book.image}`
+    : null;
+
   return (
     <Link to={`/books/${book.id}`}>
       <motion.div
@@ -26,7 +31,7 @@ const BookCard = ({ book }) => {
         transition={{ type: "spring", stiffness: 300 }}>
         <div className="relative pb-[140%] overflow-hidden">
           <img
-            src={book.cover_image}
+            src={imageUrl}
             alt={book.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />

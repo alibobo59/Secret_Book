@@ -27,7 +27,7 @@ return new class extends Migration
             $table->datetime('end_date')->comment('Ngày kết thúc');
             $table->boolean('is_active')->default(true)->comment('Trạng thái hoạt động');
             $table->timestamps();
-            
+
             $table->index(['code', 'is_active']);
             $table->index(['start_date', 'end_date']);
         });

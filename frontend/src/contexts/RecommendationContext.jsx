@@ -260,7 +260,9 @@ export const RecommendationProvider = ({ children }) => {
     
     return books
       .filter(book => {
-        const bookText = `${book.title} ${book.author} ${book.genre} ${book.description}`.toLowerCase();
+        const authorName = typeof book.author === 'object' ? book.author?.name || '' : book.author || '';
+        const genreName = typeof book.genre === 'object' ? book.genre?.name || '' : book.genre || '';
+        const bookText = `${book.title} ${authorName} ${genreName} ${book.description}`.toLowerCase();
         return queryWords.some(word => bookText.includes(word)) &&
                !userPreferences.viewedBooks.includes(book.id);
       })

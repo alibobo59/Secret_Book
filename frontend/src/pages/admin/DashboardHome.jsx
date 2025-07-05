@@ -87,7 +87,7 @@ const DashboardHome = () => {
           icon={<BookOpen className="h-6 w-6" />}
           iconBgColor="bg-amber-100"
           iconColor="text-amber-600"
-          title="Tổng Số Sách"
+          title="Tổng số sách"
           value={totalBooks}
         />
 
@@ -95,7 +95,7 @@ const DashboardHome = () => {
           icon={<Tag className="h-6 w-6" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
-          title="Danh Mục"
+          title="Danh mục"
           value={totalCategories}
         />
 
@@ -103,7 +103,7 @@ const DashboardHome = () => {
           icon={<AlertCircle className="h-6 w-6" />}
           iconBgColor="bg-red-100"
           iconColor="text-red-600"
-          title="Tồn Kho Thấp"
+          title="Sắp hết hàng"
           value={lowStockBooks}
         />
 
@@ -111,7 +111,7 @@ const DashboardHome = () => {
           icon={<DollarSign className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
-          title="Giá Trị Tồn Kho"
+          title="Tổng giá trị"
           value={`$${totalValue.toFixed(2)}`}
         />
       </div>
@@ -137,7 +137,7 @@ const DashboardHome = () => {
                   {book.title}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {book.author}
+                  {typeof book.author === 'object' ? book.author?.name || 'Tác giả không xác định' : book.author || 'Tác giả không xác định'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -157,7 +157,7 @@ const DashboardHome = () => {
         ) : (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <AlertCircle className="mx-auto h-12 w-12 mb-4" />
-            <p>Không tìm thấy sản phẩm tồn kho thấp</p>
+            <p>Không có sách nào có tồn kho thấp.</p>
           </div>
         )}
       </div>

@@ -50,7 +50,7 @@ export const NotificationProvider = ({ children }) => {
       {
         id: Date.now() + 1,
         userId: user.id,
-        title: "Welcome to Secret Bookstore!",
+        title: "Chào mừng đến với Secret Bookstore!",
         message:
           "Thank you for joining our community of book lovers. Explore our vast collection and find your next great read.",
         type: "success",
@@ -94,7 +94,7 @@ export const NotificationProvider = ({ children }) => {
         {
           id: Date.now() + 4,
           userId: user.id,
-          title: "New Order Received",
+          title: "Đã nhận đơn hàng mới",
           message: "Order #ORD-12345 from John Doe requires your attention.",
           type: "order",
           read: true,
@@ -266,8 +266,8 @@ export const NotificationProvider = ({ children }) => {
       actionText: "Rate Products",
     }),
     newOrder: (orderId, customerName) => ({
-      title: "New Order Received",
-      message: `New order #${orderId} from ${customerName} requires your attention.`,
+      title: "Đã nhận đơn hàng mới",
+      message: `Đơn hàng mới #${orderId} từ ${customerName} cần sự chú ý của bạn.`,
       type: "order",
       actionUrl: `/admin/orders`,
       actionText: "View Order",

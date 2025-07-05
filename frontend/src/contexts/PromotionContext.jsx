@@ -29,7 +29,7 @@ export const PromotionProvider = ({ children }) => {
           code: 'WELCOME10',
           type: 'percentage',
           value: 10,
-          description: 'Welcome discount for new customers',
+          description: 'Giảm giá chào mừng cho khách hàng mới',
           isActive: true,
           startDate: new Date().toISOString(),
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -41,7 +41,7 @@ export const PromotionProvider = ({ children }) => {
           code: 'FREESHIP',
           type: 'free_shipping',
           value: 0,
-          description: 'Free shipping on orders over $50',
+          description: 'Miễn phí vận chuyển cho đơn hàng trên 1.250.000 ₫',
           isActive: true,
           startDate: new Date().toISOString(),
           endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -54,7 +54,7 @@ export const PromotionProvider = ({ children }) => {
           code: 'SAVE20',
           type: 'fixed',
           value: 20,
-          description: '$20 off on orders over $100',
+          description: 'Giảm 500.000 ₫ cho đơn hàng trên 2.500.000 ₫',
           isActive: true,
           startDate: new Date().toISOString(),
           endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -84,7 +84,7 @@ export const PromotionProvider = ({ children }) => {
     );
 
     if (!promotion) {
-      return { valid: false, error: 'Invalid promo code' };
+      return { valid: false, error: 'Mã khuyến mãi không hợp lệ' };
     }
 
     if (!promotion.isActive) {
@@ -107,7 +107,7 @@ export const PromotionProvider = ({ children }) => {
     if (promotion.minimumOrder && orderTotal < promotion.minimumOrder) {
       return { 
         valid: false, 
-        error: `Minimum order of $${promotion.minimumOrder} required` 
+        error: `Yêu cầu đơn hàng tối thiểu ${(promotion.minimumOrder * 25000).toLocaleString('vi-VN')} ₫` 
       };
     }
 

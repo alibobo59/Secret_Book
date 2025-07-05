@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Filter, Grid, List, SortAsc } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
+
 
 const SearchAndSort = ({
   searchTerm,
@@ -12,17 +12,17 @@ const SearchAndSort = ({
   onToggleFilters,
   resultsCount
 }) => {
-  const { t } = useLanguage();
+
 
   const sortOptions = [
-    { value: 'title', label: 'Title A-Z' },
-    { value: 'title-desc', label: 'Title Z-A' },
-    { value: 'price', label: 'Price Low to High' },
-    { value: 'price-desc', label: 'Price High to Low' },
-    { value: 'rating-desc', label: 'Highest Rated' },
-    { value: 'rating', label: 'Lowest Rated' },
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' }
+    { value: 'title', label: 'Tiêu Đề A-Z' },
+    { value: 'title-desc', label: 'Tiêu Đề Z-A' },
+    { value: 'price', label: 'Giá Thấp Đến Cao' },
+    { value: 'price-desc', label: 'Giá Cao Đến Thấp' },
+    { value: 'rating-desc', label: 'Đánh Giá Cao Nhất' },
+    { value: 'rating', label: 'Đánh Giá Thấp Nhất' },
+    { value: 'newest', label: 'Mới Nhất' },
+    { value: 'oldest', label: 'Cũ Nhất' }
   ];
 
   return (
@@ -37,7 +37,7 @@ const SearchAndSort = ({
                      dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <Filter className="h-4 w-4" />
-            <span className="text-sm">Filters</span>
+            <span className="text-sm">Bộ Lọc</span>
           </button>
 
           {/* Search Input */}
@@ -59,7 +59,7 @@ const SearchAndSort = ({
         <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
           {/* Results Count */}
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            {resultsCount} {resultsCount === 1 ? 'book' : 'books'} found
+            Tìm thấy {resultsCount} {resultsCount === 1 ? 'cuốn sách' : 'cuốn sách'}
           </div>
 
           {/* Sort Dropdown */}

@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { Star, ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { motion } from "framer-motion";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();
-  const { t } = useLanguage();
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -16,7 +15,7 @@ const BookCard = ({ book }) => {
   };
 
   const averageRating = book.average_rating || 0;
-  const ratingsCount = book.ratings?.length || 0;
+  const ratingsCount = book.reviews_count || 0;
 
   // Construct the full image URL
   const imageUrl = book.image
@@ -39,7 +38,7 @@ const BookCard = ({ book }) => {
             <button
               onClick={handleAddToCart}
               className="p-2 bg-amber-600 text-white rounded-full opacity-0 hover:bg-amber-700 hover:scale-110 transform transition-all duration-300 group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-              aria-label={t("addToCart")}>
+              aria-label="Thêm vào giỏ">
               <ShoppingCart className="h-4 w-4" />
             </button>
           </div>
@@ -49,7 +48,7 @@ const BookCard = ({ book }) => {
             {book.title}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-            {book.author?.name || "Unknown Author"}
+            {book.author?.name || "Tác giả không xác định"}
           </p>
           <div className="flex items-center mb-2">
             <div className="flex text-amber-500">
@@ -67,7 +66,7 @@ const BookCard = ({ book }) => {
               ))}
             </div>
             <span className="text-xs text-gray-600 dark:text-gray-400 ml-2">
-              ({ratingsCount} {t("reviews")})
+              ({ratingsCount} đánh giá)
             </span>
           </div>
           <div className="flex justify-between items-center">
@@ -83,10 +82,10 @@ const BookCard = ({ book }) => {
                   : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}>
               {book.stock > 10
-                ? t("inStock")
+                ? "Còn hàng"
                 : book.stock > 0
-                ? t("onlyXLeft", { count: book.stock })
-                : t("outOfStock")}
+                ? `Chỉ còn ${book.stock} cuốn`
+                : "Hết hàng"}
             </span>
           </div>
         </div>

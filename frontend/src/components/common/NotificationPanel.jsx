@@ -51,10 +51,10 @@ const NotificationPanel = () => {
     const date = new Date(dateString);
     const diffInSeconds = Math.floor((now - date) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    if (diffInSeconds < 60) return 'Vừa xong';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
     return date.toLocaleDateString();
   };
 
@@ -86,7 +86,7 @@ const NotificationPanel = () => {
           <div className="flex items-center gap-3">
             <Bell className="h-6 w-6 text-amber-600 dark:text-amber-500" />
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Notifications
+              Thông báo
             </h2>
             {unreadCount > 0 && (
               <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
@@ -111,7 +111,7 @@ const NotificationPanel = () => {
                 className="flex items-center gap-2 px-3 py-1 text-sm text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors"
               >
                 <CheckCheck className="h-4 w-4" />
-                Mark all read
+                Đánh dấu tất cả đã đọc
               </button>
             )}
             <button
@@ -119,7 +119,7 @@ const NotificationPanel = () => {
               className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
             >
               <Trash2 className="h-4 w-4" />
-              Clear all
+              Xóa tất cả
             </button>
           </div>
         )}
@@ -130,10 +130,10 @@ const NotificationPanel = () => {
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
               <Bell className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">
-                No notifications
+                Không có thông báo
               </h3>
               <p className="text-gray-400 dark:text-gray-500 text-sm">
-                You're all caught up! New notifications will appear here.
+                Bạn đã xem hết rồi! Thông báo mới sẽ xuất hiện ở đây.
               </p>
             </div>
           ) : (
@@ -187,7 +187,7 @@ const NotificationPanel = () => {
                                 onClick={() => setIsNotificationPanelOpen(false)}
                                 className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
                               >
-                                {notification.actionText || 'View'}
+                                {notification.actionText || 'Xem'}
                                 <ExternalLink className="h-3 w-3" />
                               </Link>
                             )}
@@ -199,7 +199,7 @@ const NotificationPanel = () => {
                                   markAsRead(notification.id);
                                 }}
                                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                                title="Mark as read"
+                                title="Đánh dấu đã đọc"
                               >
                                 <Check className="h-3 w-3 text-gray-500 dark:text-gray-400" />
                               </button>
@@ -211,7 +211,7 @@ const NotificationPanel = () => {
                                 deleteNotification(notification.id);
                               }}
                               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                              title="Delete notification"
+                              title="Xóa thông báo"
                             >
                               <Trash2 className="h-3 w-3 text-gray-500 dark:text-gray-400" />
                             </button>

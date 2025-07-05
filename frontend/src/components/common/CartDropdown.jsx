@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
-import { useLanguage } from '../../contexts/LanguageContext';
+
 import { useNavigate, Link } from 'react-router-dom';
 import ConfirmRemoveModal from './ConfirmRemoveModal';
 
 const CartDropdown = ({ className = "" }) => {
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, getItemCount } = useCart();
-  const { t } = useLanguage();
+
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);

@@ -12,39 +12,39 @@ const UserManagement = () => {
       name: "Admin User",
       email: "admin@example.com",
       role: "Admin",
-      status: "Active",
+      status: "Hoạt động",
       lastLogin: "2023-07-15",
     },
     {
       id: 2,
       name: "John Doe",
       email: "john@example.com",
-      role: "Customer",
-      status: "Active",
+      role: "Khách hàng",
+      status: "Hoạt động",
       lastLogin: "2023-07-14",
     },
     {
       id: 3,
       name: "Jane Smith",
       email: "jane@example.com",
-      role: "Customer",
-      status: "Active",
+      role: "Khách hàng",
+      status: "Hoạt động",
       lastLogin: "2023-07-13",
     },
     {
       id: 4,
       name: "Bob Johnson",
       email: "bob@example.com",
-      role: "Customer",
-      status: "Inactive",
+      role: "Khách hàng",
+      status: "Không hoạt động",
       lastLogin: "2023-06-30",
     },
     {
       id: 5,
       name: "Alice Williams",
       email: "alice@example.com",
-      role: "Customer",
-      status: "Active",
+      role: "Khách hàng",
+      status: "Hoạt động",
       lastLogin: "2023-07-10",
     },
   ];
@@ -52,7 +52,7 @@ const UserManagement = () => {
   // Handle adding a new user
   const handleAddUser = () => {
     // Implementation would go here
-    console.log("Add new user");
+    console.log("Thêm người dùng mới");
   };
 
   // Define columns for the users table
@@ -101,7 +101,7 @@ const UserManagement = () => {
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <span
                 className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  user.status === "Active"
+                  user.status === "Hoạt động"
                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
@@ -113,8 +113,8 @@ const UserManagement = () => {
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <ActionButtons
-                onEdit={() => console.log(`Edit user ${user.id}`)}
-                onDelete={() => console.log(`Delete user ${user.id}`)}
+                onEdit={() => console.log(`Chỉnh sửa người dùng ${user.id}`)}
+                onDelete={() => console.log(`Xóa người dùng ${user.id}`)}
               />
             </td>
           </tr>

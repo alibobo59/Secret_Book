@@ -131,7 +131,7 @@ const NotificationDropdown = ({ className = "" }) => {
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                 <h3 className="font-semibold text-gray-800 dark:text-white">
-                  Notifications
+                  Thông báo
                 </h3>
                 {unreadCount > 0 && (
                   <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
@@ -158,7 +158,7 @@ const NotificationDropdown = ({ className = "" }) => {
                     className="flex items-center gap-1 px-2 py-1 text-xs text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
                   >
                     <CheckCheck className="h-3 w-3" />
-                    Mark all read
+                    Đánh dấu tất cả đã đọc
                   </button>
                 )}
                 <button
@@ -169,7 +169,7 @@ const NotificationDropdown = ({ className = "" }) => {
                   className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                 >
                   <Trash2 className="h-3 w-3" />
-                  Clear all
+                  Xóa tất cả
                 </button>
               </div>
             )}
@@ -180,10 +180,10 @@ const NotificationDropdown = ({ className = "" }) => {
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <Bell className="h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No notifications
+                    Không có thông báo
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    You're all caught up!
+                    Bạn đã xem hết rồi!
                   </p>
                 </div>
               ) : (
@@ -238,7 +238,7 @@ const NotificationDropdown = ({ className = "" }) => {
                                   }}
                                   className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
                                 >
-                                  {notification.actionText || 'View'}
+                                  {notification.actionText || 'Xem'}
                                   <ExternalLink className="h-2.5 w-2.5" />
                                 </Link>
                               )}
@@ -279,7 +279,7 @@ const NotificationDropdown = ({ className = "" }) => {
                         onClick={() => setIsOpen(false)}
                         className="text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium"
                       >
-                        View all notifications ({notifications.length})
+                        Xem tất cả thông báo ({notifications.length})
                       </button>
                     </div>
                   )}

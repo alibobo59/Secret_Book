@@ -11,14 +11,15 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import { api, reviewAPI } from "../../services/api";
+import { Loading } from "../../components/common";
 
 const BookDetailPage = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const { t } = useLanguage();
+
   const [book, setBook] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState(0);
@@ -110,16 +111,16 @@ const BookDetailPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-            {t("bookNotFound")}
+            Không Tìm Thấy Sách
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error || t("bookNotFoundMessage")}
+            {error || "Sách bạn đang tìm kiếm không tồn tại."}
           </p>
           <Link
             to="/books"
             className="inline-flex items-center text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
             <ArrowLeft className="h-5 w-5 mr-2" />
-            {t("backToBooks")}
+            Quay Lại Danh Sách Sách
           </Link>
         </div>
       </div>
@@ -138,28 +139,27 @@ const BookDetailPage = () => {
       const reviewData = {
         book_id: parseInt(id),
         rating: rating,
-        review: review.trim() || null
+        review: review.trim() || null,
       };
 
       await reviewAPI.submitReview(reviewData);
-      
+
       // Reset form
       setRating(0);
       setReview("");
       setShowReviewForm(false);
-      
+
       // Refresh reviews and book data
       const [reviewsResponse, bookResponse] = await Promise.all([
         reviewAPI.getBookReviews(id),
-        api.get(`/books/${id}`)
+        api.get(`/books/${id}`),
       ]);
-      
+
       setReviews(reviewsResponse.data.data || []);
       setBook(bookResponse.data.data || bookResponse.data);
-      
+
       // Update review eligibility
       setCanReview(false);
-      
     } catch (err) {
       console.error("Failed to submit review:", err);
       alert(err.response?.data?.message || "Failed to submit review");
@@ -172,7 +172,7 @@ const BookDetailPage = () => {
         to="/books"
         className="inline-flex items-center text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mb-6">
         <ArrowLeft className="h-5 w-5 mr-2" />
-        {t("backToBooks")}
+        Quay Lại Danh Sách Sách
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -201,7 +201,7 @@ const BookDetailPage = () => {
               {book.title}
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              {t("by")} {book.author?.name || "Unknown Author"}
+              Tác giả: {book.author?.name || "Tác giả không xác định"}
             </p>
           </div>
 
@@ -222,7 +222,7 @@ const BookDetailPage = () => {
               ))}
             </div>
             <span className="text-gray-600 dark:text-gray-400">
-              ({book.reviews_count || 0} {t("reviews")})
+              ({book.reviews_count || 0} đánh giá)
             </span>
           </div>
 
@@ -230,12 +230,12 @@ const BookDetailPage = () => {
           <div className="space-y-3">
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Calendar className="h-5 w-5 mr-2" />
-              {t("published")}:{" "}
+              Xuất bản: 
               {new Date(book.published_date).toLocaleDateString()}
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Book className="h-5 w-5 mr-2" />
-              {t("pages")}: {book.page_count || "N/A"}
+              Số trang: {book.page_count || "Không có"}
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Hash className="h-5 w-5 mr-2" />
@@ -244,14 +244,14 @@ const BookDetailPage = () => {
           </div>
 
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {book.description || "No description available"}
+            {book.description || "Không có mô tả"}
           </p>
 
           {/* Price and Add to Cart */}
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">
-                {(parseInt(book.price) || 0).toLocaleString('vi-VN')} ₫
+                {(parseInt(book.price) || 0).toLocaleString("vi-VN")} ₫
                 {/* Display string directly with fallback */}
               </span>
               <span
@@ -263,17 +263,17 @@ const BookDetailPage = () => {
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
                 {parseInt(book.stock) > 10
-                  ? t("inStock")
+                  ? "Còn hàng"
                   : parseInt(book.stock) > 0
-                  ? t("onlyXLeft", { count: parseInt(book.stock) })
-                  : t("outOfStock")}
+                  ? `Chỉ còn ${parseInt(book.stock)} cuốn`
+                  : "Hết hàng"}
               </span>
             </div>
 
             <div className="flex items-center space-x-4">
               <div className="w-24">
                 <label htmlFor="quantity" className="sr-only">
-                  {t("quantity")}
+                  Số lượng
                 </label>
                 <input
                   type="number"
@@ -290,7 +290,7 @@ const BookDetailPage = () => {
                 disabled={parseInt(book.stock) === 0}
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {t("addToCart")}
+                Thêm Vào Giỏ
               </button>
             </div>
           </div>
@@ -301,13 +301,13 @@ const BookDetailPage = () => {
       <div className="mt-16">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-serif font-bold text-gray-800 dark:text-white">
-            {t("customerReviews")}
+            Đánh Giá Khách Hàng
           </h2>
           {user && canReview && !showReviewForm && (
             <button
               onClick={() => setShowReviewForm(true)}
               className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
-              {t("writeReview")}
+              Viết Đánh Giá
             </button>
           )}
           {user && !canReview && reviewEligibility && (
@@ -326,7 +326,7 @@ const BookDetailPage = () => {
             onSubmit={handleSubmitReview}>
             <div className="mb-4">
               <label className="block text-gray-700 dark:text-gray-300 mb-2">
-                {t("rating")}
+                Đánh giá
               </label>
               <div className="flex space-x-1">
                 {[1, 2, 3, 4, 5].map((value) => (
@@ -350,7 +350,7 @@ const BookDetailPage = () => {
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 dark:text-gray-300 mb-2">
-                {t("review")}
+                Nhận xét
               </label>
               <textarea
                 value={review}
@@ -363,13 +363,13 @@ const BookDetailPage = () => {
                 type="button"
                 onClick={() => setShowReviewForm(false)}
                 className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-                {t("cancel")}
+                Hủy
               </button>
               <button
                 type="submit"
                 disabled={rating === 0}
                 className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
-                {t("submitReview")}
+                Gửi Đánh Giá
               </button>
             </div>
           </motion.form>
@@ -378,9 +378,7 @@ const BookDetailPage = () => {
         {/* Reviews List */}
         <div className="space-y-6">
           {reviewsLoading ? (
-            <div className="text-center text-gray-600 dark:text-gray-400">
-              Loading reviews...
-            </div>
+            <Loading size={32} message="Đang tải..." />
           ) : reviews && reviews.length > 0 ? (
             reviews.map((review, index) => (
               <motion.div
@@ -392,7 +390,7 @@ const BookDetailPage = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="font-medium text-gray-800 dark:text-white">
-                      {review.user?.name || 'Anonymous'}
+                      {review.user?.name || "Anonymous"}
                     </p>
                     <div className="flex text-amber-500 mt-1">
                       {[...Array(5)].map((_, starIndex) => (
@@ -418,7 +416,7 @@ const BookDetailPage = () => {
             ))
           ) : (
             <p className="text-center text-gray-600 dark:text-gray-400">
-              {t("noReviewsYet")}
+              {"Chưa có đánh giá nào"}
             </p>
           )}
         </div>

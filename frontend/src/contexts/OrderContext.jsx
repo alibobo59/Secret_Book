@@ -296,6 +296,22 @@ export const OrderProvider = ({ children }) => {
     }
   }, []);
 
+  const getAllowedStatuses = useCallback(async (orderId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/allowed-statuses`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch allowed statuses:", error);
+      setError("Failed to fetch allowed statuses");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const refreshOrders = useCallback(async (page = 1, perPage = 10, filters = {}) => {
     if (user?.isAdmin) {
       return await getAllOrders(page, perPage, filters);
@@ -317,6 +333,7 @@ export const OrderProvider = ({ children }) => {
     getAllOrders,
     getOrdersByStatus,
     getOrderStats,
+    getAllowedStatuses,
     refreshOrders,
     cancelOrder,
   };

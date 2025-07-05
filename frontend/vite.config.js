@@ -13,8 +13,8 @@ export default defineConfig({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
         secure: false,
-        timeout: 30000,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
+        timeout: 300000,
+        rewrite: (path) => path.replace(/^\/api/, "/api"),
         configure: (proxy) => {
           proxy.on("error", (err) => {
             console.error("Proxy error /api:", err);

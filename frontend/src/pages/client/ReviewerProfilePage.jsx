@@ -10,12 +10,12 @@ import {
   Award,
   TrendingUp,
 } from "lucide-react";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import ReviewInteractionButtons from "../../components/reviews/ReviewInteractionButtons";
 
 const ReviewerProfilePage = () => {
   const { reviewerId } = useParams();
-  const { t } = useLanguage();
+
   const [reviewer, setReviewer] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -167,16 +167,16 @@ const ReviewerProfilePage = () => {
         <div className="text-center">
           <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-            Reviewer Not Found
+            Không Tìm Thấy Người Đánh Giá
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The reviewer profile you're looking for doesn't exist.
+            Hồ sơ người đánh giá bạn đang tìm kiếm không tồn tại.
           </p>
           <Link
             to="/"
             className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors"
           >
-            Go Home
+            Về Trang Chủ
           </Link>
         </div>
       </div>
@@ -192,7 +192,7 @@ const ReviewerProfilePage = () => {
           className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 mb-8 transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
-          Back to Home
+          Quay về trang chủ
         </Link>
 
         {/* Reviewer Profile */}
@@ -251,15 +251,15 @@ const ReviewerProfilePage = () => {
                     {reviewer.totalReviews}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Reviews
+                    Đánh Giá
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-amber-600">
-                    {reviewer.averageRating.toFixed(1)}
+                    {Number(reviewer.averageRating || 0).toFixed(1)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Avg Rating
+                    Đánh Giá TB
                   </div>
                 </div>
                 <div className="text-center">
@@ -267,7 +267,7 @@ const ReviewerProfilePage = () => {
                     {reviewer.helpfulVotes}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Helpful Votes
+                    Lượt Hữu Ích
                   </div>
                 </div>
                 <div className="text-center">
@@ -276,7 +276,7 @@ const ReviewerProfilePage = () => {
                       new Date(reviewer.joinDate).getFullYear()}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Years Active
+                    Năm Hoạt Động
                   </div>
                 </div>
               </div>
@@ -284,7 +284,7 @@ const ReviewerProfilePage = () => {
               {/* Favorite Genres */}
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Favorite Genres:
+                  Thể Loại Yêu Thích:
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {reviewer.favoriteGenres.map((genre, index) => (
@@ -305,18 +305,18 @@ const ReviewerProfilePage = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-              Reviews ({reviews.length})
+              Đánh Giá ({reviews.length})
             </h2>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="rating-high">Highest Rated</option>
-              <option value="rating-low">Lowest Rated</option>
-              <option value="helpful">Most Helpful</option>
+              <option value="newest">Mới Nhất</option>
+              <option value="oldest">Cũ Nhất</option>
+              <option value="rating-high">Đánh Giá Cao Nhất</option>
+              <option value="rating-low">Đánh Giá Thấp Nhất</option>
+              <option value="helpful">Hữu Ích Nhất</option>
             </select>
           </div>
 
@@ -354,7 +354,7 @@ const ReviewerProfilePage = () => {
                           {review.bookTitle}
                         </Link>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          by {review.bookAuthor}
+                          của {review.bookAuthor}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -388,7 +388,7 @@ const ReviewerProfilePage = () => {
             <div className="text-center py-8">
               <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                This reviewer hasn't written any reviews yet.
+                Người đánh giá này chưa viết đánh giá nào.
               </p>
             </div>
           )}

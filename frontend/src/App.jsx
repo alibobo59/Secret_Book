@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import { CouponProvider } from "./contexts/CouponContext";
 import { ClientLayout, AdminLayout } from "./layouts";
 import {
   OrderManagement as OrderManagementClient,
@@ -32,6 +33,7 @@ import {
   BookDetail,
   AuditLogDashboard,
 } from "./pages/admin";
+import CouponManagement from "./pages/admin/CouponManagement";
 
 function App() {
   const { user, hasRole, loading: authLoading } = useAuth();
@@ -50,7 +52,8 @@ function App() {
   }
 
   return (
-    <Routes>
+    <CouponProvider>
+      <Routes>
       <Route element={<ClientLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/books" element={<BrowseBooksPage />} />
@@ -88,9 +91,11 @@ function App() {
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
         <Route path="audit-logs" element={<AuditLogDashboard />} />
+        <Route path="coupons" element={<CouponManagement />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      </Routes>
+    </CouponProvider>
   );
 }
 

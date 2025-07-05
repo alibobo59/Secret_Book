@@ -472,7 +472,7 @@ const BookEdit = () => {
               {!isVariableProduct && (
                 <div>
                   <label className="text-gray-700 dark:text-gray-200">
-                    Stock Quantity <span className="text-red-600">*</span>
+                    Số lượng tồn kho <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="number"

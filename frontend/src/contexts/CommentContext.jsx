@@ -121,8 +121,8 @@ export const CommentProvider = ({ children }) => {
 
   const getAverageRating = () => {
     if (comments.length === 0) return 0;
-    const totalRating = comments.reduce((sum, comment) => sum + comment.rating, 0);
-    return (totalRating / comments.length).toFixed(1);
+    const totalRating = comments.reduce((sum, comment) => sum + (Number(comment.rating) || 0), 0);
+    return Number(totalRating / comments.length).toFixed(1);
   };
 
   const getRatingDistribution = () => {

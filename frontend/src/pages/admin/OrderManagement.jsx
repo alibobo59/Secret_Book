@@ -238,7 +238,7 @@ const OrderManagement = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Order Management" hideAddButton />
+      <PageHeader title="Quản lý đơn hàng" hideAddButton />
 
       <SearchFilter
         searchTerm={searchTerm}
@@ -277,7 +277,7 @@ const OrderManagement = () => {
               {new Date(order.created_at).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              ${parseFloat(order.total || 0).toFixed(2)}
+              {parseFloat(order.total || 0).toLocaleString('vi-VN')} ₫
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <span
@@ -527,7 +527,7 @@ const OrderManagement = () => {
                         {item.book?.title || 'Unknown Title'}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        by {item.book?.author || 'Unknown Author'}
+                        bởi {item.book?.author || 'Tác giả không xác định'}
                       </p>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../../contexts/OrderContext";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
 import {
@@ -34,7 +34,7 @@ const CheckoutPage = () => {
   } = useCart();
   const { user } = useAuth();
   const { createOrder, loading } = useOrder();
-  const { t } = useLanguage();
+
   const navigate = useNavigate();
   const { showError } = useToast();
 
@@ -143,7 +143,7 @@ const CheckoutPage = () => {
           <div className="text-center">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Your cart is empty
+              Giỏ hàng của bạn đang trống
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Thêm sách vào giỏ hàng trước khi thanh toán.
@@ -151,7 +151,7 @@ const CheckoutPage = () => {
             <button
               onClick={() => navigate("/books")}
               className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-              Browse Books
+              Duyệt Sách
             </button>
           </div>
         </div>
@@ -168,10 +168,10 @@ const CheckoutPage = () => {
             onClick={() => navigate("/cart")}
             className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4">
             <ArrowLeft className="h-5 w-5" />
-            Back to Cart
+            Quay lại giỏ hàng
           </button>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Checkout
+            Thanh Toán
           </h1>
         </div>
 
@@ -186,7 +186,7 @@ const CheckoutPage = () => {
               <div className="flex items-center gap-3 mb-6">
                 <Truck className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  Shipping Information
+                  Thông Tin Giao Hàng
                 </h2>
               </div>
 
@@ -194,7 +194,7 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <User className="inline h-4 w-4 mr-1" />
-                    Full Name *
+                    Họ và Tên *
                   </label>
                   <input
                     type="text"
@@ -204,7 +204,7 @@ const CheckoutPage = () => {
                     className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-500 cursor-not-allowed"
                     placeholder="Nhập họ và tên đầy đủ"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This field cannot be changed during checkout</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Trường này không thể thay đổi trong quá trình thanh toán</p>
                 </div>
 
                 <div>
@@ -226,7 +226,7 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <Phone className="inline h-4 w-4 mr-1" />
-                    Phone Number *
+                    Số Điện Thoại *
                   </label>
                   <input
                     type="tel"
@@ -246,7 +246,7 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1" />
-                    City *
+                    Thành Phố *
                   </label>
                   <input
                     type="text"
@@ -266,7 +266,7 @@ const CheckoutPage = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1" />
-                    Address *
+                    Địa Chỉ *
                   </label>
                   <input
                     type="text"
@@ -287,7 +287,7 @@ const CheckoutPage = () => {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Order Notes (Optional)
+                    Ghi Chú Đơn Hàng (Tùy chọn)
                   </label>
                   <textarea
                     name="notes"
@@ -306,7 +306,7 @@ const CheckoutPage = () => {
               <div className="flex items-center gap-3 mb-6">
                 <CreditCard className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  Payment Method
+                  Phương Thức Thanh Toán
                 </h2>
               </div>
 
@@ -321,7 +321,7 @@ const CheckoutPage = () => {
                     className="text-amber-600"
                   />
                   <span className="text-gray-700 dark:text-gray-300">
-                    Cash on Delivery (COD)
+                    Thanh toán khi nhận hàng (COD)
                   </span>
                 </label>
 
@@ -335,7 +335,7 @@ const CheckoutPage = () => {
                     className="text-amber-600"
                   />
                   <span className="text-gray-700 dark:text-gray-300">
-                    VNPay Online Payment
+                    Thanh toán trực tuyến VNPay
                   </span>
                 </label>
               </div>
@@ -347,7 +347,7 @@ const CheckoutPage = () => {
             {/* Cart Items */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Cart Items ({cartItems.length})
+                Sản phẩm trong giỏ ({cartItems.length})
               </h3>
 
               <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -371,13 +371,13 @@ const CheckoutPage = () => {
                         {item.title}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        by {item.author?.name || "Unknown Author"}
+                        bởi {item.author?.name || "Tác giả không xác định"}
                       </p>
                       <div className="flex items-center justify-between mt-2">
                         {/* Quantity Controls */}
                         <div className="flex items-center space-x-2">
                           <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Quantity:
+                            Số lượng:
                           </span>
                           <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded">
                             <button
@@ -414,7 +414,7 @@ const CheckoutPage = () => {
             {/* Order Total and Place Order Button */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
-                Order Summary
+                Tóm tắt đơn hàng
               </h2>
 
               <div className="space-y-4 mb-6">
@@ -427,8 +427,8 @@ const CheckoutPage = () => {
                         {item.title}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Qty: {item.quantity}
-                      </p>
+                         SL: {item.quantity}
+                       </p>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {(
@@ -443,14 +443,14 @@ const CheckoutPage = () => {
               {getSelectedItemsCount() === 0 && (
                 <div className="text-center py-4">
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    Please select items to checkout
+                    Vui lòng chọn sản phẩm để thanh toán
                   </p>
                 </div>
               )}
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
                 <div className="flex justify-between text-lg font-semibold">
-                  <span className="text-gray-900 dark:text-white">Total</span>
+                  <span className="text-gray-900 dark:text-white">Tổng Cộng</span>
                   <span className="text-gray-900 dark:text-white">
                     {getSelectedTotal().toLocaleString("vi-VN")} ₫
                   </span>
@@ -466,14 +466,14 @@ const CheckoutPage = () => {
                 {isSubmitting || loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Processing...
+                    Đang xử lý...
                   </>
                 ) : (
                   <>
                     <CreditCard className="h-4 w-4" />
                     {getSelectedItemsCount() === 0
-                      ? "Select Items to Continue"
-                      : "Place Order"}
+                      ? "Chọn Sản Phẩm Để Tiếp Tục"
+                      : "Đặt hàng"}
                   </>
                 )}
               </button>

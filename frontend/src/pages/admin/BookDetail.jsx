@@ -38,7 +38,7 @@ const BookDetail = () => {
         setBook(response.data.data);
       } catch (err) {
         console.error("Error fetching book detail:", err);
-        setError(err.response?.data?.error || "Failed to fetch book details");
+        setError(err.response?.data?.error || "Không thể tải chi tiết sách");
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ const BookDetail = () => {
 
   const handleEdit = () => {
     if (!hasRole(["admin"])) {
-      setError("Only admins can edit books.");
+      setError("Chỉ quản trị viên mới có thể chỉnh sửa sách.");
       return;
     }
     navigate(`/admin/books/edit/${id}`);
@@ -59,13 +59,13 @@ const BookDetail = () => {
 
   const handleDelete = async () => {
     if (!hasRole(["admin"])) {
-      setError("Only admins can delete books.");
+      setError("Chỉ quản trị viên mới có thể xóa sách.");
       return;
     }
     
     const token = getToken();
     if (!token) {
-      setError("Authentication token is missing. Please log in.");
+      setError("Thiếu token xác thực. Vui lòng đăng nhập.");
       return;
     }
 
@@ -77,10 +77,10 @@ const BookDetail = () => {
       await api.delete(`/books/${id}`, config);
       setBooks(books.filter((book) => book.id !== parseInt(id)));
       navigate("/admin/books", { 
-        state: { message: 'Book deleted successfully' } 
+        state: { message: 'Xóa sách thành công' } 
       });
     } catch (err) {
-      const message = err.response?.data?.error || "Failed to delete book";
+      const message = err.response?.data?.error || "Không thể xóa sách";
       setError(message);
     } finally {
       setDeleting(false);
@@ -95,9 +95,9 @@ const BookDetail = () => {
   };
 
   const getStockStatusText = (quantity) => {
-    if (quantity === 0) return 'Out of Stock';
-    if (quantity < 10) return 'Low Stock';
-    return 'In Stock';
+    if (quantity === 0) return 'Hết hàng';
+    if (quantity < 10) return 'Sắp hết hàng';
+    return 'Còn hàng';
   };
 
   const handleBack = () => {
@@ -115,7 +115,7 @@ const BookDetail = () => {
             className="flex items-center text-amber-600 hover:text-amber-800 mr-4"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back to Books
+            Quay lại danh sách sách
           </button>
         </div>
         <div className="text-red-500 text-center">
@@ -134,11 +134,11 @@ const BookDetail = () => {
             className="flex items-center text-amber-600 hover:text-amber-800 mr-4"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back to Books
+            Quay lại danh sách sách
           </button>
         </div>
         <div className="text-gray-500 dark:text-gray-400 text-center">
-          <p>Book not found</p>
+          <p>Không tìm thấy sách</p>
         </div>
       </div>
     );
@@ -166,7 +166,7 @@ const BookDetail = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-gray-600 mt-1">Book Details</p>
+                <p className="text-gray-600 mt-1">Chi tiết sách</p>
               </div>
             </div>
             {hasRole(["admin"]) && (
@@ -176,14 +176,14 @@ const BookDetail = () => {
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                  Chỉnh sửa
                 </button>
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                  Xóa
                 </button>
               </div>
             )}
@@ -209,7 +209,7 @@ const BookDetail = () => {
                 }`}
               >
                 <Package className="w-4 h-4 inline mr-2" />
-                Details
+                Chi tiết
               </button>
               <button
                 onClick={() => setActiveTab('audit')}
@@ -220,7 +220,7 @@ const BookDetail = () => {
                 }`}
               >
                 <Activity className="w-4 h-4 inline mr-2" />
-                Audit Logs
+                Kiểm tra Logs
               </button>
             </nav>
           </div>
@@ -233,7 +233,7 @@ const BookDetail = () => {
             <div className="lg:col-span-2 space-y-6">
               {/* Book Information */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Book Information</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Thông tin sách</h2>
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Book Image */}
                   {(book.cover_image || book.image) && (
@@ -250,24 +250,24 @@ const BookDetail = () => {
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Title
-                      </label>
+                    Tiêu đề
+                  </label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-md">{book.title}</p>
                     </div>
                     {book.sku && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                          <Hash className="w-4 h-4 mr-1" />
-                          SKU
-                        </label>
+                      <Hash className="w-4 h-4 mr-2" />
+                      Mã SKU
+                    </label>
                         <p className="text-gray-900 bg-gray-50 p-3 rounded-md">{book.sku}</p>
                       </div>
                     )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <User className="w-4 h-4 mr-1" />
-                        Author
-                      </label>
+                    <User className="w-4 h-4 mr-2" />
+                    Tác giả
+                  </label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-md">
                         {book.author ? (
                           <Link
@@ -283,9 +283,9 @@ const BookDetail = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <Building className="w-4 h-4 mr-1" />
-                        Publisher
-                      </label>
+                    <Building className="w-4 h-4 mr-2" />
+                    Nhà xuất bản
+                  </label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-md">
                         {book.publisher ? (
                           <Link
@@ -301,9 +301,9 @@ const BookDetail = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <Tag className="w-4 h-4 mr-1" />
-                        Category
-                      </label>
+                    <Tag className="w-4 h-4 mr-2" />
+                    Danh mục
+                  </label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-md">
                         {book.category ? (
                           <Link
@@ -320,9 +320,9 @@ const BookDetail = () => {
                     {book.price && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          Price
-                        </label>
+                      <Package className="w-4 h-4 mr-2" />
+                      Tồn kho
+                    </label>
                         <p className="text-gray-900 bg-gray-50 p-3 rounded-md font-semibold text-green-600">
                           ${book.price}
                         </p>
@@ -332,19 +332,19 @@ const BookDetail = () => {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                           <Package className="w-4 h-4 mr-1" />
-                          Stock Quantity
+                          Số lượng tồn kho
                         </label>
                         <div className="bg-gray-50 p-3 rounded-md">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStockStatusColor(book.stock_quantity)}`}>
-                            {book.stock_quantity} units
+                            {book.stock_quantity} đơn vị
                           </span>
                         </div>
                       </div>
                     )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Book ID
-                      </label>
+                    Mã sách
+                  </label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-md">#{book.id}</p>
                     </div>
                   </div>
@@ -354,7 +354,7 @@ const BookDetail = () => {
               {/* Description */}
               {book.description && (
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Description</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Mô tả</h2>
                   <div className="prose max-w-none">
                     <p className="text-gray-700 leading-relaxed">{book.description}</p>
                   </div>
@@ -364,7 +364,7 @@ const BookDetail = () => {
               {/* Book Variations */}
               {book.variations && book.variations.length > 0 && (
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Book Variations</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Biến thể sách</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {book.variations.map((variation, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-4">
@@ -385,7 +385,7 @@ const BookDetail = () => {
                         )}
                         {variation.stock_quantity !== undefined && (
                           <p className="text-sm text-gray-500">
-                            Stock: {variation.stock_quantity} units
+                            Tồn kho: {variation.stock_quantity} đơn vị
                           </p>
                         )}
                         {variation.image && (
@@ -406,33 +406,33 @@ const BookDetail = () => {
             <div className="space-y-6">
               {/* Quick Stats */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thống kê nhanh</h3>
                 <div className="space-y-4">
                   {book.price && (
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Current Price</span>
+                      <span className="text-gray-600">Giá hiện tại</span>
                       <span className="font-semibold text-green-600">${book.price}</span>
                     </div>
                   )}
                   {book.stock_quantity !== undefined && (
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Stock</span>
+                      <span className="text-gray-600">Tồn kho</span>
                       <span className={`font-semibold ${
                         book.stock_quantity === 0 ? 'text-red-600' :
                         book.stock_quantity < 10 ? 'text-yellow-600' :
                         'text-green-600'
                       }`}>
-                        {book.stock_quantity} units
+                        {book.stock_quantity} đơn vị
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Book ID</span>
+                    <span className="text-gray-600">Mã sách</span>
                     <span className="font-semibold text-gray-900">#{book.id}</span>
                   </div>
                   {book.published_year && (
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Published</span>
+                      <span className="text-gray-600">Năm xuất bản</span>
                       <span className="font-semibold text-gray-900">{book.published_year}</span>
                     </div>
                   )}
@@ -441,11 +441,11 @@ const BookDetail = () => {
 
               {/* Related Information */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin liên quan</h3>
                 <div className="space-y-4">
                   {book.author && (
                     <div>
-                      <span className="block text-sm text-gray-600 mb-1">Author</span>
+                      <span className="block text-sm text-gray-600 mb-1">Tác giả</span>
                       <Link
                         to={`/admin/authors/${book.author.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
@@ -456,7 +456,7 @@ const BookDetail = () => {
                   )}
                   {book.publisher && (
                     <div>
-                      <span className="block text-sm text-gray-600 mb-1">Publisher</span>
+                      <span className="block text-sm text-gray-600 mb-1">Nhà xuất bản</span>
                       <Link
                         to={`/admin/publishers/${book.publisher.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
@@ -467,7 +467,7 @@ const BookDetail = () => {
                   )}
                   {book.category && (
                     <div>
-                      <span className="block text-sm text-gray-600 mb-1">Category</span>
+                      <span className="block text-sm text-gray-600 mb-1">Danh mục</span>
                       <Link
                         to={`/admin/categories/${book.category.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
@@ -483,17 +483,17 @@ const BookDetail = () => {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Timestamps
+                  Thời gian
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <span className="block text-sm text-gray-600">Created</span>
+                    <span className="block text-sm text-gray-600">Ngày tạo</span>
                     <span className="text-gray-900">
                       {new Date(book.created_at).toLocaleString()}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-sm text-gray-600">Last Updated</span>
+                    <span className="block text-sm text-gray-600">Cập nhật lần cuối</span>
                     <span className="text-gray-900">
                       {new Date(book.updated_at).toLocaleString()}
                     </span>
@@ -517,10 +517,10 @@ const BookDetail = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Confirm Delete
+                Xác nhận xóa
               </h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete the book "{book.title}"? This action cannot be undone and will also remove it from any existing orders.
+                Bạn có chắc chắn muốn xóa sách "{book.title}" không? Hành động này không thể hoàn tác và cũng sẽ xóa nó khỏi các đơn hàng hiện có.
               </p>
               <div className="flex justify-end space-x-3">
                 <button
@@ -528,14 +528,14 @@ const BookDetail = () => {
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
                   disabled={deleting}
                 >
-                  Cancel
+                  Hủy bỏ
                 </button>
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                   disabled={deleting}
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {deleting ? 'Đang xóa...' : 'Xóa'}
                 </button>
               </div>
             </div>

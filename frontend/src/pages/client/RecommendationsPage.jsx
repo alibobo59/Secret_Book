@@ -112,8 +112,8 @@ const RecommendationsPage = () => {
     switch (type) {
       case "for-you":
         return {
-          title: "Recommended For You",
-          description: "Personalized book recommendations based on your reading history",
+          title: "Dành cho bạn",
+          description: "Gợi ý sách được cá nhân hóa dựa trên lịch sử đọc của bạn",
           icon: Target,
           color: "text-purple-600",
         };
@@ -133,15 +133,15 @@ const RecommendationsPage = () => {
         };
       case "bestsellers":
         return {
-          title: "Bestsellers",
-          description: "Most popular books based on sales",
+          title: "Bán chạy nhất",
+          description: "Những cuốn sách phổ biến nhất dựa trên doanh số bán hàng",
           icon: Star,
           color: "text-amber-600",
         };
       default:
         return {
-          title: "Recommendations",
-          description: "Discover your next great read",
+          title: "Gợi ý",
+          description: "Khám phá cuốn sách tuyệt vời tiếp theo của bạn",
           icon: BookOpen,
           color: "text-blue-600",
         };
@@ -212,11 +212,11 @@ const RecommendationsPage = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  <option value="relevance">Sort by Relevance</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="newest">Newest First</option>
+                  <option value="relevance">Sắp xếp theo độ liên quan</option>
+                  <option value="rating">Đánh giá cao nhất</option>
+                  <option value="price-low">Giá: Thấp đến cao</option>
+                  <option value="price-high">Giá: Cao đến thấp</option>
+                  <option value="newest">Mới nhất trước</option>
                 </select>
                 <SortAsc className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -228,11 +228,11 @@ const RecommendationsPage = () => {
                   onChange={(e) => setFilterRating(e.target.value)}
                   className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
-                  <option value="all">All Ratings</option>
-                  <option value="4.5">4.5+ Stars</option>
-                  <option value="4.0">4.0+ Stars</option>
-                  <option value="3.5">3.5+ Stars</option>
-                  <option value="3.0">3.0+ Stars</option>
+                  <option value="all">Tất cả đánh giá</option>
+                  <option value="4.5">4.5+ Sao</option>
+                  <option value="4.0">4.0+ Sao</option>
+                  <option value="3.5">3.5+ Sao</option>
+                  <option value="3.0">3.0+ Sao</option>
                 </select>
                 <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -244,7 +244,7 @@ const RecommendationsPage = () => {
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              Làm mới
             </button>
           </div>
         </div>
@@ -252,7 +252,7 @@ const RecommendationsPage = () => {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Showing {recommendations.length} recommendations
+            Hiển thị {recommendations.length} gợi ý
           </p>
         </div>
 
@@ -279,16 +279,16 @@ const RecommendationsPage = () => {
           <div className="text-center py-12">
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-800 dark:text-white mb-2">
-              No recommendations found
+              Không tìm thấy gợi ý nào
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Try adjusting your filters or check back later for new recommendations.
+              Hãy thử điều chỉnh bộ lọc hoặc khám phá bộ sưu tập sách của chúng tôi
             </p>
             <Link
               to="/books"
               className="inline-flex items-center px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
-              Browse All Books
+              Duyệt sách
             </Link>
           </div>
         )}
@@ -296,14 +296,14 @@ const RecommendationsPage = () => {
         {/* Recommendation Types Navigation */}
         <div className="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">
-            Explore More Recommendations
+            Khám phá các gợi ý khác
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { type: "for-you", title: "For You", icon: Target, color: "purple" },
-              { type: "trending", title: "Trending", icon: TrendingUp, color: "red" },
-              { type: "new-releases", title: "New Releases", icon: Sparkles, color: "green" },
-              { type: "bestsellers", title: "Bestsellers", icon: Star, color: "amber" },
+              { type: "for-you", title: "Dành cho bạn", icon: Target, color: "purple" },
+              { type: "trending", title: "Xu hướng", icon: TrendingUp, color: "red" },
+              { type: "new-releases", title: "Mới phát hành", icon: Sparkles, color: "green" },
+              { type: "bestsellers", title: "Bán chạy nhất", icon: Star, color: "amber" },
             ].map((item) => {
               const isActive = type === item.type;
               return (

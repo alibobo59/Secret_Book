@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom';
 import { Star, ShoppingCart } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { motion } from 'framer-motion';
-import { useLanguage } from '../../contexts/LanguageContext';
+
 
 const BookListView = ({ book }) => {
   const { addToCart } = useCart();
-  const { t } = useLanguage();
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -15,8 +14,8 @@ const BookListView = ({ book }) => {
     addToCart(book);
   };
 
-  const averageRating = book.average_rating || 0;
-  const ratingsCount = book.ratings?.length || 0;
+  const averageRating = Number(book.average_rating) || 0;
+  const ratingsCount = book.reviews_count || 0;
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
@@ -65,14 +64,14 @@ const BookListView = ({ book }) => {
                   {book.title}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {typeof book.author === 'object' ? book.author?.name || 'Unknown Author' : book.author}
+                  {typeof book.author === 'object' ? book.author?.name || 'Tác giả không xác định' : book.author}
                 </p>
                 
                 {/* Category */}
                 {book.category && (
                   <span className="inline-block mt-2 px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900 
                                  text-amber-800 dark:text-amber-200 rounded-full">
-                    {book.category}
+                    {typeof book.category === 'object' ? book.category?.name || 'Danh mục không xác định' : book.category}
                   </span>
                 )}
 
@@ -90,11 +89,11 @@ const BookListView = ({ book }) => {
                   {renderStars(averageRating)}
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {averageRating.toFixed(1)}
+                  {Number(averageRating).toFixed(1)}
                 </span>
                 {ratingsCount > 0 && (
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    ({ratingsCount} {ratingsCount === 1 ? 'review' : 'reviews'})
+                    ({ratingsCount} đánh giá)
                   </span>
                 )}
               </div>
@@ -126,7 +125,7 @@ const BookListView = ({ book }) => {
                        dark:focus:ring-offset-gray-800"
             >
               <ShoppingCart className="h-4 w-4" />
-              <span className="text-sm font-medium">{t('book.addToCart')}</span>
+              <span className="text-sm font-medium">Thêm vào giỏ</span>
             </motion.button>
           </div>
         </div>

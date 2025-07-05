@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { User, Mail, Lock, UserPlus, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -17,7 +17,7 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,28 +32,28 @@ const RegisterPage = () => {
     
     // Name validation
     if (!formData.name.trim()) {
-      errors.name = t("form.required");
+      errors.name = "Trường này là bắt buộc";
     }
     
     // Email validation
     if (!formData.email.trim()) {
-      errors.email = t("form.required");
+      errors.email = "Trường này là bắt buộc";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = t("form.error.email");
+      errors.email = "Vui lòng nhập địa chỉ email hợp lệ";
     }
     
     // Password validation
     if (!formData.password.trim()) {
-      errors.password = t("form.required");
+      errors.password = "Trường này là bắt buộc";
     } else if (formData.password.length < 6) {
-      errors.password = t("form.error.minLength", { count: 6 });
+      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
     }
     
     // Password confirmation validation
     if (!formData.password_confirmation.trim()) {
-      errors.password_confirmation = t("form.required");
+      errors.password_confirmation = "Trường này là bắt buộc";
     } else if (formData.password !== formData.password_confirmation) {
-      errors.password_confirmation = t("message.error.passwordMatch");
+      errors.password_confirmation = "Mật khẩu xác nhận không khớp";
     }
     
     setValidationErrors(errors);
@@ -105,11 +105,11 @@ const RegisterPage = () => {
         
         // If there are no field-specific errors, show general message
         if (Object.keys(newValidationErrors).length === 0) {
-          setError(error.response.data.message || t("message.error.validation"));
+          setError(error.response.data.message || "Dữ liệu không hợp lệ");
         }
       } else {
         // Handle other types of errors (401, 500, etc.)
-        const errorMessage = error.response?.data?.message || error.message || t("message.error.register");
+        const errorMessage = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi đăng ký";
         setError(errorMessage);
       }
     } finally {
@@ -125,10 +125,10 @@ const RegisterPage = () => {
         className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
-            {t("register.title")}
+            Đăng Ký
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {t("register.subtitle")}
+            Tạo tài khoản mới để bắt đầu hành trình đọc sách
           </p>
         </div>
 
@@ -147,7 +147,7 @@ const RegisterPage = () => {
             <label
               htmlFor="name"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.name")}
+              Họ và Tên
             </label>
             <div className="relative">
               <input
@@ -161,7 +161,7 @@ const RegisterPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.name.placeholder")}
+                placeholder="Nhập họ và tên của bạn"
               />
               <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -176,7 +176,7 @@ const RegisterPage = () => {
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.email")}
+              Email
             </label>
             <div className="relative">
               <input
@@ -190,7 +190,7 @@ const RegisterPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.email.placeholder")}
+                placeholder="Nhập địa chỉ email của bạn"
               />
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -205,7 +205,7 @@ const RegisterPage = () => {
             <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.password")}
+              Mật Khẩu
             </label>
             <div className="relative">
               <input
@@ -219,7 +219,7 @@ const RegisterPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.password.create")}
+                placeholder="Tạo mật khẩu mạnh"
               />
               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -234,7 +234,7 @@ const RegisterPage = () => {
             <label
               htmlFor="password_confirmation"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.confirmPassword")}
+              Xác Nhận Mật Khẩu
             </label>
             <div className="relative">
               <input
@@ -248,7 +248,7 @@ const RegisterPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.password.confirm")}
+                placeholder="Nhập lại mật khẩu"
               />
               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -269,17 +269,17 @@ const RegisterPage = () => {
             <label
               htmlFor="terms"
               className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-              {t("register.agree")}{" "}
+              Tôi đồng ý với{" "}
               <Link
                 to="/terms"
                 className="font-medium text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400">
-                {t("footer.terms")}
+                Điều Khoản Dịch Vụ
               </Link>{" "}
-              {t("common.and")}{" "}
+              và{" "}
               <Link
                 to="/privacy"
                 className="font-medium text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400">
-                {t("footer.privacy")}
+                Chính Sách Bảo Mật
               </Link>
             </label>
           </div>
@@ -293,18 +293,18 @@ const RegisterPage = () => {
             ) : (
               <>
                 <UserPlus className="h-5 w-5 mr-2" />
-                {t("nav.register")}
+                Đăng Ký
               </>
             )}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          {t("register.haveAccount")}{" "}
+          Đã có tài khoản?{" "}
           <Link
             to="/login"
             className="font-medium text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400">
-            {t("nav.login")}
+            Đăng Nhập
           </Link>
         </p>
       </motion.div>

@@ -178,7 +178,7 @@ const AuditLogTable = ({
       name: 'Name',
       description: 'Description',
       price: 'Price',
-      stock_quantity: 'Stock Quantity',
+      stock_quantity: 'Số lượng tồn kho',
       category_id: 'Category',
       author_id: 'Author',
       publisher_id: 'Publisher',
@@ -198,7 +198,7 @@ const AuditLogTable = ({
   };
 
   const formatValue = (value) => {
-    if (value === null || value === undefined) return 'N/A';
+    if (value === null || value === undefined) return 'Không có';
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (typeof value === 'string' && value.length > 50) {
       return value.substring(0, 50) + '...';
@@ -235,9 +235,9 @@ const AuditLogTable = ({
                className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
              >
                {isExpanded ? (
-                 <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+                 <><ChevronUp className="w-3 h-3 mr-1" /> Ẩn bớt</>
                ) : (
-                 <><ChevronDown className="w-3 h-3 mr-1" /> Show {entries.length - 2} More</>
+                 <><ChevronDown className="w-3 h-3 mr-1" /> Hiện thêm {entries.length - 2}</>
                )}
              </button>
            )}
@@ -271,9 +271,9 @@ const AuditLogTable = ({
               className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
             >
               {isExpanded ? (
-                <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+                <><ChevronUp className="w-3 h-3 mr-1" /> Ẩn bớt</>
               ) : (
-                <><ChevronDown className="w-3 h-3 mr-1" /> Show {entries.length - 2} More</>
+                <><ChevronDown className="w-3 h-3 mr-1" /> Hiện thêm {entries.length - 2}</>
               )}
             </button>
           )}
@@ -299,7 +299,7 @@ const AuditLogTable = ({
       if (changes.length === 0) {
         return (
           <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-            No changes detected
+            Không phát hiện thay đổi
           </div>
         );
       }
@@ -337,15 +337,15 @@ const AuditLogTable = ({
               className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
             >
               {isExpanded ? (
-                <><ChevronUp className="w-3 h-3 mr-1" /> Show Less</>
+                <><ChevronUp className="w-3 h-3 mr-1" /> Ẩn bớt</>
               ) : (
-                <><ChevronDown className="w-3 h-3 mr-1" /> Show {changes.length - 2} More Changes</>
+                <><ChevronDown className="w-3 h-3 mr-1" /> Hiện thêm {changes.length - 2} thay đổi</>
               )}
             </button>
           )}
           {changes.length > 0 && (
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              {changes.length} field{changes.length !== 1 ? 's' : ''} changed
+              {changes.length} trường đã thay đổi
             </div>
           )}
         </div>
@@ -369,7 +369,7 @@ const AuditLogTable = ({
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Audit Log Details
+                  Chi tiết nhật ký kiểm toán
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {formatModelName(selectedLog.auditable_type)} #{selectedLog.auditable_id}
@@ -391,7 +391,7 @@ const AuditLogTable = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Event Type
+                    Loại sự kiện
                   </label>
                   <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getEventTypeColor(selectedLog.event)}`}>
                     {selectedLog.event.charAt(0).toUpperCase() + selectedLog.event.slice(1)}
@@ -399,7 +399,7 @@ const AuditLogTable = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Model Type
+                    Loại mô hình
                   </label>
                   <p className="text-sm text-gray-900 dark:text-gray-100">
                     {formatModelName(selectedLog.auditable_type)}
@@ -407,7 +407,7 @@ const AuditLogTable = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Record ID
+                    ID bản ghi
                   </label>
                   <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
                     #{selectedLog.auditable_id}
@@ -417,7 +417,7 @@ const AuditLogTable = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    User
+                    Người dùng
                   </label>
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4 text-gray-400" />
@@ -428,15 +428,15 @@ const AuditLogTable = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    IP Address
+                    Địa chỉ IP
                   </label>
                   <p className="text-sm text-gray-900 dark:text-gray-100 font-mono">
-                    {selectedLog.ip_address || 'N/A'}
+                    {selectedLog.ip_address || 'Không có'}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date & Time
+                    Ngày & Giờ
                   </label>
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-gray-400" />
@@ -455,7 +455,7 @@ const AuditLogTable = ({
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
               <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                 <Info className="w-5 h-5 mr-2 text-amber-500" />
-                Detailed Changes
+                Thay đổi chi tiết
               </h4>
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                 {renderChanges(selectedLog.old_values, selectedLog.new_values, selectedLog.event, selectedLog.id, true)}
@@ -465,13 +465,13 @@ const AuditLogTable = ({
             {/* Raw Data Section */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
               <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Raw Data
+                Dữ liệu thô
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Old Values
+                      Giá trị cũ
                     </label>
                     <pre className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3 text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.old_values, null, 2)}
@@ -481,7 +481,7 @@ const AuditLogTable = ({
                 {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      New Values
+                      Giá trị mới
                     </label>
                     <pre className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-3 text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.new_values, null, 2)}
@@ -498,7 +498,7 @@ const AuditLogTable = ({
               onClick={closeDetailModal}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
             >
-              Close
+              Đóng
             </button>
           </div>
         </div>
@@ -576,7 +576,7 @@ const AuditLogTable = ({
               disabled={exporting}
               className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50">
               <Download className="w-4 h-4 mr-2" />
-              {exporting ? "Exporting..." : "Export"}
+              {exporting ? "Đang xuất..." : "Xuất"}
             </button>
           </div>
         </div>
@@ -588,24 +588,24 @@ const AuditLogTable = ({
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Event
+                Sự kiện
               </th>
               {showModelColumn && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Model
+                  Mô hình
                 </th>
               )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                User
+                Người dùng
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Changes
+                Thay đổi
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Date
+                Ngày
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
+                Hành động
               </th>
             </tr>
           </thead>
@@ -615,7 +615,7 @@ const AuditLogTable = ({
                 <td
                   colSpan={showModelColumn ? 6 : 5}
                   className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                  No audit logs found
+                  Không tìm thấy nhật ký kiểm toán
                 </td>
               </tr>
             ) : (
@@ -675,7 +675,7 @@ const AuditLogTable = ({
                       className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-md transition-colors"
                     >
                       <Eye className="w-3 h-3 mr-1" />
-                      View Details
+                      Xem chi tiết
                     </button>
                   </td>
                 </tr>
@@ -690,9 +690,9 @@ const AuditLogTable = ({
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
-              results
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến{" "}
+              {Math.min(currentPage * itemsPerPage, totalItems)} trong tổng số {totalItems}{" "}
+              kết quả
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -700,11 +700,11 @@ const AuditLogTable = ({
                 disabled={currentPage === 1}
                 className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
+                Trước
               </button>
 
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                Page {currentPage} of {totalPages}
+                Trang {currentPage} / {totalPages}
               </span>
 
               <button
@@ -713,7 +713,7 @@ const AuditLogTable = ({
                 }
                 disabled={currentPage === totalPages}
                 className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                Next
+                Tiếp
                 <ChevronRight className="w-4 h-4 ml-1" />
               </button>
             </div>

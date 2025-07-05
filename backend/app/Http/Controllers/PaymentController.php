@@ -150,4 +150,73 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    public function verifyVNPayPayment(Request $request)
+    {
+        try {
+            $inputData = $request->all();
+
+            // Validate VNPay response
+            if (!$this->vnpayService->validateResponse($inputData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment signature'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment signature is valid',
+                'data' => $inputData
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('VNPay verification failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification failed'
+            ], 500);
+        }
+    }
+
+    public function createVNPayPaymentUrl(Request $request)
+    {
+        try {
+            $request->validate([
+                'amount' => 'required|numeric|min:1000',
+                'orderInfo' => 'string'
+            ]);
+
+            // Create a temporary order object for testing
+            $order = new \stdClass();
+            $order->order_number = 'TEST-' . time() . '-' . rand(1000, 9999);
+            $order->total = $request->amount;
+
+            $paymentUrl = $this->vnpayService->createPaymentUrl($order, $request->ip());
+
+            // For API calls, return JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'payment_url' => $paymentUrl,
+                    'order_number' => $order->order_number
+                ]);
+            }
+
+            // For direct browser access, redirect to VNPay
+            return redirect($paymentUrl);
+
+        } catch (\Exception $e) {
+            Log::error('VNPay payment URL creation failed: ' . $e->getMessage());
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment URL creation failed: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Payment creation failed');
+        }
+    }
 }

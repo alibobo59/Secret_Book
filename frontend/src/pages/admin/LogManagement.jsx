@@ -120,9 +120,9 @@ const LogManagement = () => {
   };
 
   const handleClearOldLogs = () => {
-    if (window.confirm('Are you sure you want to clear logs older than 30 days? This action cannot be undone.')) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa các nhật ký cũ hơn 30 ngày không? Hành động này không thể hoàn tác.')) {
       const deletedCount = clearOldLogs(30);
-      alert(`${deletedCount} old logs have been deleted.`);
+      alert(`${deletedCount} nhật ký cũ đã được xóa.`);
     }
   };
 
@@ -185,38 +185,38 @@ const LogManagement = () => {
   const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
 
   const columns = [
-    { id: "timestamp", label: "Timestamp", sortable: true },
-    { id: "type", label: "Type", sortable: true },
-    { id: "action", label: "Action", sortable: true },
-    { id: "user", label: "User", sortable: true },
-    { id: "module", label: "Module", sortable: true },
-    { id: "severity", label: "Severity", sortable: true },
-    { id: "actions", label: "Actions", sortable: false },
+    { id: "timestamp", label: "Thời gian", sortable: true },
+    { id: "type", label: "Loại", sortable: true },
+    { id: "action", label: "Hành động", sortable: true },
+    { id: "user", label: "Người dùng", sortable: true },
+    { id: "module", label: "Mô-đun", sortable: true },
+    { id: "severity", label: "Mức độ", sortable: true },
+    { id: "actions", label: "Thao tác", sortable: false },
   ];
 
   const typeOptions = [
-    { value: "info", label: "Info" },
-    { value: "success", label: "Success" },
-    { value: "warning", label: "Warning" },
-    { value: "error", label: "Error" },
-    { value: "security", label: "Security" },
+    { value: "info", label: "Thông tin" },
+    { value: "success", label: "Thành công" },
+    { value: "warning", label: "Cảnh báo" },
+    { value: "error", label: "Lỗi" },
+    { value: "security", label: "Bảo mật" },
   ];
 
   const moduleOptions = [
-    { value: "Authentication", label: "Authentication" },
-    { value: "Orders", label: "Orders" },
-    { value: "Inventory", label: "Inventory" },
-    { value: "Payments", label: "Payments" },
-    { value: "System", label: "System" },
-    { value: "Security", label: "Security" },
-    { value: "Communications", label: "Communications" },
-    { value: "General", label: "General" },
+    { value: "Authentication", label: "Xác thực" },
+    { value: "Orders", label: "Đơn hàng" },
+    { value: "Inventory", label: "Tồn kho" },
+    { value: "Payments", label: "Thanh toán" },
+    { value: "System", label: "Hệ thống" },
+    { value: "Security", label: "Bảo mật" },
+    { value: "Communications", label: "Liên lạc" },
+    { value: "General", label: "Tổng quát" },
   ];
 
   const severityOptions = [
-    { value: "Low", label: "Low" },
-    { value: "Medium", label: "Medium" },
-    { value: "High", label: "High" },
+    { value: "Low", label: "Thấp" },
+    { value: "Medium", label: "Trung bình" },
+    { value: "High", label: "Cao" },
   ];
 
   return (
@@ -233,21 +233,21 @@ const LogManagement = () => {
           icon={<Activity className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
-          title="Total Logs (7 days)"
+          title="Tổng nhật ký (7 ngày)"
           value={stats.total || 0}
         />
         <StatCard
           icon={<XCircle className="h-6 w-6" />}
           iconBgColor="bg-red-100"
           iconColor="text-red-600"
-          title="Errors"
+          title="Lỗi"
           value={stats.byType?.error || 0}
         />
         <StatCard
           icon={<AlertTriangle className="h-6 w-6" />}
           iconBgColor="bg-yellow-100"
           iconColor="text-yellow-600"
-          title="Warnings"
+          title="Cảnh báo"
           value={stats.byType?.warning || 0}
         />
         <StatCard
@@ -267,7 +267,7 @@ const LogManagement = () => {
             <SearchFilter
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
-              searchPlaceholder="Search logs by action, user, or details..."
+              searchPlaceholder="Tìm kiếm nhật ký theo hành động, người dùng hoặc chi tiết..."
             />
           </div>
 
@@ -277,19 +277,19 @@ const LogManagement = () => {
               onClick={() => setIsExportModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
               <Download className="h-4 w-4" />
-              Export
+              Xuất
             </button>
             <button
               onClick={handleClearOldLogs}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
               <Trash2 className="h-4 w-4" />
-              Clear Old
+              Xóa cũ
             </button>
             <button
               onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              Làm mới
             </button>
           </div>
         </div>
@@ -298,13 +298,13 @@ const LogManagement = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Type
-            </label>
+                  Loại
+                </label>
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange("type", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-              <option value="all">All Types</option>
+              <option value="all">Tất cả loại</option>
               {typeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -315,13 +315,13 @@ const LogManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Module
-            </label>
+                  Mô-đun
+                </label>
             <select
               value={filters.module}
               onChange={(e) => handleFilterChange("module", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-              <option value="all">All Modules</option>
+              <option value="all">Tất cả mô-đun</option>
               {moduleOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -332,13 +332,13 @@ const LogManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Severity
-            </label>
+                  Mức độ
+                </label>
             <select
               value={filters.severity}
               onChange={(e) => handleFilterChange("severity", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-              <option value="all">All Severities</option>
+              <option value="all">Tất cả mức độ</option>
               {severityOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -349,20 +349,20 @@ const LogManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              User
-            </label>
+                  Người dùng
+                </label>
             <input
               type="text"
               value={filters.user}
               onChange={(e) => handleFilterChange("user", e.target.value)}
-              placeholder="Filter by user..."
+              placeholder="Lọc theo người dùng..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              From Date
+              Từ ngày
             </label>
             <input
               type="date"
@@ -374,7 +374,7 @@ const LogManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              To Date
+              Đến ngày
             </label>
             <input
               type="date"
@@ -389,7 +389,7 @@ const LogManagement = () => {
       {/* Results Summary */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Showing {indexOfFirstLog + 1}-{Math.min(indexOfLastLog, filteredLogs.length)} of {filteredLogs.length} logs
+          Hiển thị {indexOfFirstLog + 1}-{Math.min(indexOfLastLog, filteredLogs.length)} trong tổng số {filteredLogs.length} nhật ký
         </p>
       </div>
 
@@ -457,7 +457,7 @@ const LogManagement = () => {
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700">
-            Previous
+            Trước
           </button>
           
           <div className="flex gap-1">
@@ -484,7 +484,7 @@ const LogManagement = () => {
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700">
-            Next
+            Tiếp
           </button>
         </div>
       )}
@@ -505,7 +505,7 @@ const LogManagement = () => {
               
               <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  Log Details
+                  Chi tiết nhật ký
                 </h2>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
@@ -518,7 +518,7 @@ const LogManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Timestamp
+                      Thời gian
                     </label>
                     <p className="text-gray-900 dark:text-white">
                       {new Date(selectedLog.timestamp).toLocaleString()}
@@ -527,7 +527,7 @@ const LogManagement = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Type
+                      Loại
                     </label>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getLogTypeColor(selectedLog.type)}`}>
                       {getLogTypeIcon(selectedLog.type)}
@@ -537,21 +537,21 @@ const LogManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      User
+                      Người dùng
                     </label>
                     <p className="text-gray-900 dark:text-white">{selectedLog.user}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Module
+                      Mô-đun
                     </label>
                     <p className="text-gray-900 dark:text-white">{selectedLog.module}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Severity
+                      Mức độ
                     </label>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(selectedLog.severity)}`}>
                       {selectedLog.severity}
@@ -560,23 +560,23 @@ const LogManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      IP Address
-                    </label>
+                  Địa chỉ IP
+                </label>
                     <p className="text-gray-900 dark:text-white">{selectedLog.ipAddress}</p>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Action
-                  </label>
+                  Hành động
+                </label>
                   <p className="text-gray-900 dark:text-white">{selectedLog.action}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Details
-                  </label>
+                  Chi tiết
+                </label>
                   <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                     {selectedLog.details}
                   </p>
@@ -584,8 +584,8 @@ const LogManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    User Agent
-                  </label>
+                  Tác nhân người dùng
+                </label>
                   <p className="text-gray-900 dark:text-white text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-md break-all">
                     {selectedLog.userAgent}
                   </p>
@@ -612,7 +612,7 @@ const LogManagement = () => {
               
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  Export Logs
+                  Xuất nhật ký
                 </h2>
                 <button
                   onClick={() => setIsExportModalOpen(false)}
@@ -622,7 +622,7 @@ const LogManagement = () => {
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Export {filteredLogs.length} filtered logs in your preferred format.
+                Xuất {filteredLogs.length} nhật ký đã lọc theo định dạng bạn muốn.
               </p>
 
               <div className="space-y-3">
@@ -631,8 +631,8 @@ const LogManagement = () => {
                   className="w-full flex items-center gap-3 p-3 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <Download className="h-5 w-5 text-blue-500" />
                   <div className="text-left">
-                    <div className="font-medium text-gray-800 dark:text-white">JSON Format</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Machine-readable format</div>
+                    <div className="font-medium text-gray-800 dark:text-white">Định dạng JSON</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Định dạng máy có thể đọc</div>
                   </div>
                 </button>
 
@@ -641,8 +641,8 @@ const LogManagement = () => {
                   className="w-full flex items-center gap-3 p-3 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <Download className="h-5 w-5 text-green-500" />
                   <div className="text-left">
-                    <div className="font-medium text-gray-800 dark:text-white">CSV Format</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Spreadsheet compatible</div>
+                    <div className="font-medium text-gray-800 dark:text-white">Định dạng CSV</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Tương thích với bảng tính</div>
                   </div>
                 </button>
               </div>

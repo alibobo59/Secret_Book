@@ -12,12 +12,12 @@ const CancelOrderModal = ({
   const [selectedReason, setSelectedReason] = useState('');
 
   const predefinedReasons = [
-    'Changed my mind',
-    'Found a better price elsewhere',
-    'No longer need the item',
-    'Ordered by mistake',
-    'Delivery taking too long',
-    'Other'
+    'Đổi ý',
+    'Tìm thấy giá tốt hơn ở nơi khác',
+    'Không còn cần sản phẩm này',
+    'Đặt hàng nhầm',
+    'Giao hàng quá lâu',
+    'Khác'
   ];
 
   const handleConfirm = () => {
@@ -46,7 +46,7 @@ const CancelOrderModal = ({
           <div className="flex items-center space-x-3">
             <AlertTriangle className="h-6 w-6 text-red-500" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Cancel Order
+              Hủy đơn hàng
             </h3>
           </div>
           <button
@@ -61,13 +61,13 @@ const CancelOrderModal = ({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Are you sure you want to cancel order <span className="font-semibold text-gray-900 dark:text-white">{orderNumber}</span>?
+            Bạn có chắc chắn muốn hủy đơn hàng <span className="font-semibold text-gray-900 dark:text-white">{orderNumber}</span>?
           </p>
 
           {/* Reason Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Reason for cancellation *
+              Lý do hủy đơn hàng *
             </label>
             <div className="space-y-2">
               {predefinedReasons.map((reason) => (
@@ -91,13 +91,13 @@ const CancelOrderModal = ({
           {selectedReason === 'Other' && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Please specify
+                Vui lòng ghi rõ
               </label>
               <textarea
                 value={cancellationReason}
                 onChange={(e) => setCancellationReason(e.target.value)}
                 disabled={loading}
-                placeholder="Nhập lý do hủy đơn hàng..."
+                placeholder="Vui lòng cung cấp thêm chi tiết..."
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
               />
@@ -106,7 +106,7 @@ const CancelOrderModal = ({
 
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 mb-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>Note:</strong> Once cancelled, this action cannot be undone. If you've already paid, a refund will be processed according to our refund policy.
+              <strong>Lưu ý:</strong> Sau khi hủy, hành động này không thể hoàn tác. Nếu bạn đã thanh toán, việc hoàn tiền sẽ được xử lý theo chính sách hoàn tiền của chúng tôi.
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ const CancelOrderModal = ({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50"
           >
-            Keep Order
+            Giữ đơn hàng
           </button>
           <button
             onClick={handleConfirm}
@@ -128,7 +128,7 @@ const CancelOrderModal = ({
             {loading && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             )}
-            <span>{loading ? 'Cancelling...' : 'Cancel Order'}</span>
+            <span>{loading ? 'Đang hủy...' : 'Hủy đơn hàng'}</span>
           </button>
         </div>
       </div>

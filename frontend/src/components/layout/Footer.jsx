@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { BookOpen, Facebook, Twitter, Instagram, Mail } from "lucide-react";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { t } = useLanguage();
+
 
   return (
     <footer className="bg-gray-100 dark:bg-gray-800 pt-12 pb-8">
@@ -16,11 +16,11 @@ const Footer = () => {
             <Link to="/" className="flex items-center mb-4">
               <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-500" />
               <span className="ml-2 text-2xl font-serif font-bold text-gray-800 dark:text-white">
-                {t("app.name")}
+                BookStore
               </span>
             </Link>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {t("message.welcome")}
+              Khám phá thế giới sách cùng chúng tôi
             </p>
             <div className="flex space-x-4">
               <a
@@ -47,42 +47,42 @@ const Footer = () => {
           {/* Quick Links */}
           <div className="col-span-1">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-              {t("nav.home")}
+              Liên Kết Nhanh
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/books"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("nav.books")}
+                  Sách
                 </Link>
               </li>
               <li>
                 <Link
                   to="/categories"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("nav.categories")}
+                  Danh Mục
                 </Link>
               </li>
               <li>
                 <Link
                   to="/recommendations"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("home.bestsellers")}
+                  Sách Bán Chạy
                 </Link>
               </li>
               <li>
                 <Link
                   to="/bestsellers"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("home.bestsellers")}
+                  Sách Bán Chạy
                 </Link>
               </li>
               <li>
                 <Link
                   to="/new-releases"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("home.new")}
+                  Sách Mới
                 </Link>
               </li>
             </ul>
@@ -91,42 +91,42 @@ const Footer = () => {
           {/* Account */}
           <div className="col-span-1">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-              {t("user.profile")}
+              Tài Khoản
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/login"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("nav.login")}
+                  Đăng Nhập
                 </Link>
               </li>
               <li>
                 <Link
                   to="/register"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("nav.register")}
+                  Đăng Ký
                 </Link>
               </li>
               <li>
                 <Link
                   to="/my-books"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("user.orders")}
+                  Đơn Hàng
                 </Link>
               </li>
               <li>
                 <Link
                   to="/orders"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("user.orders")}
+                  Đơn Hàng
                 </Link>
               </li>
               <li>
                 <Link
                   to="/wishlist"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("user.wishlist")}
+                  Danh Sách Yêu Thích
                 </Link>
               </li>
             </ul>
@@ -135,42 +135,42 @@ const Footer = () => {
           {/* Support */}
           <div className="col-span-1">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-              {t("footer.contact")}
+              Hỗ Trợ
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/contact"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("footer.contact")}
+                  Hỗ Trợ
                 </Link>
               </li>
               <li>
                 <Link
                   to="/faq"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("footer.faq")}
+                  Câu Hỏi Thường Gặp
                 </Link>
               </li>
               <li>
                 <Link
                   to="/shipping"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("footer.shipping")}
+                  Vận Chuyển
                 </Link>
               </li>
               <li>
                 <Link
                   to="/returns"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("footer.returns")}
+                  Đổi Trả
                 </Link>
               </li>
               <li>
                 <Link
                   to="/privacy"
                   className="text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors duration-200">
-                  {t("footer.privacy")}
+                  Chính Sách Bảo Mật
                 </Link>
               </li>
             </ul>
@@ -181,23 +181,23 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="max-w-md mx-auto">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">
-              {t("message.welcome")}
+              Đăng ký nhận tin tức mới nhất
             </h3>
             <form className="flex">
               <input
                 type="email"
-                placeholder={t("user.email")}
+                placeholder="Email của bạn"
                 className="flex-grow py-2 px-4 rounded-l-md focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                 required
               />
               <button
                 type="submit"
                 className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-r-md transition-colors duration-200">
-                {t("form.submit")}
+                Đăng Ký
               </button>
             </form>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
-              {t("message.welcome")}
+              Nhận thông tin về sách mới và ưu đãi đặc biệt.
             </p>
           </div>
         </div>
@@ -205,7 +205,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-12 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            &copy; {currentYear} {t("app.name")}. {t("footer.rights")}
+            &copy; {currentYear} BookStore. Tất cả quyền được bảo lưu.
           </p>
         </div>
       </div>

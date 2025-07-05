@@ -510,7 +510,7 @@ const BookCreate = () => {
               {!isVariableProduct && (
                 <div>
                   <label className="text-gray-700 dark:text-gray-200">
-                    Stock Quantity
+                    Số lượng tồn kho
                     <span className="text-red-600 text-xs font-semibold">
                       {" "}
                       *
@@ -522,7 +522,7 @@ const BookCreate = () => {
                     onChange={(e) =>
                       setForm({ ...form, stock_quantity: e.target.value })
                     }
-                    placeholder="Stock quantity (e.g., 100)"
+                    placeholder="Số lượng tồn kho (ví dụ: 100)"
                     className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                     min="0"
                   />
@@ -808,7 +808,7 @@ const BookCreate = () => {
                         </div>
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Stock Quantity
+                            Số lượng tồn kho
                             <span className="text-red-600 text-xs font-semibold">
                               {" "}
                               *
@@ -824,7 +824,7 @@ const BookCreate = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="Stock quantity (e.g., 50)"
+                            placeholder="Số lượng tồn kho (ví dụ: 50)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                             min="0"
                           />

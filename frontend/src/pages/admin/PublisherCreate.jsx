@@ -19,7 +19,7 @@ const PublisherCreate = () => {
       setError(null);
       navigate("/admin/publishers");
     } catch (err) {
-      setError("Failed to create publisher: " + (err.message || err));
+      setError("Không thể tạo nhà xuất bản: " + (err.message || err));
       console.error("Create error:", err);
     } finally {
       setLocalLoading(false);
@@ -29,11 +29,11 @@ const PublisherCreate = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Create Publisher
+        Tạo Nhà Xuất Bản
       </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {!hasRole(["admin"]) && !error && (
-        <p className="text-red-500 mb-4">Only admins can create publishers.</p>
+        <p className="text-red-500 mb-4">Chỉ quản trị viên mới có thể tạo nhà xuất bản.</p>
       )}
       {(hasRole(["admin"]) || authLoading) && (
         <>
@@ -44,21 +44,21 @@ const PublisherCreate = () => {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Publisher Name"
+                placeholder="Tên nhà xuất bản"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Publisher Address"
+                placeholder="Địa chỉ nhà xuất bản"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
               <button
                 type="submit"
                 className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700"
                 disabled={localLoading}>
-                Create Publisher
+                Tạo Nhà Xuất Bản
               </button>
             </form>
           )}

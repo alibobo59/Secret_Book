@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -20,7 +20,7 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
+
 
   const from = location.state?.from?.pathname || "/";
 
@@ -29,14 +29,14 @@ const LoginPage = () => {
     
     // Email validation
     if (!email.trim()) {
-      errors.email = t("form.required");
+      errors.email = "Trường này là bắt buộc";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = t("form.error.email");
+      errors.email = "Email không hợp lệ";
     }
     
     // Password validation
     if (!password.trim()) {
-      errors.password = t("form.required");
+      errors.password = "Trường này là bắt buộc";
     }
     
     setValidationErrors(errors);
@@ -78,16 +78,16 @@ const LoginPage = () => {
         
         // Nếu không có lỗi cụ thể theo trường, hiển thị thông báo chung
         if (Object.keys(newValidationErrors).length === 0) {
-          setError(error.response.data.message || t("message.error.validation"));
+          setError(error.response.data.message || "Lỗi xác thực dữ liệu");
         }
       } else if (error.response && error.response.status === 401) {
         // Xử lý lỗi xác thực (thông tin đăng nhập không hợp lệ)
-        const errorMessage = error.response.data.message || t("login.error.invalidCredentials");
+        const errorMessage = error.response.data.message || "Thông tin đăng nhập không hợp lệ";
         setError(errorMessage);
         // Don't clear form fields - let user correct their input
       } else {
         // Xử lý các loại lỗi khác (500, lỗi mạng, v.v.)
-        const errorMessage = error.response?.data?.message || error.message || t("message.error.login");
+        const errorMessage = error.response?.data?.message || error.message || "Lỗi đăng nhập";
         setError(errorMessage);
       }
     } finally {
@@ -103,10 +103,10 @@ const LoginPage = () => {
         className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
-            {t("login.title")}
+            Đăng Nhập
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {t("login.subtitle")}
+            Chào mừng bạn trở lại
           </p>
         </div>
 
@@ -125,7 +125,7 @@ const LoginPage = () => {
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.email")}
+              Email
             </label>
             <div className="relative">
               <input
@@ -138,7 +138,7 @@ const LoginPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.email.placeholder")}
+                placeholder="Nhập email của bạn"
               />
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -153,7 +153,7 @@ const LoginPage = () => {
             <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t("user.password")}
+              Mật khẩu
             </label>
             <div className="relative">
               <input
@@ -166,7 +166,7 @@ const LoginPage = () => {
                     ? "border-red-500 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder={t("form.password.placeholder")}
+                placeholder="Nhập mật khẩu của bạn"
               />
               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
@@ -188,14 +188,14 @@ const LoginPage = () => {
               <label
                 htmlFor="remember-me"
                 className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                {t("login.remember")}
+                Ghi nhớ đăng nhập
               </label>
             </div>
 
             <Link
               to="/forgot-password"
               className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400">
-              {t("login.forgot")}
+              Quên mật khẩu?
             </Link>
           </div>
 
@@ -208,7 +208,7 @@ const LoginPage = () => {
             ) : (
               <>
                 <LogIn className="h-5 w-5 mr-2" />
-                {t("nav.login")}
+                Đăng Nhập
               </>
             )}
           </button>
@@ -220,17 +220,17 @@ const LoginPage = () => {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-              {t("common.or")}
+              Hoặc
             </span>
           </div>
         </div>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          {t("login.noAccount")}{" "}
+          Chưa có tài khoản?{" "}
           <Link
             to="/register"
             className="font-medium text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400">
-            {t("login.register")}
+            Đăng ký ngay
           </Link>
         </p>
       </motion.div>

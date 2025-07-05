@@ -171,7 +171,7 @@ const ReviewPage = () => {
                 to="/orders"
                 className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Orders
+                Quay lại đơn hàng
               </Link>
             </div>
           </div>
@@ -192,13 +192,13 @@ const ReviewPage = () => {
             to="/orders"
             className="inline-flex items-center text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mb-4">
             <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Orders
+            Quay lại đơn hàng
           </Link>
           <div className="flex items-center gap-4 mb-4">
             <Package className="h-8 w-8 text-amber-600 dark:text-amber-500" />
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                Review Your Order
+                Đánh giá đơn hàng của bạn
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Order #{order?.order_number || order?.id} • Delivered on{" "}
@@ -240,9 +240,9 @@ const ReviewPage = () => {
                       by {item.book?.author?.name || item.author}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                      <span>Quantity: {item.quantity}</span>
+                      <span>Số lượng: {item.quantity}</span>
                       <span>•</span>
-                      <span>Price: ${((item.price / 100) * item.quantity).toFixed(2)}</span>
+                      <span>Giá: {((item.price / 100) * item.quantity).toLocaleString('vi-VN')} ₫</span>
                     </div>
                     {!isReviewable && (
                       <p className="mt-2 text-amber-600 dark:text-amber-500">
@@ -270,7 +270,7 @@ const ReviewPage = () => {
                     {/* Rating */}
                     <div className="mb-6">
                       <label className="block text-gray-700 dark:text-gray-300 mb-3 font-medium">
-                        How would you rate this book?
+                        Bạn đánh giá cuốn sách này như thế nào?
                       </label>
                       <div className="flex items-center gap-2">
                         {[1, 2, 3, 4, 5].map((value) => (
@@ -308,7 +308,7 @@ const ReviewPage = () => {
                         onChange={(e) => updateReview(bookId, 'review', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         rows="4"
-                        placeholder="What did you think about this book? How was the quality, story, etc.?"
+                        placeholder="Chia sẻ suy nghĩ của bạn (tùy chọn)"
                       />
                     </div>
 
@@ -351,7 +351,7 @@ const ReviewPage = () => {
             to="/orders"
             className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to My Orders
+            Quay lại đơn hàng của tôi
           </Link>
         </motion.div>
       </div>

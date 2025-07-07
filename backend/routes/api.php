@@ -13,6 +13,7 @@ use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\CouponController;
+use App\Http\Controllers\API\UserController;
 
 // Root route
 Route::get('/', function () {
@@ -77,6 +78,20 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::apiResource('coupons', CouponController::class);
     Route::post('/coupons/generate-code', [CouponController::class, 'generateCode'])->name('coupons.generate-code');
     Route::get('/coupons/{coupon}/stats', [CouponController::class, 'stats'])->name('coupons.stats');
+
+    // User Management (Admin)
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/admin/users/stats', [UserController::class, 'getStats'])->name('admin.users.stats');
+    Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+    // Review Management (Admin)
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+    Route::patch('/admin/reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
+    Route::get('/admin/reviews/stats', [ReviewController::class, 'getStats'])->name('admin.reviews.stats');
+    Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 });
 
 // Authenticated user routes

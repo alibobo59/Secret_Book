@@ -14,11 +14,13 @@ class Review extends Model
         'book_id', 
         'order_id',
         'rating',
-        'review'
+        'review',
+        'is_hidden'
     ];
 
     protected $casts = [
         'rating' => 'integer',
+        'is_hidden' => 'boolean'
     ];
 
     public function user()

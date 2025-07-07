@@ -68,7 +68,7 @@ const AdminLayout = () => {
 
         <AdminHeader isSidebarCollapsed={isSidebarCollapsed} />
 
-        <main className="p-6 mt-16 md:pt-16 flex-1 overflow-auto">
+        <main className="p-4 mt-12 md:pt-2 flex-1 overflow-auto">
           <Outlet
             context={{
               loading: isLoading, // Only authLoading

@@ -79,8 +79,8 @@ const AdminHeader = ({ isSidebarCollapsed }) => {
           isScrolled
             ? "bg-white dark:bg-gray-800 shadow-md"
             : "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-        } py-2 px-4 w-full`}>
-        <div className="flex items-center justify-between h-14">
+        } py-1 px-4 w-full`}>
+        <div className="flex items-center justify-between h-12">
           {/* Left side - Title visible only when sidebar is collapsed */}
           {isSidebarCollapsed && (
             <div className="hidden md:block">

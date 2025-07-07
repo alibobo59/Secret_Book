@@ -71,12 +71,23 @@ const AuditLogTable = ({ modelType, modelId, className = "" }) => {
       }
 
       setAuditLogs(response.data.data);
-      setPagination({
-        current_page: response.data.current_page,
-        last_page: response.data.last_page,
-        per_page: response.data.per_page,
-        total: response.data.total,
-      });
+      if (response.data.pagination) {
+        // For model-specific audit logs
+        setPagination({
+          current_page: response.data.pagination.current_page,
+          last_page: response.data.pagination.last_page,
+          per_page: response.data.pagination.per_page,
+          total: response.data.pagination.total,
+        });
+      } else {
+        // For general audit logs
+        setPagination({
+          current_page: response.data.current_page,
+          last_page: response.data.last_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+        });
+      }
     } catch (err) {
       setError("Failed to fetch audit logs");
       console.error("Error fetching audit logs:", err);
@@ -156,12 +167,71 @@ const AuditLogTable = ({ modelType, modelId, className = "" }) => {
     return new Date(dateString).toLocaleString();
   };
 
-  const renderChangeDetails = (changes) => {
-    if (!changes || changes.length === 0) return null;
+  const renderChangeDetails = (log) => {
+    // Check for enhanced metadata first, then fall back to formatted_changes
+    const hasEnhancedMetadata = log.enhanced_metadata && log.enhanced_metadata.change_summary;
+    const hasFormattedChanges = log.formatted_changes && log.formatted_changes.length > 0;
+    
+    if (!hasEnhancedMetadata && !hasFormattedChanges) return null;
 
+    if (hasEnhancedMetadata) {
+      return (
+        <div className="mt-2 space-y-3">
+          {/* Change Summary */}
+          {log.enhanced_metadata.change_summary && log.enhanced_metadata.change_summary.length > 0 && (
+            <div className="bg-blue-50 p-3 rounded border">
+              <div className="font-medium text-sm text-blue-700 mb-2">
+                Change Summary
+              </div>
+              <div className="space-y-1">
+                {log.enhanced_metadata.change_summary.map((summary, index) => (
+                  <div key={index} className="text-sm text-blue-600">
+                    • {summary}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Business Impact */}
+          {log.enhanced_metadata.business_impact && log.enhanced_metadata.business_impact.length > 0 && (
+            <div className="bg-yellow-50 p-3 rounded border">
+              <div className="font-medium text-sm text-yellow-700 mb-2">
+                Business Impact
+              </div>
+              <div className="space-y-1">
+                {log.enhanced_metadata.business_impact.map((impact, index) => (
+                  <div key={index} className="text-sm text-yellow-600">
+                    • {impact}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Changed Fields */}
+          {log.enhanced_metadata.changed_fields && log.enhanced_metadata.changed_fields.length > 0 && (
+            <div className="bg-gray-50 p-3 rounded border">
+              <div className="font-medium text-sm text-gray-700 mb-2">
+                Changed Fields
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {log.enhanced_metadata.changed_fields.map((field, index) => (
+                  <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded">
+                    {field}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Fallback to original formatted_changes display
     return (
       <div className="mt-2 space-y-2">
-        {changes.map((change, index) => (
+        {log.formatted_changes.map((change, index) => (
           <div key={index} className="bg-gray-50 p-3 rounded border">
             <div className="font-medium text-sm text-gray-700 mb-1">
               {change.field}
@@ -344,8 +414,8 @@ const AuditLogTable = ({ modelType, modelId, className = "" }) => {
                       {log.ip_address}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {log.formatted_changes &&
-                        log.formatted_changes.length > 0 && (
+                      {((log.enhanced_metadata && log.enhanced_metadata.change_summary) ||
+                        (log.formatted_changes && log.formatted_changes.length > 0)) && (
                           <button
                             onClick={() => toggleRowExpansion(log.id)}
                             className="flex items-center text-blue-600 hover:text-blue-800">
@@ -366,7 +436,7 @@ const AuditLogTable = ({ modelType, modelId, className = "" }) => {
                           <h4 className="font-medium text-gray-900 mb-2">
                             Change Details:
                           </h4>
-                          {renderChangeDetails(log.formatted_changes)}
+                          {renderChangeDetails(log)}
                         </div>
                       </td>
                     </tr>

@@ -20,11 +20,13 @@ class AuditLog extends Model
         'user_name',
         'ip_address',
         'user_agent',
+        'metadata',
     ];
 
     protected $casts = [
         'old_values' => 'array',
         'new_values' => 'array',
+        'metadata' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

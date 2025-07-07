@@ -258,7 +258,7 @@ const PublisherDetail = () => {
 
         {activeTab === 'audit' && (
           <AuditLogTable 
-            modelType="App\\Models\\Publisher" 
+            modelType="Publisher" 
             modelId={id}
             className="mt-6"
           />

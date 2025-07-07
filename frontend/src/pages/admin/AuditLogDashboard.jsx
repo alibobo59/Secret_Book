@@ -8,12 +8,15 @@ import {
   Filter,
   Download,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 import AuditLogTable from "../../components/AuditLogTable";
 import Loading from "../../components/admin/Loading";
 import { api } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 const AuditLogDashboard = () => {
+  const { user, isAdmin, isMod } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,12 +44,22 @@ const AuditLogDashboard = () => {
   ];
 
   useEffect(() => {
-    fetchStats();
-  }, [selectedTimeRange]);
+    // Only fetch stats if user is admin or moderator
+    if (user && (isAdmin() || isMod())) {
+      fetchStats();
+    } else if (user) {
+      setError("You don't have permission to access audit logs.");
+      setLoading(false);
+    } else {
+      setError("Please log in to access audit logs.");
+      setLoading(false);
+    }
+  }, [selectedTimeRange, user, isAdmin, isMod]);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = {};
       if (selectedTimeRange) {
         params.days = selectedTimeRange;
@@ -56,13 +69,25 @@ const AuditLogDashboard = () => {
       setStats(response.data);
     } catch (err) {
       console.error("Error fetching audit stats:", err);
-      setError("Failed to load audit statistics");
+      if (err.response?.status === 401) {
+        setError("Authentication required. Please log in as an admin or moderator.");
+      } else if (err.response?.status === 403) {
+        setError("You don't have permission to access audit logs.");
+      } else {
+        setError("Failed to load audit statistics. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleExport = async () => {
+    // Check permissions before attempting export
+    if (!user || (!isAdmin() && !isMod())) {
+      alert("You don't have permission to export audit logs.");
+      return;
+    }
+
     try {
       setExporting(true);
       const params = {};
@@ -89,7 +114,13 @@ const AuditLogDashboard = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error exporting audit logs:", err);
-      alert("Failed to export audit logs");
+      if (err.response?.status === 401) {
+        alert("Authentication required. Please log in as an admin or moderator.");
+      } else if (err.response?.status === 403) {
+        alert("You don't have permission to export audit logs.");
+      } else {
+        alert("Failed to export audit logs. Please try again.");
+      }
     } finally {
       setExporting(false);
     }
@@ -115,9 +146,25 @@ const AuditLogDashboard = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-2">Error</div>
-          <div className="text-gray-600">{error}</div>
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="flex justify-center mb-4">
+            <AlertTriangle className="w-16 h-16 text-red-500" />
+          </div>
+          <div className="text-red-600 text-xl font-semibold mb-2">Access Denied</div>
+          <div className="text-gray-600 mb-4">{error}</div>
+          {!user && (
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Go to Login
+            </button>
+          )}
+          {user && !isAdmin() && !isMod() && (
+            <div className="text-sm text-gray-500">
+              Contact your administrator to request audit log access.
+            </div>
+          )}
         </div>
       </div>
     );

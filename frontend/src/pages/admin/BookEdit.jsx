@@ -6,11 +6,14 @@ import { api } from "../../services/api";
 import { Loading } from "../../components/admin";
 
 const BookEdit = () => {
-  const { loading, error, setError } = useOutletContext();
-  const { user, getToken, hasRole } = useAuth();
+  const { loading, user, hasRole } = useOutletContext();
+  const { getToken } = useAuth();
   const { id } = useParams();
   const { books, categories, authors, publishers, setBooks } = useBook();
   const navigate = useNavigate();
+  
+  // Local error state
+  const [error, setError] = useState(null);
 
   // --- START: NEW STATE MANAGEMENT to handle variations ---
   const [isVariableProduct, setIsVariableProduct] = useState(false);

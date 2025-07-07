@@ -17,6 +17,7 @@ class ReviewController extends Controller
     public function index(Book $book)
     {
         $reviews = $book->verifiedReviews()
+            ->where('is_hidden', false)
             ->with('user:id,name')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -171,5 +172,106 @@ class ReviewController extends Controller
         return response()->json([
             'can_review' => true
         ]);
+    }
+
+    /**
+     * Display all reviews for admin management
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = Review::with(['user:id,name,email', 'book:id,title', 'order:id'])
+            ->orderBy('created_at', 'desc');
+
+        // Filter by hidden status
+        if ($request->has('is_hidden')) {
+            $query->where('is_hidden', $request->boolean('is_hidden'));
+        }
+
+        // Filter by rating
+        if ($request->has('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
+        // Filter by book
+        if ($request->has('book_id')) {
+            $query->where('book_id', $request->book_id);
+        }
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('review', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                               ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('book', function($bookQuery) use ($searchTerm) {
+                      $bookQuery->where('title', 'like', '%' . $searchTerm . '%');
+                  });
+            });
+        }
+
+        $perPage = $request->get('per_page', 15);
+        $reviews = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $reviews
+        ]);
+    }
+
+    /**
+     * Toggle review visibility (hide/show)
+     */
+    public function toggleVisibility(Review $review)
+    {
+        $review->update([
+            'is_hidden' => !$review->is_hidden
+        ]);
+
+        $review->load(['user:id,name,email', 'book:id,title']);
+
+        return response()->json([
+            'success' => true,
+            'message' => $review->is_hidden ? 'Review đã được ẩn' : 'Review đã được hiển thị',
+            'data' => $review
+        ]);
+    }
+
+    /**
+     * Get review statistics for admin
+     */
+    public function getStats()
+    {
+        try {
+            $stats = [
+                'total_reviews' => Review::count(),
+                'visible_reviews' => Review::where('is_hidden', false)->count(),
+                'hidden_reviews' => Review::where('is_hidden', true)->count(),
+                'average_rating' => Review::where('is_hidden', false)->avg('rating'),
+                'rating_distribution' => [
+                    '5_star' => Review::where('is_hidden', false)->where('rating', 5)->count(),
+                    '4_star' => Review::where('is_hidden', false)->where('rating', 4)->count(),
+                    '3_star' => Review::where('is_hidden', false)->where('rating', 3)->count(),
+                    '2_star' => Review::where('is_hidden', false)->where('rating', 2)->count(),
+                    '1_star' => Review::where('is_hidden', false)->where('rating', 1)->count(),
+                ],
+                'recent_reviews' => Review::with(['user:id,name', 'book:id,title'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get()
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get review statistics: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

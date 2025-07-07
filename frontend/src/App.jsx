@@ -2,6 +2,10 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { CouponProvider } from "./contexts/CouponContext";
+import { UserManagementProvider } from "./contexts/UserManagementContext";
+import { ReviewManagementProvider } from "./contexts/ReviewManagementContext";
+import { OrderManagementProvider } from "./contexts/OrderManagementContext";
+import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { ClientLayout, AdminLayout } from "./layouts";
 import {
   OrderManagement as OrderManagementClient,
@@ -26,13 +30,16 @@ import {
   PublisherManagement,
   UserManagement,
   OrderManagement,
+  OrderDetail,
   PublisherCreate,
   PublisherEdit,
   BookCreate,
   BookEdit,
   BookDetail,
   AuditLogDashboard,
+  ReviewManagement,
 } from "./pages/admin";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import CouponManagement from "./pages/admin/CouponManagement";
 
 function App() {
@@ -53,7 +60,11 @@ function App() {
 
   return (
     <CouponProvider>
-      <Routes>
+      <UserManagementProvider>
+        <ReviewManagementProvider>
+          <OrderManagementProvider>
+            <AnalyticsProvider>
+              <Routes>
       <Route element={<ClientLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/books" element={<BrowseBooksPage />} />
@@ -90,11 +101,18 @@ function App() {
         <Route path="publishers/edit/:id" element={<PublisherEdit />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
+        <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="audit-logs" element={<AuditLogDashboard />} />
         <Route path="coupons" element={<CouponManagement />} />
+        <Route path="reviews" element={<ReviewManagement />} />
+        <Route path="analytics" element={<AnalyticsDashboard />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+              </Routes>
+            </AnalyticsProvider>
+          </OrderManagementProvider>
+        </ReviewManagementProvider>
+      </UserManagementProvider>
     </CouponProvider>
   );
 }

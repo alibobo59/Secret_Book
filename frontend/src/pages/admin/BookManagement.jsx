@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,8 +9,11 @@ import { api } from "../../services/api";
 const BookManagement = () => {
   const { user, getToken, hasRole } = useAuth();
   const { books, categories, setBooks, authors, publishers } = useBook();
-  const { loading, error, setError } = useOutletContext();
+  const { loading } = useOutletContext();
   const navigate = useNavigate();
+  
+  // Local error state
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!hasRole(["admin"])) {
@@ -64,7 +67,7 @@ const BookManagement = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
         Quản Lý Sách
       </h2>

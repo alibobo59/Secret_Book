@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCoupon } from '../../contexts/CouponContext';
 import {
   Plus,
@@ -21,12 +22,10 @@ import {
 } from 'lucide-react';
 
 const CouponManagement = () => {
+  const navigate = useNavigate();
   const {
     getAllCoupons,
-    createCoupon,
-    updateCoupon,
     deleteCoupon,
-    generateCouponCode,
     getCouponStats,
     loading,
     error
@@ -45,28 +44,9 @@ const CouponManagement = () => {
   const [sortDirection, setSortDirection] = useState('desc');
 
   // Modal states
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [couponStats, setCouponStats] = useState(null);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    code: '',
-    name: '',
-    description: '',
-    type: 'percentage',
-    value: '',
-    minimum_amount: '',
-    maximum_discount: '',
-    usage_limit: '',
-    usage_limit_per_user: '',
-    start_date: '',
-    end_date: '',
-    is_active: true
-  });
 
   // Load coupons
   const loadCoupons = async () => {
@@ -93,22 +73,7 @@ const CouponManagement = () => {
     loadCoupons();
   }, [currentPage, perPage, searchTerm, statusFilter, typeFilter, sortField, sortDirection]);
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (showEditModal) {
-        await updateCoupon(selectedCoupon.id, formData);
-      } else {
-        await createCoupon(formData);
-      }
-      
-      resetForm();
-      loadCoupons();
-    } catch (error) {
-      console.error('Error saving coupon:', error);
-    }
-  };
+
 
   // Handle delete
   const handleDelete = async (coupon) => {
@@ -122,15 +87,7 @@ const CouponManagement = () => {
     }
   };
 
-  // Generate random code
-  const handleGenerateCode = async () => {
-    try {
-      const response = await generateCouponCode();
-      setFormData(prev => ({ ...prev, code: response.data.code }));
-    } catch (error) {
-      console.error('Error generating code:', error);
-    }
-  };
+
 
   // View coupon stats
   const handleViewStats = async (coupon) => {
@@ -144,45 +101,11 @@ const CouponManagement = () => {
     }
   };
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      code: '',
-      name: '',
-      description: '',
-      type: 'percentage',
-      value: '',
-      minimum_amount: '',
-      maximum_discount: '',
-      usage_limit: '',
-      usage_limit_per_user: '',
-      start_date: '',
-      end_date: '',
-      is_active: true
-    });
-    setShowCreateModal(false);
-    setShowEditModal(false);
-    setSelectedCoupon(null);
-  };
 
-  // Open edit modal
+
+  // Handle edit
   const handleEdit = (coupon) => {
-    setSelectedCoupon(coupon);
-    setFormData({
-      code: coupon.code,
-      name: coupon.name,
-      description: coupon.description || '',
-      type: coupon.type,
-      value: coupon.value,
-      minimum_amount: coupon.minimum_amount || '',
-      maximum_discount: coupon.maximum_discount || '',
-      usage_limit: coupon.usage_limit || '',
-      usage_limit_per_user: coupon.usage_limit_per_user || '',
-      start_date: coupon.start_date?.split('T')[0] || '',
-      end_date: coupon.end_date?.split('T')[0] || '',
-      is_active: coupon.is_active
-    });
-    setShowEditModal(true);
+    navigate(`/admin/coupons/edit/${coupon.id}`);
   };
 
   // Get status icon and color
@@ -225,7 +148,7 @@ const CouponManagement = () => {
           <p className="text-gray-600 mt-1">Tạo và quản lý các mã khuyến mại cho khách hàng</p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => navigate('/admin/coupons/create')}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -466,225 +389,7 @@ const CouponManagement = () => {
         )}
       </div>
 
-      {/* Create/Edit Modal */}
-      {(showCreateModal || showEditModal) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
-              {showEditModal ? 'Chỉnh sửa mã khuyến mại' : 'Tạo mã khuyến mại mới'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Code */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mã khuyến mại *
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="VD: SUMMER2024"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={handleGenerateCode}
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    title="Tạo mã ngẫu nhiên"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
 
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tên khuyến mại *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="VD: Khuyến mại mùa hè"
-                  required
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mô tả
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="3"
-                  placeholder="Mô tả chi tiết về khuyến mại..."
-                />
-              </div>
-
-              {/* Type and Value */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại giảm giá *
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="percentage">Phần trăm (%)</option>
-                    <option value="fixed">Số tiền cố định (đ)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giá trị *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.value}
-                    onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={formData.type === 'percentage' ? 'VD: 10' : 'VD: 50000'}
-                    min="0"
-                    max={formData.type === 'percentage' ? '100' : undefined}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Conditions */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Đơn hàng tối thiểu (đ)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.minimum_amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, minimum_amount: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="VD: 100000"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giảm tối đa (đ)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.maximum_discount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maximum_discount: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="VD: 200000"
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              {/* Usage Limits */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giới hạn sử dụng tổng
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.usage_limit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, usage_limit: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="VD: 100"
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giới hạn mỗi người
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.usage_limit_per_user}
-                    onChange={(e) => setFormData(prev => ({ ...prev, usage_limit_per_user: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="VD: 1"
-                    min="1"
-                  />
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày bắt đầu *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày kết thúc *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Active Status */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
-                  Kích hoạt mã khuyến mại
-                </label>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Đang xử lý...' : (showEditModal ? 'Cập nhật' : 'Tạo mã')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Stats Modal */}
       {showStatsModal && couponStats && (

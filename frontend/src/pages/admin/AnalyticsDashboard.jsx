@@ -54,11 +54,23 @@ const AnalyticsDashboard = () => {
     loadAnalyticsData();
   }, [user, selectedPeriod]);
 
+  // Convert frontend period format to backend format
+  const convertPeriodFormat = (period) => {
+    const periodMap = {
+      '7_days': '7d',
+      '30_days': '30d',
+      '90_days': '90d',
+      '1_year': '1y'
+    };
+    return periodMap[period] || '30d';
+  };
+
   const loadAnalyticsData = async () => {
     try {
       setLocalLoading(true);
       clearError();
-      await getDashboardStats(selectedPeriod);
+      const backendPeriod = convertPeriodFormat(selectedPeriod);
+      await getDashboardStats(backendPeriod);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to load analytics data:', error);
@@ -83,8 +95,9 @@ const AnalyticsDashboard = () => {
 
     try {
       setLocalLoading(true);
+      const backendPeriod = convertPeriodFormat(selectedPeriod);
       const exportData = await exportAnalytics({
-        period: selectedPeriod,
+        period: backendPeriod,
         format: 'json'
       });
       

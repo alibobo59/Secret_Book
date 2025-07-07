@@ -102,7 +102,7 @@ class CouponController extends Controller
             'maximum_discount' => 'nullable|numeric|min:0',
             'usage_limit' => 'nullable|integer|min:1',
             'usage_limit_per_user' => 'nullable|integer|min:1',
-            'start_date' => 'required|date|after_or_equal:today',
+            'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean'
         ], [
@@ -114,7 +114,7 @@ class CouponController extends Controller
             'value.required' => 'Giá trị giảm giá là bắt buộc',
             'value.min' => 'Giá trị giảm giá phải lớn hơn 0',
             'start_date.required' => 'Ngày bắt đầu là bắt buộc',
-            'start_date.after_or_equal' => 'Ngày bắt đầu không được nhỏ hơn hôm nay',
+
             'end_date.required' => 'Ngày kết thúc là bắt buộc',
             'end_date.after' => 'Ngày kết thúc phải sau ngày bắt đầu'
         ]);

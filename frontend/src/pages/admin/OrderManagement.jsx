@@ -91,7 +91,7 @@ const OrderManagement = () => {
     try {
       setLoadingAllowedStatuses(true);
       const allowedStatusesData = await getAllowedStatuses(order.id);
-      setAllowedStatuses(allowedStatusesData.allowed_statuses || []);
+      setAllowedStatuses(allowedStatusesData.allowed_next_statuses || []);
     } catch (error) {
       console.error("Failed to fetch allowed statuses:", error);
       // Fallback to all statuses if API fails
@@ -638,7 +638,7 @@ const OrderManagement = () => {
                   ) : (
                     allowedStatuses.map((status) => (
                       <option key={status.value} value={status.value}>
-                        {status.display_name}
+                        {status.label}
                       </option>
                     ))
                   )}

@@ -161,6 +161,15 @@ const AnalyticsDashboard = () => {
   const displayData = analytics || dashboardStats;
   const isLoading = loading || localLoading;
 
+  // Debug logging
+  console.log('Analytics data:', analytics);
+  console.log('Dashboard stats:', dashboardStats);
+  console.log('Display data:', displayData);
+  console.log('Sales data:', displayData?.sales);
+  console.log('Users data:', displayData?.users);
+  console.log('Inventory data:', displayData?.inventory);
+  console.log('Performance data:', displayData?.performance);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -251,28 +260,28 @@ const AnalyticsDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Tổng Doanh Thu"
-          value={sales?.totalRevenue ? `${sales.totalRevenue.toLocaleString('vi-VN')} VNĐ` : 'N/A'}
+          value={sales?.totalRevenue ? `${parseInt(sales.totalRevenue).toLocaleString('vi-VN')} VNĐ` : 'N/A'}
           icon={<DollarSign className="h-6 w-6" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
         />
         <StatCard
           title="Đơn Hàng"
-          value={sales?.totalOrders ? sales.totalOrders.toLocaleString('vi-VN') : 'N/A'}
+          value={sales?.totalOrders ? parseInt(sales.totalOrders).toLocaleString('vi-VN') : 'N/A'}
           icon={<ShoppingCart className="h-6 w-6" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
         />
         <StatCard
           title="Khách Hàng"
-          value={users?.totalUsers ? users.totalUsers.toLocaleString('vi-VN') : 'N/A'}
+          value={users?.totalUsers ? parseInt(users.totalUsers).toLocaleString('vi-VN') : 'N/A'}
           icon={<Users className="h-6 w-6" />}
           iconBgColor="bg-purple-100"
           iconColor="text-purple-600"
         />
         <StatCard
           title="Sản Phẩm"
-          value={inventory?.totalProducts ? inventory.totalProducts.toLocaleString('vi-VN') : 'N/A'}
+          value={inventory?.totalProducts ? parseInt(inventory.totalProducts).toLocaleString('vi-VN') : 'N/A'}
           icon={<Package className="h-6 w-6" />}
           iconBgColor="bg-orange-100"
           iconColor="text-orange-600"
@@ -323,18 +332,24 @@ const AnalyticsDashboard = () => {
               </div>
             ) : (
               <div className="h-full flex items-end justify-between gap-2">
-                {sales?.dailySales?.map((day, index) => (
-                  <div key={index} className="flex flex-col items-center flex-1">
-                    <div 
-                      className="bg-green-500 w-full rounded-t transition-all hover:bg-green-600"
-                      style={{ height: `${(day.revenue / 6000) * 100}%` }}
-                      title={`${day.revenue.toLocaleString('vi-VN')} VNĐ`}
-                    ></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                      {new Date(day.date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                )) || (
+                {sales?.dailySales?.map((day, index) => {
+                  const revenue = parseInt(day.revenue);
+                  const maxRevenue = Math.max(...sales.dailySales.map(d => parseInt(d.revenue)));
+                  const heightPercentage = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center flex-1">
+                      <div 
+                        className="bg-green-500 w-full rounded-t transition-all hover:bg-green-600"
+                        style={{ height: `${heightPercentage}%` }}
+                        title={`${revenue.toLocaleString('vi-VN')} VNĐ`}
+                      ></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        {new Date(day.date).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  );
+                }) || (
                   <div className="flex items-center justify-center w-full h-full">
                     <div className="text-center">
                       <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
@@ -448,7 +463,7 @@ const AnalyticsDashboard = () => {
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                    {product.revenue.toLocaleString('vi-VN')} VNĐ
+                    {parseInt(product.revenue).toLocaleString('vi-VN')} VNĐ
                   </span>
                 </div>
               )) || (
@@ -486,7 +501,9 @@ const AnalyticsDashboard = () => {
             ) : (
               sales?.categoryPerformance?.map((category, index) => {
                 const colors = ['bg-amber-500', 'bg-blue-500', 'bg-green-500', 'bg-red-500'];
-                const percentage = (category.revenue / sales.categoryPerformance.reduce((sum, cat) => sum + cat.revenue, 0)) * 100;
+                const categoryRevenue = parseInt(category.revenue);
+                const totalRevenue = sales.categoryPerformance.reduce((sum, cat) => sum + parseInt(cat.revenue), 0);
+                const percentage = totalRevenue > 0 ? (categoryRevenue / totalRevenue) * 100 : 0;
                 
                 return (
                   <div key={index} className="space-y-2">
@@ -495,7 +512,7 @@ const AnalyticsDashboard = () => {
                         {category.category}
                       </span>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {category.revenue.toLocaleString('vi-VN')} VNĐ
+                        {categoryRevenue.toLocaleString('vi-VN')} VNĐ
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -541,7 +558,9 @@ const AnalyticsDashboard = () => {
             ) : (
               users?.userSegments?.map((segment, index) => {
                 const colors = ['bg-purple-500', 'bg-cyan-500', 'bg-orange-500', 'bg-red-500'];
-                const percentage = (segment.count / users.totalUsers) * 100;
+                const segmentCount = parseInt(segment.count);
+                const totalUsers = parseInt(users.totalUsers);
+                const percentage = totalUsers > 0 ? (segmentCount / totalUsers) * 100 : 0;
                 
                 return (
                   <div key={index} className="space-y-2">
@@ -550,7 +569,7 @@ const AnalyticsDashboard = () => {
                         {segment.segment}
                       </span>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {segment.count.toLocaleString('vi-VN')}
+                        {segmentCount.toLocaleString('vi-VN')}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -595,18 +614,24 @@ const AnalyticsDashboard = () => {
               </div>
             ) : (
               <div className="h-full flex items-end justify-between gap-2">
-                {sales?.monthlySales?.map((month, index) => (
-                  <div key={index} className="flex flex-col items-center flex-1">
-                    <div 
-                      className="bg-green-500 w-full rounded-t transition-all hover:bg-green-600"
-                      style={{ height: `${Math.min((month.revenue / 150000) * 100, 100)}%` }}
-                      title={`${month.revenue?.toLocaleString('vi-VN')} VNĐ`}
-                    ></div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                      {new Date(month.month + '-01').toLocaleDateString('vi-VN', { month: 'short' })}
-                    </span>
-                  </div>
-                )) || (
+                {sales?.monthlySales?.map((month, index) => {
+                  const revenue = parseInt(month.revenue);
+                  const maxRevenue = Math.max(...sales.monthlySales.map(m => parseInt(m.revenue)));
+                  const heightPercentage = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center flex-1">
+                      <div 
+                        className="bg-green-500 w-full rounded-t transition-all hover:bg-green-600"
+                        style={{ height: `${heightPercentage}%` }}
+                        title={`${revenue.toLocaleString('vi-VN')} VNĐ`}
+                      ></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        {new Date(month.month + '-01').toLocaleDateString('vi-VN', { month: 'short' })}
+                      </span>
+                    </div>
+                  );
+                }) || (
                   <div className="flex items-center justify-center w-full h-full">
                     <div className="text-center">
                       <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
@@ -643,7 +668,7 @@ const AnalyticsDashboard = () => {
                   {isLoading ? (
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto"></div>
                   ) : (
-                    performance?.pageViews?.toLocaleString('vi-VN') || 'N/A'
+                    performance?.pageViews ? parseInt(performance.pageViews).toLocaleString('vi-VN') : 'N/A'
                   )}
                 </p>
               </div>
@@ -659,7 +684,7 @@ const AnalyticsDashboard = () => {
                   {isLoading ? (
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto"></div>
                   ) : (
-                    performance?.uniqueVisitors?.toLocaleString('vi-VN') || 'N/A'
+                    performance?.uniqueVisitors ? parseInt(performance.uniqueVisitors).toLocaleString('vi-VN') : 'N/A'
                   )}
                 </p>
               </div>
@@ -707,7 +732,7 @@ const AnalyticsDashboard = () => {
                         {page.page}
                       </span>
                       <span className="font-medium text-gray-800 dark:text-white">
-                        {page.views?.toLocaleString('vi-VN')}
+                        {page.views ? parseInt(page.views).toLocaleString('vi-VN') : 'N/A'}
                       </span>
                     </div>
                   )) || (

@@ -36,8 +36,20 @@ export const AnalyticsProvider = ({ children }) => {
     setError(null);
     try {
       const response = await analyticsService.getDashboardStats(period);
-      setDashboardStats(response.data || response);
-      setAnalytics(response.data || response);
+      console.log('Raw API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', Object.keys(response || {}));
+      setDashboardStats(response);
+      // Map the response to the expected analytics structure
+      setAnalytics({
+        sales: response.sales || {},
+        users: response.users || {},
+        inventory: response.inventory || {},
+        performance: response.performance || {},
+        reviews: response.reviews || {},
+        promotions: response.promotions || {},
+        behavior: response.behavior || {}
+      });
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê';
       setError(errorMessage);
@@ -57,7 +69,7 @@ export const AnalyticsProvider = ({ children }) => {
     setError(null);
     try {
       const response = await analyticsService.getDashboardStats(period);
-      setDashboardStats(response.data || response);
+      setDashboardStats(response);
       return response;
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê dashboard';

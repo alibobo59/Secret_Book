@@ -8,7 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { OrderProvider } from './contexts/OrderContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+
 import { ChangelogProvider } from './contexts/ChangelogContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { AttributeProvider } from './contexts/AttributeContext';
@@ -24,17 +24,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <BookProvider>
               <CartProvider>
                 <OrderProvider>
-                  <LanguageProvider>
-                    <ChangelogProvider>
-                      <ToastProvider>
-                        <AttributeProvider>
-                          <VariationProvider>
-                            <App />
-                          </VariationProvider>
-                        </AttributeProvider>
-                      </ToastProvider>
-                    </ChangelogProvider>
-                  </LanguageProvider>
+                  <ChangelogProvider>
+                    <ToastProvider>
+                      <AttributeProvider>
+                        <VariationProvider>
+                          <App />
+                        </VariationProvider>
+                      </AttributeProvider>
+                    </ToastProvider>
+                  </ChangelogProvider>
                 </OrderProvider>
               </CartProvider>
             </BookProvider>

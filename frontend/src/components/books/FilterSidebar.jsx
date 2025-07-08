@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Filter, DollarSign, Star, User, Tag } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
+
 
 const FilterSidebar = ({
   isOpen,
@@ -12,7 +12,7 @@ const FilterSidebar = ({
   priceRange,
   onClearFilters
 }) => {
-  const { t } = useLanguage();
+
 
   const handleCategoryChange = (category) => {
     setFilters(prev => ({
@@ -71,7 +71,7 @@ const FilterSidebar = ({
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-amber-600" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Filters</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Bộ Lọc</h2>
           </div>
           <button
             onClick={onClose}
@@ -88,14 +88,14 @@ const FilterSidebar = ({
             className="w-full py-2 px-4 text-sm text-amber-600 hover:text-amber-700 
                      border border-amber-600 hover:border-amber-700 rounded-md transition-colors"
           >
-            Clear All Filters
+            Xóa Tất Cả Bộ Lọc
           </button>
 
           {/* Categories */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Tag className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-medium text-gray-900 dark:text-white">Categories</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white">Danh Mục</h3>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {uniqueCategories.map(category => (
@@ -116,7 +116,7 @@ const FilterSidebar = ({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-medium text-gray-900 dark:text-white">Authors</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white">Tác Giả</h3>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {uniqueAuthors.map(author => (
@@ -137,7 +137,7 @@ const FilterSidebar = ({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <DollarSign className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-medium text-gray-900 dark:text-white">Price Range (VND)</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white">Khoảng Giá (VND)</h3>
             </div>
             <div className="space-y-3">
               <div className="flex gap-2">
@@ -172,7 +172,7 @@ const FilterSidebar = ({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Star className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-medium text-gray-900 dark:text-white">Ratings</h3>
+              <h3 className="font-medium text-gray-900 dark:text-white">Đánh Giá</h3>
             </div>
             <div className="space-y-2">
               {[5, 4, 3, 2, 1].map(rating => (
@@ -193,7 +193,7 @@ const FilterSidebar = ({
                       />
                     ))}
                     <span className="text-sm text-gray-700 dark:text-gray-300 ml-1">
-                      {rating === 5 ? '5 stars' : `${rating}+ stars`}
+                      {rating === 5 ? '5 sao' : `${rating}+ sao`}
                     </span>
                   </div>
                 </label>

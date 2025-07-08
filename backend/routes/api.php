@@ -12,6 +12,8 @@ use App\Http\Controllers\API\PublisherController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\AnalyticsController;
+use App\Http\Controllers\API\CouponController;
+use App\Http\Controllers\API\UserController;
 
 // Root route
 Route::get('/', function () {
@@ -57,6 +59,7 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     // Orders (Admin)
     Route::get('/admin/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
     Route::get('/admin/orders/{order}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
+    Route::get('/admin/orders/{order}/allowed-statuses', [OrderController::class, 'getAllowedStatuses'])->name('admin.orders.allowed-statuses');
     Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update-status');
     Route::patch('/admin/orders/{order}/payment', [OrderController::class, 'updatePaymentStatus'])->name('admin.orders.update-payment');
     Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
@@ -70,6 +73,25 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::get('/audit-logs/stats', [AuditLogController::class, 'getStats'])->name('audit-logs.stats');
     Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
     Route::get('/audit-logs/{modelType}/{modelId}', [AuditLogController::class, 'getModelAuditLogs'])->name('audit-logs.model');
+
+    // Coupons (Admin)
+    Route::apiResource('coupons', CouponController::class);
+    Route::post('/coupons/generate-code', [CouponController::class, 'generateCode'])->name('coupons.generate-code');
+    Route::get('/coupons/{coupon}/stats', [CouponController::class, 'stats'])->name('coupons.stats');
+
+    // User Management (Admin)
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/admin/users/stats', [UserController::class, 'getStats'])->name('admin.users.stats');
+    Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+    // Review Management (Admin)
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+    Route::patch('/admin/reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
+    Route::get('/admin/reviews/stats', [ReviewController::class, 'getStats'])->name('admin.reviews.stats');
+    Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 });
 
 // Authenticated user routes
@@ -82,12 +104,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment routes
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
-
+    Route::post('/payment/vnpay/verify', [PaymentController::class, 'verifyVNPayPayment']);
     // Review routes for authenticated users
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+
+    // Coupon validation for authenticated users
+    Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
 });
 
 // Public routes for VNPay

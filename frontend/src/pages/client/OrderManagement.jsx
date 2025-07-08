@@ -26,178 +26,6 @@ import {
 } from "lucide-react";
 
 // Dữ liệu đơn hàng giả để kiểm tra
-const fakeOrders = [
-  {
-    id: "ORD-001",
-    userId: "user1",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    status: "delivered",
-    paymentMethod: "cod",
-    paymentStatus: "completed",
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-20T14:45:00Z",
-    estimatedDelivery: "2024-01-22T00:00:00Z",
-    subtotal: 89.97,
-    shipping: 5.0,
-    tax: 9.5,
-    total: 104.47,
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-    },
-    contactInfo: {
-      email: "john.doe@example.com",
-      phone: "+1-555-123-4567",
-    },
-    items: [
-      {
-        bookId: "BOOK001",
-        price: 29.99,
-        quantity: 3,
-      },
-    ],
-    notes: "Vui lòng giao hàng trước 5 giờ chiều",
-  },
-  {
-    id: "ORD-002",
-    userId: "user1",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    status: "shipped",
-    paymentMethod: "cod",
-    paymentStatus: "pending",
-    createdAt: "2024-01-18T14:20:00Z",
-    updatedAt: "2024-01-19T09:15:00Z",
-    estimatedDelivery: "2024-01-25T00:00:00Z",
-    subtotal: 45.98,
-    shipping: 5.0,
-    tax: 5.1,
-    total: 56.08,
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-    },
-    contactInfo: {
-      email: "john.doe@example.com",
-      phone: "+1-555-123-4567",
-    },
-    items: [
-      {
-        bookId: "BOOK002",
-        price: 22.99,
-        quantity: 2,
-      },
-    ],
-    notes: "",
-  },
-  {
-    id: "ORD-003",
-    userId: "user1",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    status: "processing",
-    paymentMethod: "cod",
-    paymentStatus: "pending",
-    createdAt: "2024-01-20T11:45:00Z",
-    updatedAt: "2024-01-20T11:45:00Z",
-    estimatedDelivery: "2024-01-27T00:00:00Z",
-    subtotal: 34.99,
-    shipping: 5.0,
-    tax: 4.0,
-    total: 43.99,
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-    },
-    contactInfo: {
-      email: "john.doe@example.com",
-      phone: "+1-555-123-4567",
-    },
-    items: [
-      {
-        bookId: "BOOK003",
-        price: 34.99,
-        quantity: 1,
-      },
-    ],
-    notes: "Yêu cầu gói quà",
-  },
-  {
-    id: "ORD-004",
-    userId: "user1",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    status: "pending",
-    paymentMethod: "cod",
-    paymentStatus: "pending",
-    createdAt: "2024-01-22T16:30:00Z",
-    updatedAt: "2024-01-22T16:30:00Z",
-    estimatedDelivery: "2024-01-29T00:00:00Z",
-    subtotal: 67.98,
-    shipping: 5.0,
-    tax: 7.3,
-    total: 80.28,
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-    },
-    contactInfo: {
-      email: "john.doe@example.com",
-      phone: "+1-555-123-4567",
-    },
-    items: [
-      {
-        bookId: "BOOK004",
-        price: 19.99,
-        quantity: 2,
-      },
-      {
-        bookId: "BOOK005",
-        price: 27.99,
-        quantity: 1,
-      },
-    ],
-    notes: "",
-  },
-  {
-    id: "ORD-005",
-    userId: "user1",
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    status: "cancelled",
-    paymentMethod: "cod",
-    paymentStatus: "cancelled",
-    createdAt: "2024-01-10T09:15:00Z",
-    updatedAt: "2024-01-11T10:20:00Z",
-    estimatedDelivery: "2024-01-17T00:00:00Z",
-    subtotal: 25.99,
-    shipping: 5.0,
-    tax: 3.1,
-    total: 34.09,
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-    },
-    contactInfo: {
-      email: "john.doe@example.com",
-      phone: "+1-555-123-4567",
-    },
-    items: [
-      {
-        bookId: "BOOK006",
-        price: 25.99,
-        quantity: 1,
-      },
-    ],
-    notes: "Đã hủy do thay đổi ý định",
-  },
-];
 
 const OrderManagementPage = () => {
   const { user } = useAuth();
@@ -219,13 +47,13 @@ const OrderManagementPage = () => {
   // Hàm kiểm tra xem đơn hàng có sản phẩm nào có thể đánh giá không
   const hasReviewableItems = (order) => {
     if (!order.items || order.items.length === 0) return false;
-    
-    const result = order.items.some(item => {
+
+    const result = order.items.some((item) => {
       const bookId = item.book_id || item.bookId;
       const canReview = bookId && reviewEligibility[bookId] === true;
       return canReview;
     });
-    
+
     return result;
   };
 
@@ -243,7 +71,7 @@ const OrderManagementPage = () => {
         const userOrders = await getUserOrders(); // Xóa tham số userId
         setOrders(userOrders || []);
         setFilteredOrders(userOrders || []);
-        
+
         // Kiểm tra tính đủ điều kiện đánh giá cho các đơn hàng đã giao
         await checkReviewEligibility(userOrders || []);
       } catch (error) {
@@ -258,7 +86,7 @@ const OrderManagementPage = () => {
     // Hàm kiểm tra tính đủ điều kiện đánh giá cho tất cả sách trong đơn hàng đã giao
     const checkReviewEligibility = async (ordersList) => {
       const eligibilityMap = {};
-      
+
       for (const order of ordersList) {
         if (order.status === "delivered" && order.items) {
           for (const item of order.items) {
@@ -268,14 +96,17 @@ const OrderManagementPage = () => {
                 const response = await reviewAPI.canReviewBook(bookId);
                 eligibilityMap[bookId] = response.data.can_review;
               } catch (error) {
-                console.error(`Failed to check review eligibility for book ${bookId}:`, error);
+                console.error(
+                  `Failed to check review eligibility for book ${bookId}:`,
+                  error
+                );
                 eligibilityMap[bookId] = false;
               }
             }
           }
         }
       }
-      
+
       setReviewEligibility(eligibilityMap);
     };
 
@@ -356,7 +187,7 @@ const OrderManagementPage = () => {
       setSelectedOrder(null);
     } catch (error) {
       console.error("Không thể hủy đơn hàng:", error);
-        alert("Không thể hủy đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
+      alert("Không thể hủy đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
     } finally {
       setCancellingOrderId(null);
     }
@@ -595,9 +426,7 @@ const OrderManagementPage = () => {
                           {new Date(order.created_at).toLocaleDateString()}
                         </span>
                         <span>•</span>
-                        <span>
-                          {order.items?.length || 0} sản phẩm
-                        </span>
+                        <span>{order.items?.length || 0} sản phẩm</span>
                       </div>
                     </div>
 
@@ -611,7 +440,7 @@ const OrderManagementPage = () => {
                           order.status.slice(1)}
                       </span>
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
-                        ${(order.total / 100).toFixed(2)}
+                        {(order.total / 100).toFixed(2)}đ
                       </span>
                     </div>
                   </div>
@@ -623,7 +452,11 @@ const OrderManagementPage = () => {
                         key={item.book_id || item.id}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <img
-                          src={item.book?.image_url || item.coverImage || '/placeholder-book.jpg'}
+                          src={
+                            item.book?.image_url ||
+                            item.coverImage ||
+                            "/placeholder-book.jpg"
+                          }
                           alt={item.book?.title || item.title}
                           className="w-12 h-16 object-cover rounded"
                         />
@@ -639,7 +472,7 @@ const OrderManagementPage = () => {
                               SL: {item.quantity}
                             </span>
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              ${((item.price / 100) * item.quantity).toFixed(2)}
+                              {((item.price / 100) * item.quantity).toFixed(2)}đ
                             </span>
                           </div>
                         </div>
@@ -663,7 +496,6 @@ const OrderManagementPage = () => {
                       Xem Chi Tiết
                     </button>
 
-
                     {canCancelOrder(order) && (
                       <button
                         onClick={() => handleCancelOrder(order)}
@@ -673,14 +505,15 @@ const OrderManagementPage = () => {
                       </button>
                     )}
 
-                    {order.status === "delivered" && hasReviewableItems(order) && (
-                      <Link
-                        to={`/orders/${order.id}/review`}
-                        className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                        <Package className="h-4 w-4" />
-                        Đánh Giá Đơn Hàng
-                      </Link>
-                    )}
+                    {order.status === "delivered" &&
+                      hasReviewableItems(order) && (
+                        <Link
+                          to={`/orders/${order.id}/review`}
+                          className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                          <Package className="h-4 w-4" />
+                          Đánh Giá Đơn Hàng
+                        </Link>
+                      )}
                   </div>
                 </motion.div>
               ))}
@@ -704,7 +537,8 @@ const OrderManagementPage = () => {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
                   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Chi Tiết Đơn Hàng - {selectedOrder.order_number || selectedOrder.id}
+                    Chi Tiết Đơn Hàng -{" "}
+                    {selectedOrder.order_number || selectedOrder.id}
                   </h2>
                   <button
                     onClick={() => setIsDetailModalOpen(false)}
@@ -731,19 +565,21 @@ const OrderManagementPage = () => {
                       </span>
                     </div>
                     <div>
-                        <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                          Ngày Đặt Hàng
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {new Date(selectedOrder.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
+                      <h3 className="font-medium text-gray-800 dark:text-white mb-2">
+                        Ngày Đặt Hàng
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {new Date(
+                          selectedOrder.created_at
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
                         Tổng Tiền
                       </h3>
                       <p className="text-lg font-semibold text-gray-800 dark:text-white">
-                        ${(selectedOrder.total / 100).toFixed(2)}
+                        {(selectedOrder.total / 100).toFixed(2)}đ
                       </p>
                     </div>
                   </div>
@@ -762,25 +598,28 @@ const OrderManagementPage = () => {
                           Họ Và Tên
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.full_name || selectedOrder.shippingAddress?.name}
+                          {selectedOrder.address?.full_name ||
+                            selectedOrder.shippingAddress?.name}
                         </p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Thành Phố
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.city || selectedOrder.shippingAddress?.city}
+                          {selectedOrder.address?.city ||
+                            selectedOrder.shippingAddress?.city}
                         </p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Địa Chỉ
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.address_line_1 || selectedOrder.shippingAddress?.address}
+                          {selectedOrder.address?.address_line_1 ||
+                            selectedOrder.shippingAddress?.address}
                         </p>
                         {selectedOrder.address?.address_line_2 && (
                           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -788,18 +627,20 @@ const OrderManagementPage = () => {
                           </p>
                         )}
                       </div>
-                      
-                      {(selectedOrder.address?.state || selectedOrder.address?.postal_code) && (
+
+                      {(selectedOrder.address?.state ||
+                        selectedOrder.address?.postal_code) && (
                         <div>
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Tỉnh/Thành & Mã Bưu Điện
                           </p>
                           <p className="text-gray-800 dark:text-white">
-                            {selectedOrder.address?.state} {selectedOrder.address?.postal_code}
+                            {selectedOrder.address?.state}{" "}
+                            {selectedOrder.address?.postal_code}
                           </p>
                         </div>
                       )}
-                      
+
                       {selectedOrder.address?.country && (
                         <div>
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -822,13 +663,15 @@ const OrderManagementPage = () => {
                       <div className="flex items-center gap-3">
                         <Mail className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.user?.email || selectedOrder.contactInfo?.email}
+                          {selectedOrder.user?.email ||
+                            selectedOrder.contactInfo?.email}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.address?.phone || selectedOrder.contactInfo?.phone}
+                          {selectedOrder.address?.phone ||
+                            selectedOrder.contactInfo?.phone}
                         </span>
                       </div>
                     </div>
@@ -845,7 +688,11 @@ const OrderManagementPage = () => {
                           key={item.book_id || item.id}
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
-                            src={item.book?.image_url || item.coverImage || '/placeholder-book.jpg'}
+                            src={
+                              item.book?.image_url ||
+                              item.coverImage ||
+                              "/placeholder-book.jpg"
+                            }
                             alt={item.book?.title || item.title}
                             className="w-16 h-20 object-cover rounded"
                           />
@@ -861,7 +708,10 @@ const OrderManagementPage = () => {
                                 Số lượng: {item.quantity}
                               </span>
                               <span className="font-medium text-gray-800 dark:text-white">
-                                ${((item.price / 100) * item.quantity).toFixed(2)}
+                                {((item.price / 100) * item.quantity).toFixed(
+                                  2
+                                )}
+                                đ
                               </span>
                             </div>
                           </div>
@@ -883,10 +733,15 @@ const OrderManagementPage = () => {
                         <CreditCard className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="font-medium text-gray-800 dark:text-white">
-                            {selectedOrder.payment_method || selectedOrder.paymentMethod?.type || 'Thanh toán khi nhận hàng (COD)'}
+                            {selectedOrder.payment_method ||
+                              selectedOrder.paymentMethod?.type ||
+                              "Thanh toán khi nhận hàng (COD)"}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Trạng thái: {selectedOrder.payment_status || selectedOrder.paymentStatus || 'Đang chờ'}
+                            Trạng thái:{" "}
+                            {selectedOrder.payment_status ||
+                              selectedOrder.paymentStatus ||
+                              "Đang chờ"}
                           </p>
                         </div>
                       </div>
@@ -894,14 +749,16 @@ const OrderManagementPage = () => {
                   </div>
 
                   {/* Ghi Chú Đơn Hàng */}
-                  {(selectedOrder.notes || selectedOrder.special_instructions) && (
+                  {(selectedOrder.notes ||
+                    selectedOrder.special_instructions) && (
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-3">
                         Ghi Chú Đơn Hàng
                       </h3>
                       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.notes || selectedOrder.special_instructions}
+                          {selectedOrder.notes ||
+                            selectedOrder.special_instructions}
                         </p>
                       </div>
                     </div>

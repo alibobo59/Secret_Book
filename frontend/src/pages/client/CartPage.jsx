@@ -79,16 +79,16 @@ const CartPage = () => {
         <div className="text-center">
           <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-            Vui Lòng Đăng Nhập
+            Vui lòng đăng nhập
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Bạn cần đăng nhập để xem giỏ hàng của mình
+            Bạn cần đăng nhập để xem giỏ hàng
           </p>
           <Link
             to="/login"
             className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors"
           >
-            Đăng Nhập Ngay
+            Đăng nhập
           </Link>
         </div>
       </div>
@@ -105,14 +105,14 @@ const CartPage = () => {
               Giỏ hàng của bạn đang trống
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Có vẻ như bạn chưa thêm cuốn sách nào vào giỏ hàng
+              Có vẻ như bạn chưa thêm sách nào vào giỏ hàng
             </p>
             <Link
               to="/books"
               className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors inline-flex items-center gap-2"
             >
               <ShoppingCart className="h-5 w-5" />
-              Bắt Đầu Mua Sắm
+              Bắt đầu mua sắm
             </Link>
           </div>
         </div>
@@ -125,7 +125,7 @@ const CartPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-            Giỏ Hàng
+            Giỏ hàng
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             {cartItems.length} sản phẩm trong giỏ hàng của bạn
@@ -200,7 +200,7 @@ const CartPage = () => {
                           </h3>
                         </Link>
                         <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                          của {item.author}
+                          của {typeof item.author === 'object' ? item.author?.name || 'Tác giả không xác định' : item.author || 'Tác giả không xác định'}
                         </p>
                         <div className="flex items-center gap-4">
                           <span className="text-lg font-bold text-gray-800 dark:text-white">
@@ -263,7 +263,7 @@ const CartPage = () => {
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-6">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-                Tóm Tắt Đơn Hàng
+                Tóm tắt đơn hàng
               </h2>
 
               <div className="space-y-3 mb-6">
@@ -281,7 +281,7 @@ const CartPage = () => {
                 </div>
                 {shipping > 0 && (
                   <div className="text-sm text-amber-600 dark:text-amber-400">
-                    Miễn phí vận chuyển cho đơn hàng trên 1,200,000 ₫
+                    Miễn phí vận chuyển cho đơn hàng trên 1.200.000 ₫
                   </div>
                 )}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -312,7 +312,7 @@ const CartPage = () => {
                   to="/books"
                   className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 text-sm transition-colors"
                 >
-                  Tiếp Tục Mua Sắm
+                  Tiếp tục mua sắm
                 </Link>
               </div>
             </div>

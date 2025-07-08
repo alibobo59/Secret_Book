@@ -102,13 +102,13 @@ const AdminSettings = () => {
   });
 
   const tabs = [
-    { id: 'general', label: 'General', icon: Settings },
+    { id: 'general', label: 'Tổng quan', icon: Settings },
     { id: 'email', label: 'Email', icon: Mail },
-    { id: 'payment', label: 'Payment', icon: CreditCard },
-    { id: 'orders', label: 'Order Processing', icon: Package },
-    { id: 'shipping', label: 'Shipping', icon: Package },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'system', label: 'System', icon: Server }
+    { id: 'payment', label: 'Thanh toán', icon: CreditCard },
+    { id: 'orders', label: 'Xử lý đơn hàng', icon: Package },
+    { id: 'shipping', label: 'Vận chuyển', icon: Package },
+    { id: 'notifications', label: 'Thông báo', icon: Bell },
+    { id: 'system', label: 'Hệ thống', icon: Server }
   ];
 
   const handleSaveSettings = async (settingsType) => {
@@ -153,33 +153,33 @@ const AdminSettings = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="System Settings"
-        subtitle="Configure your bookstore settings and preferences"
+        title="Cài Đặt Hệ Thống"
+        subtitle="Cấu hình cài đặt và tùy chọn cửa hàng sách của bạn"
       />
 
       {/* Settings Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Site Status"
-          value={systemSettings.maintenanceMode ? 'Maintenance' : 'Online'}
+          title="Trạng Thái Trang Web"
+          value={systemSettings.maintenanceMode ? 'Bảo trì' : 'Trực tuyến'}
           icon={systemSettings.maintenanceMode ? AlertCircle : CheckCircle}
           trend={systemSettings.maintenanceMode ? 'warning' : 'positive'}
         />
         <StatCard
-          title="Email Status"
-          value={emailSettings.testMode ? 'Test Mode' : 'Live'}
+          title="Trạng Thái Email"
+          value={emailSettings.testMode ? 'Chế độ thử nghiệm' : 'Hoạt động'}
           icon={Mail}
           trend={emailSettings.testMode ? 'warning' : 'positive'}
         />
         <StatCard
-          title="Payment Methods"
-          value={`${[paymentSettings.enableCOD, paymentSettings.enableStripe, paymentSettings.enablePaypal].filter(Boolean).length} Active`}
+          title="Phương Thức Thanh Toán"
+          value={`${[paymentSettings.enableCOD, paymentSettings.enableStripe, paymentSettings.enablePaypal].filter(Boolean).length} Hoạt động`}
           icon={CreditCard}
           trend="neutral"
         />
         <StatCard
-          title="Security Status"
-          value={systemSettings.requireEmailVerification ? 'Secure' : 'Basic'}
+          title="Trạng Thái Bảo Mật"
+          value={systemSettings.requireEmailVerification ? 'Bảo mật' : 'Cơ bản'}
           icon={systemSettings.requireEmailVerification ? CheckCircle : XCircle}
           trend={systemSettings.requireEmailVerification ? 'positive' : 'negative'}
         />
@@ -216,33 +216,33 @@ const AdminSettings = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Site Name"
+                  label="Tên trang web"
                   value={generalSettings.siteName}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, siteName: e.target.value })}
                 />
                 <FormField
-                  label="Contact Email"
+                  label="Email liên hệ"
                   type="email"
                   value={generalSettings.contactEmail}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, contactEmail: e.target.value })}
                 />
                 <FormField
-                  label="Site Description"
+                  label="Mô tả trang web"
                   value={generalSettings.siteDescription}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, siteDescription: e.target.value })}
                 />
                 <FormField
-                  label="Contact Phone"
+                  label="Số điện thoại liên hệ"
                   value={generalSettings.contactPhone}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, contactPhone: e.target.value })}
                 />
                 <FormField
-                  label="Timezone"
+                  label="Múi giờ"
                   value={generalSettings.timezone}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, timezone: e.target.value })}
                 />
                 <FormField
-                  label="Business Address"
+                  label="Địa chỉ kinh doanh"
                   value={generalSettings.businessAddress}
                   onChange={(e) => setGeneralSettings({ ...generalSettings, businessAddress: e.target.value })}
                 />
@@ -254,7 +254,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save General Settings
+                Lưu Cài Đặt Tổng Quan
               </button>
             </div>
           )}
@@ -264,34 +264,34 @@ const AdminSettings = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="SMTP Host"
+                  label="Máy chủ SMTP"
                   value={emailSettings.smtpHost}
                   onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
                 />
                 <FormField
-                  label="SMTP Port"
+                  label="Cổng SMTP"
                   type="number"
                   value={emailSettings.smtpPort}
                   onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: parseInt(e.target.value) })}
                 />
                 <FormField
-                  label="SMTP Username"
+                  label="Tên đăng nhập SMTP"
                   value={emailSettings.smtpUsername}
                   onChange={(e) => setEmailSettings({ ...emailSettings, smtpUsername: e.target.value })}
                 />
                 <FormField
-                  label="SMTP Password"
+                  label="Mật khẩu SMTP"
                   type="password"
                   value={emailSettings.smtpPassword}
                   onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
                 />
                 <FormField
-                  label="From Name"
+                  label="Tên người gửi"
                   value={emailSettings.fromName}
                   onChange={(e) => setEmailSettings({ ...emailSettings, fromName: e.target.value })}
                 />
                 <FormField
-                  label="From Email"
+                  label="Email người gửi"
                   type="email"
                   value={emailSettings.fromEmail}
                   onChange={(e) => setEmailSettings({ ...emailSettings, fromEmail: e.target.value })}
@@ -306,7 +306,7 @@ const AdminSettings = () => {
                     onChange={(e) => setEmailSettings({ ...emailSettings, enableSSL: e.target.checked })}
                     className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Enable SSL/TLS</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Bật SSL/TLS</span>
                 </label>
 
                 <label className="flex items-center gap-2">
@@ -316,7 +316,7 @@ const AdminSettings = () => {
                     onChange={(e) => setEmailSettings({ ...emailSettings, testMode: e.target.checked })}
                     className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Test Mode</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Chế độ thử nghiệm</span>
                 </label>
               </div>
 
@@ -327,7 +327,7 @@ const AdminSettings = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
-                  Save Email Settings
+                  Lưu Cài Đặt Email
                 </button>
                 <button
                   onClick={handleTestEmail}
@@ -339,7 +339,7 @@ const AdminSettings = () => {
                   ) : (
                     <Mail className="h-4 w-4" />
                   )}
-                  Send Test Email
+                  Gửi Email Thử Nghiệm
                 </button>
               </div>
             </div>
@@ -349,7 +349,7 @@ const AdminSettings = () => {
           {activeTab === 'payment' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Payment Methods
+                Phương Thức Thanh Toán
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -361,10 +361,10 @@ const AdminSettings = () => {
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, enableCOD: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="font-medium text-gray-800 dark:text-white">Cash on Delivery</span>
+                    <span className="font-medium text-gray-800 dark:text-white">Thanh toán khi nhận hàng</span>
                   </label>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Accept cash payments on delivery
+                    Cho phép khách hàng thanh toán khi nhận hàng
                   </p>
                 </div>
 
@@ -379,7 +379,7 @@ const AdminSettings = () => {
                     <span className="font-medium text-gray-800 dark:text-white">Stripe</span>
                   </label>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Accept credit card payments via Stripe
+                    Chấp nhận thanh toán thẻ tín dụng qua Stripe
                   </p>
                 </div>
 
@@ -394,21 +394,21 @@ const AdminSettings = () => {
                     <span className="font-medium text-gray-800 dark:text-white">PayPal</span>
                   </label>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Accept payments via PayPal
+                    Chấp nhận thanh toán PayPal
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Tax Rate (%)"
+                  label="Thuế suất (%)"
                   type="number"
                   step="0.1"
                   value={paymentSettings.taxRate}
                   onChange={(e) => setPaymentSettings({ ...paymentSettings, taxRate: parseFloat(e.target.value) })}
                 />
                 <FormField
-                  label="Processing Fee (%)"
+                  label="Phí xử lý (%)"
                   type="number"
                   step="0.1"
                   value={paymentSettings.processingFee}
@@ -422,7 +422,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save Payment Settings
+                Lưu Cài Đặt Thanh Toán
               </button>
             </div>
           )}
@@ -431,7 +431,7 @@ const AdminSettings = () => {
           {activeTab === 'orders' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Order Processing Rules
+                Quy Tắc Xử Lý Đơn Hàng
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -443,7 +443,7 @@ const AdminSettings = () => {
                       onChange={(e) => setOrderSettings({ ...orderSettings, autoConfirmOrders: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Auto-confirm orders after payment</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Tự động xác nhận đơn hàng sau khi thanh toán</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -453,7 +453,7 @@ const AdminSettings = () => {
                       onChange={(e) => setOrderSettings({ ...orderSettings, autoReserveStock: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Auto-reserve stock when order is placed</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Tự động dành trước hàng tồn kho khi đặt hàng</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -463,7 +463,7 @@ const AdminSettings = () => {
                       onChange={(e) => setOrderSettings({ ...orderSettings, allowBackorders: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Allow backorders for out-of-stock items</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Cho phép đặt hàng trước cho sản phẩm hết hàng</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -473,33 +473,33 @@ const AdminSettings = () => {
                       onChange={(e) => setOrderSettings({ ...orderSettings, autoCancelUnpaid: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Auto-cancel unpaid orders</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Tự động hủy đơn hàng chưa thanh toán</span>
                   </label>
                 </div>
 
                 <div className="space-y-4">
                   <FormField
-                    label="Stock Reservation Duration (hours)"
+                    label="Thời gian dành trước hàng tồn kho (giờ)"
                     type="number"
                     value={orderSettings.reservationDuration}
                     onChange={(e) => setOrderSettings({ ...orderSettings, reservationDuration: parseInt(e.target.value) })}
                   />
 
                   <FormField
-                    label="Unpaid Order Cancel Duration (hours)"
+                    label="Thời gian hủy đơn hàng chưa thanh toán (giờ)"
                     type="number"
                     value={orderSettings.unpaidCancelDuration}
                     onChange={(e) => setOrderSettings({ ...orderSettings, unpaidCancelDuration: parseInt(e.target.value) })}
                   />
 
                   <FormField
-                    label="Order Number Prefix"
+                    label="Tiền tố số đơn hàng"
                     value={orderSettings.orderNumberPrefix}
                     onChange={(e) => setOrderSettings({ ...orderSettings, orderNumberPrefix: e.target.value })}
                   />
 
                   <FormField
-                    label="Minimum Order Value ($)"
+                    label="Giá trị đơn hàng tối thiểu (₫)"
                     type="number"
                     step="0.01"
                     value={orderSettings.minOrderValue}
@@ -514,7 +514,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save Order Settings
+                Lưu Cài Đặt Đơn Hàng
               </button>
             </div>
           )}
@@ -524,41 +524,41 @@ const AdminSettings = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Free Shipping Threshold ($)"
+                  label="Ngưỡng miễn phí vận chuyển (₫)"
                   type="number"
                   step="0.01"
                   value={shippingSettings.freeShippingThreshold}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, freeShippingThreshold: parseFloat(e.target.value) })}
                 />
                 <FormField
-                  label="Standard Shipping Cost ($)"
+                  label="Chi phí vận chuyển tiêu chuẩn (₫)"
                   type="number"
-                  step="0.01"
+                  step="1000"
                   value={shippingSettings.standardShippingCost}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, standardShippingCost: parseFloat(e.target.value) })}
                 />
                 <FormField
-                  label="Express Shipping Cost ($)"
+                  label="Chi phí vận chuyển nhanh (₫)"
                   type="number"
-                  step="0.01"
+                  step="1000"
                   value={shippingSettings.expressShippingCost}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, expressShippingCost: parseFloat(e.target.value) })}
                 />
                 <FormField
-                  label="International Shipping Cost ($)"
+                  label="Chi phí vận chuyển quốc tế (₫)"
                   type="number"
-                  step="0.01"
+                  step="1000"
                   value={shippingSettings.internationalShippingCost}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, internationalShippingCost: parseFloat(e.target.value) })}
                 />
                 <FormField
-                  label="Estimated Delivery Days"
+                  label="Số ngày giao hàng ước tính"
                   type="number"
                   value={shippingSettings.estimatedDeliveryDays}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, estimatedDeliveryDays: parseInt(e.target.value) })}
                 />
                 <FormField
-                  label="Express Delivery Days"
+                  label="Số ngày giao hàng nhanh"
                   type="number"
                   value={shippingSettings.expressDeliveryDays}
                   onChange={(e) => setShippingSettings({ ...shippingSettings, expressDeliveryDays: parseInt(e.target.value) })}
@@ -573,7 +573,7 @@ const AdminSettings = () => {
                     onChange={(e) => setShippingSettings({ ...shippingSettings, internationalShipping: e.target.checked })}
                     className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Enable International Shipping</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Bật vận chuyển quốc tế</span>
                 </label>
 
                 <label className="flex items-center gap-2">
@@ -583,7 +583,7 @@ const AdminSettings = () => {
                     onChange={(e) => setShippingSettings({ ...shippingSettings, enableTracking: e.target.checked })}
                     className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Enable Package Tracking</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Bật theo dõi gói hàng</span>
                 </label>
               </div>
 
@@ -593,7 +593,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save Shipping Settings
+                Lưu Cài Đặt Vận Chuyển
               </button>
             </div>
           )}
@@ -602,12 +602,12 @@ const AdminSettings = () => {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Email Notifications
+                Thông Báo Email
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white">Customer Notifications</h4>
+                  <h4 className="font-medium text-gray-800 dark:text-white">Thông Báo Khách Hàng</h4>
                   
                   <label className="flex items-center gap-2">
                     <input
@@ -616,7 +616,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, orderConfirmation: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Order Confirmation</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Email xác nhận đơn hàng</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -626,7 +626,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, orderShipped: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Order Shipped</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Email thông báo vận chuyển</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -636,12 +636,12 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, orderDelivered: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Order Delivered</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Email giao hàng thành công</span>
                   </label>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white">Admin Notifications</h4>
+                  <h4 className="font-medium text-gray-800 dark:text-white">Thông Báo Quản Trị</h4>
                   
                   <label className="flex items-center gap-2">
                     <input
@@ -650,7 +650,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, newOrderAlert: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">New Order Alerts</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Thông báo đơn hàng mới</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -660,11 +660,11 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, lowStockAlert: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Low Stock Alerts</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Cảnh báo tồn kho thấp</span>
                   </label>
 
                   <FormField
-                    label="Low Stock Threshold"
+                    label="Ngưỡng cảnh báo tồn kho thấp"
                     type="number"
                     value={notificationSettings.lowStockThreshold}
                     onChange={(e) => setNotificationSettings({ ...notificationSettings, lowStockThreshold: parseInt(e.target.value) })}
@@ -673,7 +673,7 @@ const AdminSettings = () => {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-800 dark:text-white mb-4">Report Frequency</h4>
+                <h4 className="font-medium text-gray-800 dark:text-white mb-4">Tần Suất Báo Cáo</h4>
                 <div className="flex gap-6">
                   <label className="flex items-center gap-2">
                     <input
@@ -682,7 +682,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, dailyReports: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Daily Reports</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Báo cáo hàng ngày</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -692,7 +692,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, weeklyReports: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Weekly Reports</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Báo cáo hàng tuần</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -702,7 +702,7 @@ const AdminSettings = () => {
                       onChange={(e) => setNotificationSettings({ ...notificationSettings, monthlyReports: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Monthly Reports</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Báo cáo hàng tháng</span>
                   </label>
                 </div>
               </div>
@@ -713,7 +713,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save Notification Settings
+                Lưu Cài Đặt Thông Báo
               </button>
             </div>
           )}
@@ -723,7 +723,7 @@ const AdminSettings = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white">System Status</h4>
+                  <h4 className="font-medium text-gray-800 dark:text-white">Trạng Thái Hệ Thống</h4>
                   
                   <label className="flex items-center gap-2">
                     <input
@@ -732,7 +732,7 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, maintenanceMode: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Maintenance Mode</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Chế độ bảo trì</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -742,7 +742,7 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, debugMode: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Debug Mode</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Chế độ gỡ lỗi</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -752,12 +752,12 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, cacheEnabled: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Enable Caching</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Bật bộ nhớ đệm</span>
                   </label>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white">User Registration</h4>
+                  <h4 className="font-medium text-gray-800 dark:text-white">Đăng Ký Người Dùng</h4>
                   
                   <label className="flex items-center gap-2">
                     <input
@@ -766,7 +766,7 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, allowRegistration: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Allow User Registration</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Cho phép đăng ký người dùng</span>
                   </label>
 
                   <label className="flex items-center gap-2">
@@ -776,48 +776,48 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, requireEmailVerification: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Require Email Verification</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Yêu cầu xác minh email</span>
                   </label>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  label="Session Timeout (minutes)"
+                  label="Thời gian chờ phiên (phút)"
                   type="number"
                   value={systemSettings.sessionTimeout}
                   onChange={(e) => setSystemSettings({ ...systemSettings, sessionTimeout: parseInt(e.target.value) })}
                 />
                 <FormField
-                  label="Max File Upload Size (MB)"
+                  label="Kích thước tải lên tối đa (MB)"
                   type="number"
                   value={systemSettings.maxFileUploadSize}
                   onChange={(e) => setSystemSettings({ ...systemSettings, maxFileUploadSize: parseInt(e.target.value) })}
                 />
                 <FormField
-                  label="Log Retention Days"
+                  label="Số ngày lưu trữ nhật ký"
                   type="number"
                   value={systemSettings.logRetentionDays}
                   onChange={(e) => setSystemSettings({ ...systemSettings, logRetentionDays: parseInt(e.target.value) })}
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Backup Frequency
+                    Tần suất sao lưu
                   </label>
                   <select
                     value={systemSettings.backupFrequency}
                     onChange={(e) => setSystemSettings({ ...systemSettings, backupFrequency: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                   >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
+                    <option value="daily">Hàng ngày</option>
+                    <option value="weekly">Hàng tuần</option>
+                    <option value="monthly">Hàng tháng</option>
                   </select>
                 </div>
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-                <h4 className="font-medium text-gray-800 dark:text-white mb-4">Database Backup</h4>
+                <h4 className="font-medium text-gray-800 dark:text-white mb-4">Sao Lưu Cơ Sở Dữ Liệu</h4>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -826,7 +826,7 @@ const AdminSettings = () => {
                       onChange={(e) => setSystemSettings({ ...systemSettings, autoBackup: e.target.checked })}
                       className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Enable Auto Backup</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Bật sao lưu tự động</span>
                   </label>
                   <button
                     onClick={handleBackupNow}
@@ -838,7 +838,7 @@ const AdminSettings = () => {
                     ) : (
                       <Database className="h-4 w-4" />
                     )}
-                    Backup Now
+                    Sao Lưu Ngay
                   </button>
                 </div>
               </div>
@@ -849,7 +849,7 @@ const AdminSettings = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                Save System Settings
+                Lưu Cài Đặt Hệ Thống
               </button>
             </div>
           )}

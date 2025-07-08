@@ -123,7 +123,7 @@ export const ToastProvider = ({ children }) => {
   const showLoginSuccess = useCallback((userName) => {
     return addToast({
       type: 'success',
-      title: 'Welcome Back!',
+      title: 'Chào mừng trở lại!',
       message: `Hello ${userName}, you've been logged in successfully.`,
     });
   }, [addToast]);
@@ -140,7 +140,7 @@ export const ToastProvider = ({ children }) => {
   const showAdminNewOrder = useCallback((orderId, customerName, total) => {
     return addToast({
       type: 'info',
-      title: 'New Order Received',
+      title: 'Đã nhận đơn hàng mới',
       message: `Order ${orderId} from ${customerName} - $${total.toFixed(2)}`,
       actionText: 'View Orders',
       actionUrl: '/admin/orders',

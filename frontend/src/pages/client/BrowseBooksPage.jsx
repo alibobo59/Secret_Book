@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useBook } from '../../contexts/BookContext';
-import { useLanguage } from '../../contexts/LanguageContext';
+
 import BookCard from '../../components/client/BookCard';
 import BookListView from '../../components/books/BookListView';
 import FilterSidebar from '../../components/books/FilterSidebar';
@@ -8,7 +8,7 @@ import SearchAndSort from '../../components/books/SearchAndSort';
 
 const BrowseBooksPage = () => {
   const { books, loading, fetchBooks } = useBook();
-  const { t } = useLanguage();
+
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,7 +134,7 @@ const BrowseBooksPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">{t('message.loading')}</div>
+        <div className="text-lg">Đang tải...</div>
       </div>
     );
   }
@@ -171,19 +171,19 @@ const BrowseBooksPage = () => {
           {/* Books Grid/List */}
           <div className="p-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-              {t('browseBooks')}
+              Duyệt Sách
             </h1>
             
             {filteredAndSortedBooks.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 dark:text-gray-400 text-lg">
-                  No books found matching your criteria.
+                  Không tìm thấy sách nào phù hợp với tiêu chí của bạn.
                 </p>
                 <button
                   onClick={clearFilters}
                   className="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md transition-colors"
                 >
-                  Clear Filters
+                  Xóa Bộ Lọc
                 </button>
               </div>
             ) : (

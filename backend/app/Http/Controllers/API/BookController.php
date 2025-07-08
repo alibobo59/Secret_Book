@@ -16,13 +16,13 @@ class BookController extends Controller
     {
         return response()
         ->json([
-            'data' => Book::with(['category', 'author', 'publisher', 'variations'])->get()
+            'data' => Book::with(['category', 'author', 'publisher', 'variations', 'reviews'])->get()
         ], Response::HTTP_OK);
     }
 
     public function show($id)
     {
-        $book = Book::with(['category', 'author', 'publisher', 'variations'])->find($id);
+        $book = Book::with(['category', 'author', 'publisher', 'variations', 'reviews'])->find($id);
         if (!$book) {
             return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
         }
@@ -101,7 +101,7 @@ class BookController extends Controller
             }
         }
 
-        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations'])], Response::HTTP_CREATED);
+        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_CREATED);
     }
 
     public function update(Request $request, $id)
@@ -216,7 +216,7 @@ class BookController extends Controller
         }
         // --- END: MODIFIED LOGIC ---
 
-        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations'])], Response::HTTP_OK);
+        return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_OK);
     }
 
     public function destroy($id)

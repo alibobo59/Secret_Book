@@ -291,7 +291,7 @@ const VariationManager = ({ bookId }) => {
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <span>SKU: {variation.sku}</span>
                       <span className="mx-2">•</span>
-                      <span>Price: ${variation.price}</span>
+                      <span>Giá: {variation.price.toLocaleString('vi-VN')} ₫</span>
                       <span className="mx-2">•</span>
                       <span>Stock: {variation.stock_quantity}</span>
                     </div>
@@ -376,7 +376,7 @@ const VariationManager = ({ bookId }) => {
             />
 
             <FormField
-              label="Stock Quantity"
+              label="Số lượng tồn kho"
               name="stock_quantity"
               type="number"
               min="0"
@@ -453,7 +453,7 @@ const VariationManager = ({ bookId }) => {
             />
 
             <FormField
-              label="Stock Quantity"
+              label="Số lượng tồn kho"
               name="stock_quantity"
               type="number"
               min="0"

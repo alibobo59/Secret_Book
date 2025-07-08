@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,26 +9,29 @@ import { api } from "../../services/api";
 const BookManagement = () => {
   const { user, getToken, hasRole } = useAuth();
   const { books, categories, setBooks, authors, publishers } = useBook();
-  const { loading, error, setError } = useOutletContext();
+  const { loading } = useOutletContext();
   const navigate = useNavigate();
+  
+  // Local error state
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!hasRole(["admin"])) {
-      setError("Only admins can manage books.");
+      setError("Chỉ quản trị viên mới có thể quản lý sách.");
     }
   }, [hasRole, setError]);
 
   const handleDelete = async (id) => {
     if (!hasRole(["admin"])) {
-      setError("Only admins can delete books.");
+      setError("Chỉ quản trị viên mới có thể xóa sách.");
       return;
     }
     const token = getToken();
     if (!token) {
-      setError("Authentication token is missing. Please log in.");
+      setError("Thiếu token xác thực. Vui lòng đăng nhập.");
       return;
     }
-    if (window.confirm("Are you sure you want to delete this book?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa cuốn sách này không?")) {
       try {
         const config = {
           headers: { Authorization: `Bearer ${token}` },
@@ -37,7 +40,7 @@ const BookManagement = () => {
         setBooks(books.filter((book) => book.id !== id));
         setError(null);
       } catch (err) {
-        const message = err.response?.data?.error || "Failed to delete book";
+        const message = err.response?.data?.error || "Không thể xóa sách";
         setError(message);
       }
     }
@@ -45,7 +48,7 @@ const BookManagement = () => {
 
   const handleEdit = (id) => {
     if (!hasRole(["admin"])) {
-      setError("Only admins can edit books.");
+      setError("Chỉ quản trị viên mới có thể chỉnh sửa sách.");
       return;
     }
     navigate(`/admin/books/edit/${id}`);
@@ -64,7 +67,7 @@ const BookManagement = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
         Quản Lý Sách
       </h2>
@@ -84,22 +87,22 @@ const BookManagement = () => {
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Tiêu Đề
+                    Tiêu đề
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    SKU
+                    Mã SKU
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Giá
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Tồn Kho
+                    Tồn kho
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Danh Mục
+                    Danh mục
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Hành Động
+                    Hành động
                   </th>
                 </tr>
               </thead>
@@ -110,7 +113,7 @@ const BookManagement = () => {
                       {book.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {book.sku || "N/A"}
+                      {book.sku || "Không có"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       ${book.price || "0.00"}
@@ -119,7 +122,7 @@ const BookManagement = () => {
                       {book.stock_quantity || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                      {book.category?.name || "Unknown"}
+                      {book.category?.name || "Không xác định"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button

@@ -305,7 +305,7 @@ const AdminProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="relative">
                     <FormField
-                      label="Current Password"
+                      label="Mật khẩu hiện tại"
                       type={showCurrentPassword ? 'text' : 'password'}
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
@@ -321,7 +321,7 @@ const AdminProfile = () => {
                   </div>
                   <div className="relative">
                     <FormField
-                      label="New Password"
+                      label="Mật khẩu mới"
                       type={showNewPassword ? 'text' : 'password'}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
@@ -337,7 +337,7 @@ const AdminProfile = () => {
                   </div>
                   <div className="relative">
                     <FormField
-                      label="Confirm Password"
+                      label="Xác nhận mật khẩu"
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
@@ -357,14 +357,14 @@ const AdminProfile = () => {
                   className="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   <Key className="h-4 w-4" />
-                  Change Password
+                  Đổi mật khẩu
                 </button>
               </div>
 
               {/* Two-Factor Authentication */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                  Two-Factor Authentication
+                  Xác thực hai yếu tố
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -372,12 +372,12 @@ const AdminProfile = () => {
                       <Smartphone className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                       <div>
                         <h4 className="font-medium text-gray-800 dark:text-white">
-                          Authenticator App
+                          Ứng dụng xác thực
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           {securitySettings.twoFactorEnabled 
-                            ? 'Two-factor authentication is enabled'
-                            : 'Add an extra layer of security to your account'
+                            ? 'Xác thực hai yếu tố đã được bật'
+                            : 'Thêm một lớp bảo mật bổ sung cho tài khoản của bạn'
                           }
                         </p>
                       </div>
@@ -393,12 +393,12 @@ const AdminProfile = () => {
                       {securitySettings.twoFactorEnabled ? (
                         <>
                           <X className="h-4 w-4" />
-                          Disable 2FA
+                          Tắt 2FA
                         </>
                       ) : (
                         <>
                           <Check className="h-4 w-4" />
-                          Enable 2FA
+                          Bật 2FA
                         </>
                       )}
                     </button>
@@ -409,14 +409,14 @@ const AdminProfile = () => {
               {/* Security Preferences */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                  Security Preferences
+                  Tùy chọn bảo mật
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div>
-                      <h4 className="font-medium text-gray-800 dark:text-white">Email Notifications</h4>
+                      <h4 className="font-medium text-gray-800 dark:text-white">Thông báo qua email</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Receive email alerts for security events
+                        Nhận cảnh báo qua email cho các sự kiện bảo mật
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -435,9 +435,9 @@ const AdminProfile = () => {
 
                   <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div>
-                      <h4 className="font-medium text-gray-800 dark:text-white">Login Alerts</h4>
+                      <h4 className="font-medium text-gray-800 dark:text-white">Cảnh báo đăng nhập</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Get notified of new login attempts
+                        Nhận thông báo về các lần đăng nhập mới
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -456,9 +456,9 @@ const AdminProfile = () => {
 
                   <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-800 dark:text-white">Session Timeout</h4>
+                      <h4 className="font-medium text-gray-800 dark:text-white">Thời gian chờ phiên</h4>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {securitySettings.sessionTimeout} minutes
+                        {securitySettings.sessionTimeout} phút
                       </span>
                     </div>
                     <input
@@ -474,8 +474,8 @@ const AdminProfile = () => {
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                     />
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>30 min</span>
-                      <span>8 hours</span>
+                      <span>30 phút</span>
+                      <span>8 giờ</span>
                     </div>
                   </div>
                 </div>
@@ -488,10 +488,10 @@ const AdminProfile = () => {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  Recent Login Activity
+                  Hoạt động đăng nhập gần đây
                 </h3>
                 <button className="text-amber-600 hover:text-amber-700 text-sm">
-                  View All Sessions
+                  Xem tất cả phiên
                 </button>
               </div>
 

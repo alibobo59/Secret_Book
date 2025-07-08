@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, X, Plus, Minus, Trash2, CheckSquare, Square } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import { useNavigate, Link } from "react-router-dom";
 import ConfirmRemoveModal from "../common/ConfirmRemoveModal";
 
@@ -20,7 +20,7 @@ const CartDropdown = ({ className = "" }) => {
     getSelectedTotal,
     getSelectedItemsCount,
   } = useCart();
-  const { t } = useLanguage();
+
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -126,7 +126,7 @@ const CartDropdown = ({ className = "" }) => {
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                 <h3 className="font-semibold text-gray-800 dark:text-white">
-                  {t("nav.cart")}
+                  Giỏ Hàng
                 </h3>
                 {getItemCount() > 0 && (
                   <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
@@ -145,7 +145,7 @@ const CartDropdown = ({ className = "" }) => {
                       }
                     }}
                     className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                    {selectedItems.size === cartItems.length ? 'Deselect All' : 'Select All'}
+                    {selectedItems.size === cartItems.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                   </button>
                 )}
                 <button
@@ -162,10 +162,10 @@ const CartDropdown = ({ className = "" }) => {
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <ShoppingCart className="h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Your cart is empty
+                    Giỏ hàng của bạn đang trống
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    Add some books to get started!
+                    Thêm một số sách để bắt đầu!
                   </p>
                 </div>
               ) : (
@@ -205,7 +205,7 @@ const CartDropdown = ({ className = "" }) => {
                         </h4>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                           {typeof item.author === "object"
-                            ? item.author?.name || "Unknown Author"
+                            ? item.author?.name || "Tác giả không xác định"
                             : item.author}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -259,7 +259,7 @@ const CartDropdown = ({ className = "" }) => {
               <div className="border-t border-gray-200 dark:border-gray-700 p-4 mt-auto">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Selected ({getSelectedItemsCount()}):
+                    Đã chọn ({getSelectedItemsCount()}):
                   </span>
                   <span className="font-bold text-lg text-gray-800 dark:text-white">
                     {getSelectedTotal().toLocaleString('vi-VN')} ₫
@@ -267,7 +267,7 @@ const CartDropdown = ({ className = "" }) => {
                 </div>
                 <div className="flex justify-between items-center mb-3">
                   <span className="font-medium text-gray-800 dark:text-white">
-                    Total:
+                    Tổng cộng:
                   </span>
                   <span className="font-bold text-lg text-gray-800 dark:text-white">
                     {getCartTotal().toLocaleString('vi-VN')} ₫
@@ -285,7 +285,7 @@ const CartDropdown = ({ className = "" }) => {
                       ? "bg-amber-600 text-white hover:bg-amber-700"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}>
-                  Checkout Selected
+                  Thanh Toán Đã Chọn
                 </Link>
               </div>
             )}

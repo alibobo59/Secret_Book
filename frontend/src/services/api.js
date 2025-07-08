@@ -76,6 +76,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Thêm interceptor để log timezone info
+api.interceptors.request.use(
+  (config) => {
+    // Log timezone info cho debug
+    if (config.url.includes('vnpay')) {
+      console.log('Frontend Timezone Info:', {
+        browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        current_time: new Date().toISOString(),
+        vietnam_time: new Date().toLocaleString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh'
+        })
+      });
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Retry interceptor
 api.interceptors.response.use(
   (response) => response,

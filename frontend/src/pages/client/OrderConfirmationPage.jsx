@@ -168,14 +168,14 @@ const OrderConfirmationPage = () => {
                         {item.book.title}
                       </Link>
                       <p className="text-gray-600 dark:text-gray-400 text-sm">
-                        tác giả {item.book.author}
+                        tác giả {typeof item.book.author === 'object' ? item.book.author?.name || 'Tác giả không xác định' : item.book.author || 'Tác giả không xác định'}
                       </p>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-gray-600 dark:text-gray-400">
                           Số lượng: {item.quantity}
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ${(Number(item.price) * Number(item.quantity)).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -245,24 +245,24 @@ const OrderConfirmationPage = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tạm tính</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>${Number(order.subtotal || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Thuế</span>
-                  <span>${order.tax.toFixed(2)}</span>
+                  <span>${Number(order.tax || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Phí vận chuyển</span>
                   <span>
-                    {order.shipping === 0
+                    {Number(order.shipping) === 0
                       ? "Miễn phí"
-                      : `$${order.shipping.toFixed(2)}`}
+                      : `$${Number(order.shipping || 0).toFixed(2)}`}
                   </span>
                 </div>
                 <hr className="border-gray-200 dark:border-gray-700" />
                 <div className="flex justify-between text-lg font-semibold text-gray-800 dark:text-white">
                   <span>Tổng cộng</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>${Number(order.total || 0).toFixed(2)}</span>
                 </div>
               </div>
 

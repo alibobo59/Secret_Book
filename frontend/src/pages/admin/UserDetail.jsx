@@ -324,7 +324,7 @@ const UserDetail = () => {
 
         {activeTab === 'audit' && (
           <AuditLogTable 
-            modelType="App\\Models\\User" 
+            modelType="User" 
             modelId={id}
             className="mt-6"
           />

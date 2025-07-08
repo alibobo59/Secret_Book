@@ -12,6 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  Percent,
+  BarChart3,
+  Star,
 } from "lucide-react";
 
 function AdminSidebar({
@@ -72,6 +75,24 @@ function AdminSidebar({
       label: "Nhật Ký Kiểm Tra",
       icon: <Activity size={20} />,
       path: "/admin/audit-logs",
+    },
+    {
+      id: "coupons",
+      label: "Mã Khuyến Mại",
+      icon: <Percent size={20} />,
+      path: "/admin/coupons",
+    },
+    {
+      id: "reviews",
+      label: "Đánh Giá",
+      icon: <Star size={20} />,
+      path: "/admin/reviews",
+    },
+    {
+      id: "analytics",
+      label: "Phân Tích",
+      icon: <BarChart3 size={20} />,
+      path: "/admin/analytics",
     },
   ];
 

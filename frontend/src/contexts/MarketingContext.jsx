@@ -95,7 +95,7 @@ export const MarketingProvider = ({ children }) => {
         code: 'FREESHIP',
         type: 'free_shipping',
         value: 0,
-        description: 'Free shipping on orders over $75',
+        description: 'Miễn phí vận chuyển cho đơn hàng trên 1.875.000 ₫',
         minOrderAmount: 75,
         maxDiscount: 15,
         usageLimit: 2000,

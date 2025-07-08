@@ -9,7 +9,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import NotificationDropdown from "../common/NotificationDropdown";
 
 const AdminHeader = ({ isSidebarCollapsed }) => {
@@ -27,7 +27,7 @@ const AdminHeader = ({ isSidebarCollapsed }) => {
   });
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,13 +79,13 @@ const AdminHeader = ({ isSidebarCollapsed }) => {
           isScrolled
             ? "bg-white dark:bg-gray-800 shadow-md"
             : "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-        } py-2 px-4 w-full`}>
-        <div className="flex items-center justify-between h-14">
+        } py-1 px-4 w-full`}>
+        <div className="flex items-center justify-between h-12">
           {/* Left side - Title visible only when sidebar is collapsed */}
           {isSidebarCollapsed && (
             <div className="hidden md:block">
               <h1 className="text-xl font-bold text-amber-600">
-                {t("admin.panel")}
+                Bảng Điều Khiển Quản Trị
               </h1>
             </div>
           )}
@@ -132,19 +132,19 @@ const AdminHeader = ({ isSidebarCollapsed }) => {
                     to="/admin/profile"
                     className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                     <User className="h-4 w-4 mr-2" />
-                    {t("user.profile")}
+                    Hồ Sơ
                   </Link>
                   <Link
                     to="/admin/settings"
                     className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                     <Settings className="h-4 w-4 mr-2" />
-                    {t("admin.settings")}
+                    Cài Đặt
                   </Link>
                   <button
                     onClick={logout}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center">
                     <LogOut className="h-4 w-4 mr-2" />
-                    {t("nav.logout")}
+                    Đăng Xuất
                   </button>
                 </div>
               )}

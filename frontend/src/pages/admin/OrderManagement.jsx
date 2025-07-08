@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader, Table, SearchFilter, Modal } from "../../components/admin";
 import { useOrder } from "../../contexts/OrderContext";
 import {
@@ -15,18 +16,18 @@ import {
   CreditCard,
 } from "lucide-react";
 
-
-
 const OrderManagement = () => {
-  const { 
-    orders, 
-    loading, 
-    error, 
+  const navigate = useNavigate();
+  const {
+    orders,
+    loading,
+    error,
     pagination,
-    getAllOrders, 
-    updateOrderStatus 
+    getAllOrders,
+    updateOrderStatus,
+    getAllowedStatuses,
   } = useOrder();
-  
+
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -37,6 +38,8 @@ const OrderManagement = () => {
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [statusLoading, setStatusLoading] = useState(false);
+  const [allowedStatuses, setAllowedStatuses] = useState([]);
+  const [loadingAllowedStatuses, setLoadingAllowedStatuses] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -56,7 +59,7 @@ const OrderManagement = () => {
     const filters = {};
     if (statusFilter) filters.status = statusFilter;
     if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
-    
+
     getAllOrders(currentPage, perPage, filters);
   }, [getAllOrders, currentPage, perPage, statusFilter, debouncedSearchTerm]);
 
@@ -75,14 +78,26 @@ const OrderManagement = () => {
   };
 
   const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setIsViewModalOpen(true);
+    navigate(`/admin/orders/${order.id}`);
   };
 
-  const handleUpdateStatus = (order) => {
+  const handleUpdateStatus = async (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
     setIsStatusModalOpen(true);
+
+    // Fetch allowed statuses for this order
+    try {
+      setLoadingAllowedStatuses(true);
+      const allowedStatusesData = await getAllowedStatuses(order.id);
+      setAllowedStatuses(allowedStatusesData.allowed_next_statuses || []);
+    } catch (error) {
+      console.error("Failed to fetch allowed statuses:", error);
+      // Fallback to all statuses if API fails
+      setAllowedStatuses(statusOptions);
+    } finally {
+      setLoadingAllowedStatuses(false);
+    }
   };
 
   const handleStatusUpdate = async () => {
@@ -91,19 +106,26 @@ const OrderManagement = () => {
     try {
       setStatusLoading(true);
       await updateOrderStatus(selectedOrder.id, newStatus);
-      
+
       // Refresh orders after successful update with current filters
-       const filters = {};
-       if (statusFilter) filters.status = statusFilter;
-       if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
-       await getAllOrders(currentPage, perPage, filters);
+      const filters = {};
+      if (statusFilter) filters.status = statusFilter;
+      if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
+      await getAllOrders(currentPage, perPage, filters);
 
       setIsStatusModalOpen(false);
       setSelectedOrder(null);
       setNewStatus("");
+      setAllowedStatuses([]);
     } catch (error) {
       console.error("Failed to update order status:", error);
-      alert("Failed to update order status. Please try again.");
+
+      // Check if it's a validation error from our backend
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
+      }
     } finally {
       setStatusLoading(false);
     }
@@ -167,7 +189,7 @@ const OrderManagement = () => {
     return (
       <div className="space-y-6">
         <PageHeader title="Quản Lý Đơn Hàng" hideAddButton />
-        
+
         <SearchFilter
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -177,7 +199,7 @@ const OrderManagement = () => {
           filterOptions={statusOptions}
           filterPlaceholder="Tất Cả Trạng Thái"
         />
-        
+
         {/* Loading Skeleton */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -199,7 +221,7 @@ const OrderManagement = () => {
             ))}
           </div>
         </div>
-        
+
         {/* Loading Pagination Skeleton */}
         <div className="flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-lg">
           <div className="flex items-center gap-4">
@@ -208,7 +230,9 @@ const OrderManagement = () => {
           </div>
           <div className="flex items-center gap-2">
             {Array.from({ length: 7 }, (_, i) => (
-              <div key={i} className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div
+                key={i}
+                className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -222,12 +246,15 @@ const OrderManagement = () => {
         <PageHeader title="Quản Lý Đơn Hàng" hideAddButton />
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            <div className="text-red-500 dark:text-red-400 mb-2">Lỗi tải đơn hàng</div>
-            <div className="text-gray-500 dark:text-gray-400 text-sm">{error}</div>
-            <button 
+            <div className="text-red-500 dark:text-red-400 mb-2">
+              Lỗi tải đơn hàng
+            </div>
+            <div className="text-gray-500 dark:text-gray-400 text-sm">
+              {error}
+            </div>
+            <button
               onClick={() => getAllOrders()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
               Thử Lại
             </button>
           </div>
@@ -238,7 +265,7 @@ const OrderManagement = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Order Management" hideAddButton />
+      <PageHeader title="Quản lý đơn hàng" hideAddButton />
 
       <SearchFilter
         searchTerm={searchTerm}
@@ -261,15 +288,15 @@ const OrderManagement = () => {
             key={order.id}
             className="hover:bg-gray-50 dark:hover:bg-gray-700">
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-              #{order.id}
+              {order.order_number || `#${order.id}`}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {order.address?.name || order.user?.name || 'N/A'}
+                  {order.address?.name || order.user?.name || "N/A"}
                 </div>
                 <div className="text-gray-500 dark:text-gray-400">
-                  {order.address?.email || order.user?.email || 'N/A'}
+                  {order.address?.email || order.user?.email || "N/A"}
                 </div>
               </div>
             </td>
@@ -277,7 +304,7 @@ const OrderManagement = () => {
               {new Date(order.created_at).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              ${parseFloat(order.total || 0).toFixed(2)}
+              {parseFloat(order.total || 0).toLocaleString("vi-VN")} ₫
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <span
@@ -285,13 +312,15 @@ const OrderManagement = () => {
                   order.status
                 )}`}>
                 {getStatusIcon(order.status)}
-                {statusOptions.find(opt => opt.value === order.status)?.label || order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                {statusOptions.find((opt) => opt.value === order.status)
+                  ?.label ||
+                  order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
                 <CreditCard className="h-3 w-3" />
-                {order.payment_method?.toUpperCase() || 'COD'}
+                {order.payment_method?.toUpperCase() || "COD"}
               </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -323,14 +352,14 @@ const OrderManagement = () => {
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm || statusFilter
-              ? 'Thử điều chỉnh tiêu chí tìm kiếm hoặc bộ lọc của bạn.'
-              : 'Chưa có đơn hàng nào được đặt.'}
+              ? "Thử điều chỉnh tiêu chí tìm kiếm hoặc bộ lọc của bạn."
+              : "Chưa có đơn hàng nào được đặt."}
           </p>
           {(searchTerm || statusFilter) && (
             <button
               onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('');
+                setSearchTerm("");
+                setStatusFilter("");
                 setCurrentPage(1);
               }}
               className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -343,84 +372,94 @@ const OrderManagement = () => {
       {/* Pagination Controls */}
       {!loading && filteredOrders.length > 0 && (
         <div className="flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Hiển thị:
+              </label>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing page size
+                }}
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                mục
+              </span>
+            </div>
+
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              Hiển thị {pagination.from || 0} đến {pagination.to || 0} trong
+              tổng số {pagination.total || 0} mục
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Hiển thị:
-            </label>
-            <select
-              value={perPage}
-              onChange={(e) => {
-                setPerPage(Number(e.target.value));
-                setCurrentPage(1); // Reset to first page when changing page size
-              }}
-              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
-            <span className="text-sm text-gray-700 dark:text-gray-300">mục</span>
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              Đầu
+            </button>
+
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              Trước
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from(
+                { length: Math.min(5, pagination.last_page || 1) },
+                (_, i) => {
+                  const pageNumber =
+                    Math.max(
+                      1,
+                      Math.min(
+                        (pagination.last_page || 1) - 4,
+                        Math.max(1, currentPage - 2)
+                      )
+                    ) + i;
+
+                  if (pageNumber > (pagination.last_page || 1)) return null;
+
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`px-3 py-1 text-sm border rounded-md ${
+                        currentPage === pageNumber
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                      }`}>
+                      {pageNumber}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === (pagination.last_page || 1)}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              Tiếp
+            </button>
+
+            <button
+              onClick={() => setCurrentPage(pagination.last_page || 1)}
+              disabled={currentPage === (pagination.last_page || 1)}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              Cuối
+            </button>
           </div>
-          
-          <div className="text-sm text-gray-700 dark:text-gray-300">
-             Hiển thị {pagination.from || 0} đến {pagination.to || 0} trong tổng số {pagination.total || 0} mục
-           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-            Đầu
-          </button>
-          
-          <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-            Trước
-          </button>
-
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, pagination.last_page || 1) }, (_, i) => {
-               const pageNumber = Math.max(1, Math.min(
-                 (pagination.last_page || 1) - 4,
-                 Math.max(1, currentPage - 2)
-               )) + i;
-               
-               if (pageNumber > (pagination.last_page || 1)) return null;
-              
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => setCurrentPage(pageNumber)}
-                  className={`px-3 py-1 text-sm border rounded-md ${
-                    currentPage === pageNumber
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}>
-                  {pageNumber}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === (pagination.last_page || 1)}
-            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-            Tiếp
-          </button>
-          
-          <button
-            onClick={() => setCurrentPage(pagination.last_page || 1)}
-             disabled={currentPage === (pagination.last_page || 1)}
-            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-            Cuối
-          </button>
-        </div>
         </div>
       )}
 
@@ -428,7 +467,7 @@ const OrderManagement = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={`Chi Tiết Đơn Hàng - #${selectedOrder?.id}`}>
+        title={`Chi Tiết Đơn Hàng - ${selectedOrder?.order_number || `#${selectedOrder?.id}`}`}>
         {selectedOrder && (
           <div className="space-y-6">
             {/* Order Info */}
@@ -438,7 +477,7 @@ const OrderManagement = () => {
                   Mã Đơn Hàng
                 </label>
                 <p className="text-gray-900 dark:text-white">
-                  #{selectedOrder.id}
+                  {selectedOrder.order_number || `#${selectedOrder.id}`}
                 </p>
               </div>
               <div>
@@ -450,7 +489,11 @@ const OrderManagement = () => {
                     selectedOrder.status
                   )}`}>
                   {getStatusIcon(selectedOrder.status)}
-                  {statusOptions.find(opt => opt.value === selectedOrder.status)?.label || selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                  {statusOptions.find(
+                    (opt) => opt.value === selectedOrder.status
+                  )?.label ||
+                    selectedOrder.status.charAt(0).toUpperCase() +
+                      selectedOrder.status.slice(1)}
                 </span>
               </div>
               <div>
@@ -466,7 +509,7 @@ const OrderManagement = () => {
                   Tổng Tiền
                 </label>
                 <p className="text-gray-900 dark:text-white font-semibold">
-                  ${parseFloat(selectedOrder.total || 0).toFixed(2)}
+                  {parseFloat(selectedOrder.total || 0).toFixed(2)}đ
                 </p>
               </div>
             </div>
@@ -480,13 +523,15 @@ const OrderManagement = () => {
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    {selectedOrder.address?.email || selectedOrder.user?.email || 'N/A'}
+                    {selectedOrder.address?.email ||
+                      selectedOrder.user?.email ||
+                      "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    {selectedOrder.address?.phone || 'N/A'}
+                    {selectedOrder.address?.phone || "N/A"}
                   </span>
                 </div>
               </div>
@@ -500,9 +545,9 @@ const OrderManagement = () => {
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-gray-400 mt-1" />
                 <div className="text-gray-700 dark:text-gray-300">
-                  <p>{selectedOrder.address?.name || 'N/A'}</p>
-                  <p>{selectedOrder.address?.address || 'N/A'}</p>
-                  <p>{selectedOrder.address?.city || 'N/A'}</p>
+                  <p>{selectedOrder.address?.name || "N/A"}</p>
+                  <p>{selectedOrder.address?.address || "N/A"}</p>
+                  <p>{selectedOrder.address?.city || "N/A"}</p>
                 </div>
               </div>
             </div>
@@ -518,16 +563,17 @@ const OrderManagement = () => {
                     key={item.id || index}
                     className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded">
                     <img
-                      src={item.book?.image_url || '/placeholder-book.jpg'}
-                      alt={item.book?.title || 'Book'}
+                      src={item.book?.image_url || "/placeholder-book.jpg"}
+                      alt={item.book?.title || "Book"}
                       className="w-12 h-16 object-cover rounded"
                     />
                     <div className="flex-grow">
                       <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.book?.title || 'Unknown Title'}
+                        {item.book?.title || "Unknown Title"}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        by {item.book?.author || 'Unknown Author'}
+                        bởi{" "}
+                        {item.book?.author?.name || "Tác giả không xác định"}
                       </p>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -561,20 +607,36 @@ const OrderManagement = () => {
       {/* Update Status Modal */}
       <Modal
         isOpen={isStatusModalOpen}
-        onClose={() => setIsStatusModalOpen(false)}
+        onClose={() => {
+          setIsStatusModalOpen(false);
+          setAllowedStatuses([]);
+          setNewStatus("");
+        }}
         title="Cập Nhật Trạng Thái Đơn Hàng"
         footer={
           <div className="flex justify-end space-x-3">
             <button
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsStatusModalOpen(false)}>
+              onClick={() => {
+                setIsStatusModalOpen(false);
+                setAllowedStatuses([]);
+                setNewStatus("");
+              }}>
               Hủy
             </button>
             <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               onClick={handleStatusUpdate}
-              disabled={statusLoading}>
-              {statusLoading ? "Đang Cập Nhật..." : "Cập Nhật Trạng Thái"}
+              disabled={
+                statusLoading ||
+                loadingAllowedStatuses ||
+                allowedStatuses.length === 0
+              }>
+              {statusLoading
+                ? "Đang Cập Nhật..."
+                : loadingAllowedStatuses
+                ? "Đang Tải..."
+                : "Cập Nhật Trạng Thái"}
             </button>
           </div>
         }>
@@ -582,32 +644,74 @@ const OrderManagement = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mã Đơn Hàng: {selectedOrder.id}
+                Mã Đơn Hàng: {selectedOrder.order_number || `#${selectedOrder.id}`}
               </label>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Trạng Thái Hiện Tại: {statusOptions.find(opt => opt.value === selectedOrder.status)?.label || selectedOrder.status}
+                Trạng Thái Hiện Tại:{" "}
+                {statusOptions.find((opt) => opt.value === selectedOrder.status)
+                  ?.label || selectedOrder.status}
               </label>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Trạng Thái Mới
               </label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {loadingAllowedStatuses ? (
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                  Đang tải trạng thái được phép...
+                </div>
+              ) : (
+                <select
+                  value={newStatus}
+                  onChange={(e) => {
+                    // Chỉ cho phép chọn trạng thái được phép
+                    const isAllowed = allowedStatuses.some(
+                      (allowed) => allowed.value === e.target.value
+                    );
+                    if (isAllowed) {
+                      setNewStatus(e.target.value);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  <option value="">-- Chọn trạng thái mới --</option>
+                  {statusOptions.map((status) => {
+                    const isAllowed = allowedStatuses.some(
+                      (allowed) => allowed.value === status.value
+                    );
+                    const isCurrentStatus =
+                      status.value === selectedOrder?.status;
+
+                    return (
+                      <option
+                        key={status.value}
+                        value={status.value}
+                        disabled={!isAllowed || isCurrentStatus}
+                        className={`${
+                          !isAllowed || isCurrentStatus
+                            ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-600"
+                            : "text-gray-800 dark:text-gray-200"
+                        }`}>
+                        {status.label} {isCurrentStatus ? "(Hiện tại)" : ""}{" "}
+                        {!isAllowed && !isCurrentStatus
+                          ? "(Không được phép)"
+                          : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+              {allowedStatuses.length === 0 && !loadingAllowedStatuses && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  Đơn hàng này không thể thay đổi trạng thái.
+                </p>
+              )}
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <AlertCircle className="h-4 w-4" />
                 <span className="text-sm">
-                  Thay đổi trạng thái đơn hàng sẽ thông báo cho khách hàng qua email.
+                  Thay đổi trạng thái đơn hàng sẽ thông báo cho khách hàng qua
+                  email.
                 </span>
               </div>
             </div>

@@ -1,6 +1,11 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import { CouponProvider } from "./contexts/CouponContext";
+import { UserManagementProvider } from "./contexts/UserManagementContext";
+import { ReviewManagementProvider } from "./contexts/ReviewManagementContext";
+import { OrderManagementProvider } from "./contexts/OrderManagementContext";
+import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { ClientLayout, AdminLayout } from "./layouts";
 import {
   OrderManagement as OrderManagementClient,
@@ -25,13 +30,19 @@ import {
   PublisherManagement,
   UserManagement,
   OrderManagement,
+  OrderDetail,
   PublisherCreate,
   PublisherEdit,
   BookCreate,
   BookEdit,
   BookDetail,
   AuditLogDashboard,
+  ReviewManagement,
 } from "./pages/admin";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import CouponManagement from "./pages/admin/CouponManagement";
+import CouponCreate from "./pages/admin/CouponCreate";
+import CouponEdit from "./pages/admin/CouponEdit";
 
 function App() {
   const { user, hasRole, loading: authLoading } = useAuth();
@@ -50,7 +61,12 @@ function App() {
   }
 
   return (
-    <Routes>
+    <CouponProvider>
+      <UserManagementProvider>
+        <ReviewManagementProvider>
+          <OrderManagementProvider>
+            <AnalyticsProvider>
+              <Routes>
       <Route element={<ClientLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/books" element={<BrowseBooksPage />} />
@@ -87,10 +103,21 @@ function App() {
         <Route path="publishers/edit/:id" element={<PublisherEdit />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
+        <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="audit-logs" element={<AuditLogDashboard />} />
+        <Route path="coupons" element={<CouponManagement />} />
+        <Route path="coupons/create" element={<CouponCreate />} />
+        <Route path="coupons/edit/:id" element={<CouponEdit />} />
+        <Route path="reviews" element={<ReviewManagement />} />
+        <Route path="analytics" element={<AnalyticsDashboard />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+              </Routes>
+            </AnalyticsProvider>
+          </OrderManagementProvider>
+        </ReviewManagementProvider>
+      </UserManagementProvider>
+    </CouponProvider>
   );
 }
 

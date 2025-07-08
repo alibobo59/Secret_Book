@@ -14,16 +14,36 @@ trait Auditable
     public static function bootAuditable()
     {
         static::created(function ($model) {
-            $model->auditActivity('created');
+            if ($model->shouldAudit()) {
+                $model->auditActivity('created');
+            }
         });
 
         static::updated(function ($model) {
-            $model->auditActivity('updated');
+            if ($model->shouldAudit()) {
+                $model->auditActivity('updated');
+            }
         });
 
         static::deleted(function ($model) {
-            $model->auditActivity('deleted');
+            if ($model->shouldAudit()) {
+                $model->auditActivity('deleted');
+            }
         });
+    }
+
+    /**
+     * Check if this model should be audited
+     */
+    protected function shouldAudit()
+    {
+        // Only audit Book and Order models
+        $auditableModels = [
+            'App\\Models\\Book',
+            'App\\Models\\Order',
+        ];
+        
+        return in_array(get_class($this), $auditableModels);
     }
 
     /**
@@ -43,10 +63,12 @@ trait Auditable
         $user = Auth::user();
         $oldValues = null;
         $newValues = null;
+        $metadata = [];
 
         switch ($event) {
             case 'created':
                 $newValues = $this->getAuditableAttributes();
+                $metadata = $this->getCreationMetadata();
                 break;
             case 'updated':
                 $oldValues = $this->getOriginal();
@@ -61,9 +83,11 @@ trait Auditable
                 // Filter to only include changed values
                 $oldValues = array_intersect_key($oldValues, $changes);
                 $newValues = array_intersect_key($newValues, $changes);
+                $metadata = $this->getUpdateMetadata($changes);
                 break;
             case 'deleted':
                 $oldValues = $this->getAuditableAttributes();
+                $metadata = $this->getDeletionMetadata();
                 break;
         }
 
@@ -81,6 +105,7 @@ trait Auditable
             'user_name' => $user ? $user->name : 'System',
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
+            'metadata' => $metadata,
         ]);
     }
 
@@ -136,5 +161,29 @@ trait Auditable
     {
         $labels = $this->getAuditFieldLabels();
         return $labels[$field] ?? ucfirst(str_replace('_', ' ', $field));
+    }
+
+    /**
+     * Get metadata for creation events (override in model if needed)
+     */
+    protected function getCreationMetadata()
+    {
+        return [];
+    }
+
+    /**
+     * Get metadata for update events (override in model if needed)
+     */
+    protected function getUpdateMetadata($changes)
+    {
+        return [];
+    }
+
+    /**
+     * Get metadata for deletion events (override in model if needed)
+     */
+    protected function getDeletionMetadata()
+    {
+        return [];
     }
 }

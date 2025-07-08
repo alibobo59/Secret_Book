@@ -97,7 +97,7 @@ const ReviewInteractionButtons = ({
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400'
           } ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          title={user ? (hasLiked ? 'Remove like' : 'Like this review') : 'Login to like reviews'}
+          title={user ? (hasLiked ? 'Bỏ thích' : 'Thích đánh giá này') : 'Đăng nhập để thích đánh giá'}
         >
           <motion.div
             animate={hasLiked ? { scale: [1, 1.2, 1] } : {}}
@@ -119,7 +119,7 @@ const ReviewInteractionButtons = ({
               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400'
           } ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          title={user ? (hasDisliked ? 'Remove dislike' : 'Dislike this review') : 'Login to dislike reviews'}
+          title={user ? (hasDisliked ? 'Bỏ không thích' : 'Không thích đánh giá này') : 'Đăng nhập để không thích đánh giá'}
         >
           <motion.div
             animate={hasDisliked ? { scale: [1, 1.2, 1] } : {}}
@@ -134,7 +134,7 @@ const ReviewInteractionButtons = ({
 
         {/* Helpful indicator */}
         <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-          <span>{likes > dislikes ? 'Helpful' : likes === dislikes ? 'Mixed' : 'Not helpful'}</span>
+          <span>{likes > dislikes ? 'Hữu ích' : likes === dislikes ? 'Trung bình' : 'Không hữu ích'}</span>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ const ReviewInteractionButtons = ({
           >
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Please login to interact with reviews</span>
+              <span className="text-sm">Vui lòng đăng nhập để tương tác với đánh giá</span>
             </div>
           </motion.div>
         )}

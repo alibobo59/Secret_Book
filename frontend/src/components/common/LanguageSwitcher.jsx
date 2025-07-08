@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLanguage } from "../../contexts/LanguageContext";
+
 import { Globe } from "lucide-react";
 
 const LanguageSwitcher = () => {
-  const { language, changeLanguage, t } = useLanguage();
+  const [language, setLanguage] = useState('vi');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -12,7 +12,7 @@ const LanguageSwitcher = () => {
   };
 
   const handleLanguageChange = (lang) => {
-    changeLanguage(lang);
+    setLanguage(lang);
     setIsOpen(false);
   };
 
@@ -35,10 +35,10 @@ const LanguageSwitcher = () => {
       <button
         onClick={toggleDropdown}
         className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center"
-        aria-label={t("language.select")}>
+        aria-label="Chọn ngôn ngữ">
         <Globe className="h-5 w-5 text-gray-700 dark:text-gray-300" />
         <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
-          {language === "en" ? t("language.en") : t("language.vi")}
+          {language === "en" ? "English" : "Tiếng Việt"}
         </span>
       </button>
 
@@ -51,7 +51,7 @@ const LanguageSwitcher = () => {
                 ? "text-amber-600 dark:text-amber-500 font-medium"
                 : "text-gray-700 dark:text-gray-300"
             }`}>
-            {t("language.en")}
+            English
           </button>
           <button
             onClick={() => handleLanguageChange("vi")}
@@ -60,7 +60,7 @@ const LanguageSwitcher = () => {
                 ? "text-amber-600 dark:text-amber-500 font-medium"
                 : "text-gray-700 dark:text-gray-300"
             }`}>
-            {t("language.vi")}
+            Tiếng Việt
           </button>
         </div>
       )}

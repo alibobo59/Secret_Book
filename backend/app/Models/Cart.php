@@ -46,5 +46,17 @@ class Cart extends Model
         'user_id',   // chủ sở hữu giỏ hàng
         // 'status',  // tuỳ schema, ví dụ: pending, completed
     ];
-    
+    /**
+ * Quan hệ 1-nhiều: Cart -> CartItem
+ *
+ * Mỗi giỏ hàng (Cart) có thể chứa nhiều dòng sản phẩm (CartItem). 
+ * Một CartItem đại diện cho một sản phẩm cụ thể cùng số lượng trong giỏ hàng. 
+ * Quan hệ này cho phép dễ dàng truy xuất tất cả các sản phẩm thuộc một giỏ hàng cụ thể, 
+ * ví dụ dùng trong tính tổng tiền, hiển thị chi tiết giỏ hàng hoặc kiểm tra tồn kho.
+ */
+public function items()
+{
+    return $this->hasMany(CartItem::class);
+}
+
 }

@@ -25,10 +25,12 @@ export const UserManagementProvider = ({ children }) => {
     setError(null);
     try {
       const response = await userService.getAllUsers(params);
+      console.log(params, "day la params");
       // console.log('API Response:', response);
       // console.log('Users data:', response.data);
       // console.log('Response type:', typeof response);
       // console.log('Response keys:', Object.keys(response || {}));
+      console.log(response);
       setUsers(response.data || []);
       return response;
     } catch (error) {

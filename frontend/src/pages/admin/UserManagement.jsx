@@ -50,8 +50,9 @@ const UserManagement = () => {
   const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
-    console.log("Current user:", user);
-    console.log("Has admin role:", hasRole(["admin"]));
+    // console.log("Current user:", user);
+    // console.log("Has admin role:", hasRole(["admin"]));
+    console.log("useEffect at admin");
     if (user && hasRole(["admin"])) {
       loadUsers();
       loadUserStats();

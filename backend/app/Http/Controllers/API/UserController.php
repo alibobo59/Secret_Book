@@ -35,7 +35,11 @@ class UserController extends Controller
 
         // Filter by status
         if ($request->has('status') && $request->status !== '' && $request->status !== 'all') {
-            $query->where('is_active', $request->status === 'active');
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
         }
 
         // Sort

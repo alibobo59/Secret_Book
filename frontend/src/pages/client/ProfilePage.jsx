@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { useOrder } from "../contexts/OrderContext";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useOrder } from "../../contexts/OrderContext";
+
 import { motion } from "framer-motion";
 import {
   User,
@@ -54,7 +54,8 @@ const ProfilePage = () => {
       title: "Pride and Prejudice",
       author: "Jane Austen",
       price: 10.99,
-      image: "https://images.pexels.com/photos/6373305/pexels-photo-6373305.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      image:
+        "https://images.pexels.com/photos/6373305/pexels-photo-6373305.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       rating: 4.6,
     },
     {
@@ -62,7 +63,8 @@ const ProfilePage = () => {
       title: "The Alchemist",
       author: "Paulo Coelho",
       price: 11.99,
-      image: "https://images.pexels.com/photos/3646105/pexels-photo-3646105.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      image:
+        "https://images.pexels.com/photos/3646105/pexels-photo-3646105.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       rating: 4.5,
     },
   ]);
@@ -85,7 +87,7 @@ const ProfilePage = () => {
   };
 
   const removeFromWishlist = (bookId) => {
-    setWishlist(wishlist.filter(book => book.id !== bookId));
+    setWishlist(wishlist.filter((book) => book.id !== bookId));
   };
 
   const getStatusColor = (status) => {
@@ -139,8 +141,7 @@ const ProfilePage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8"
-        >
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="w-24 h-24 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center text-white text-3xl font-bold">
               {user?.name?.charAt(0) || "U"}
@@ -184,8 +185,7 @@ const ProfilePage = () => {
                       activeTab === tab.id
                         ? "border-amber-500 text-amber-600 dark:text-amber-500"
                         : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    }`}
-                  >
+                    }`}>
                     <Icon className="h-5 w-5" />
                     {tab.label}
                   </button>
@@ -201,8 +201,7 @@ const ProfilePage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                     Personal Information
@@ -210,8 +209,7 @@ const ProfilePage = () => {
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors"
-                    >
+                      className="flex items-center gap-2 px-4 py-2 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors">
                       <Edit3 className="h-4 w-4" />
                       Edit
                     </button>
@@ -219,15 +217,13 @@ const ProfilePage = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
-                      >
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                         <Save className="h-4 w-4" />
                         Save
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                      >
+                        className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
                         <X className="h-4 w-4" />
                         Cancel
                       </button>
@@ -244,13 +240,17 @@ const ProfilePage = () => {
                       <input
                         type="text"
                         value={editedUser.name}
-                        onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
+                        onChange={(e) =>
+                          setEditedUser({ ...editedUser, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                       />
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <User className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-800 dark:text-gray-200">{editedUser.name}</span>
+                        <span className="text-gray-800 dark:text-gray-200">
+                          {editedUser.name}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -263,13 +263,20 @@ const ProfilePage = () => {
                       <input
                         type="email"
                         value={editedUser.email}
-                        onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            email: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                       />
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <Mail className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-800 dark:text-gray-200">{editedUser.email}</span>
+                        <span className="text-gray-800 dark:text-gray-200">
+                          {editedUser.email}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -282,13 +289,20 @@ const ProfilePage = () => {
                       <input
                         type="tel"
                         value={editedUser.phone}
-                        onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            phone: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                       />
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <Phone className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-800 dark:text-gray-200">{editedUser.phone}</span>
+                        <span className="text-gray-800 dark:text-gray-200">
+                          {editedUser.phone}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -301,13 +315,20 @@ const ProfilePage = () => {
                       <input
                         type="text"
                         value={editedUser.address}
-                        onChange={(e) => setEditedUser({ ...editedUser, address: e.target.value })}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            address: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                       />
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                         <MapPin className="h-5 w-5 text-gray-400" />
-                        <span className="text-gray-800 dark:text-gray-200">{editedUser.address}</span>
+                        <span className="text-gray-800 dark:text-gray-200">
+                          {editedUser.address}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -320,13 +341,17 @@ const ProfilePage = () => {
                   {isEditing ? (
                     <textarea
                       value={editedUser.bio}
-                      onChange={(e) => setEditedUser({ ...editedUser, bio: e.target.value })}
+                      onChange={(e) =>
+                        setEditedUser({ ...editedUser, bio: e.target.value })
+                      }
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                     />
                   ) : (
                     <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                      <span className="text-gray-800 dark:text-gray-200">{editedUser.bio}</span>
+                      <span className="text-gray-800 dark:text-gray-200">
+                        {editedUser.bio}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -338,16 +363,17 @@ const ProfilePage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                   Order History
                 </h2>
-                
+
                 {userOrders.length === 0 ? (
                   <div className="text-center py-12">
                     <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">No orders yet</p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No orders yet
+                    </p>
                     <Link
                       to="/books"
                       className="inline-block mt-4 px-6 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
@@ -359,8 +385,7 @@ const ProfilePage = () => {
                     {userOrders.map((order) => (
                       <div
                         key={order.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-6"
-                      >
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="font-semibold text-gray-800 dark:text-white">
@@ -371,19 +396,25 @@ const ProfilePage = () => {
                             </p>
                           </div>
                           <div className="text-right">
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            <span
+                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                order.status
+                              )}`}>
                               {getStatusIcon(order.status)}
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)}
                             </span>
                             <p className="text-lg font-semibold text-gray-800 dark:text-white mt-1">
                               ${order.total.toFixed(2)}
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-3">
                           {order.items?.map((item) => (
-                            <div key={item.bookId} className="flex items-center gap-4">
+                            <div
+                              key={item.bookId}
+                              className="flex items-center gap-4">
                               <img
                                 src={item.coverImage}
                                 alt={item.title}
@@ -394,7 +425,10 @@ const ProfilePage = () => {
                                   {item.title}
                                 </h4>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  by {typeof item.author === 'object' ? item.author?.name || 'Unknown Author' : item.author}
+                                  by{" "}
+                                  {typeof item.author === "object"
+                                    ? item.author?.name || "Unknown Author"
+                                    : item.author}
                                 </p>
                               </div>
                               <div className="text-right">
@@ -408,12 +442,11 @@ const ProfilePage = () => {
                             </div>
                           ))}
                         </div>
-                        
+
                         <div className="flex justify-end mt-4">
                           <Link
                             to={`/order-confirmation/${order.id}`}
-                            className="flex items-center gap-2 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
-                          >
+                            className="flex items-center gap-2 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
                             <Eye className="h-4 w-4" />
                             View Details
                           </Link>
@@ -430,20 +463,20 @@ const ProfilePage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                   My Wishlist
                 </h2>
-                
+
                 {wishlist.length === 0 ? (
                   <div className="text-center py-12">
                     <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">Your wishlist is empty</p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Your wishlist is empty
+                    </p>
                     <Link
                       to="/books"
-                      className="inline-block mt-4 px-6 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
-                    >
+                      className="inline-block mt-4 px-6 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                       Browse Books
                     </Link>
                   </div>
@@ -452,8 +485,7 @@ const ProfilePage = () => {
                     {wishlist.map((book) => (
                       <div
                         key={book.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="relative">
                           <img
                             src={book.image}
@@ -462,26 +494,27 @@ const ProfilePage = () => {
                           />
                           <button
                             onClick={() => removeFromWishlist(book.id)}
-                            className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors"
-                          >
+                            className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                        
+
                         <h3 className="font-semibold text-gray-800 dark:text-white mb-1">
                           {book.title}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                           by {book.author}
                         </p>
-                        
+
                         <div className="flex items-center gap-2 mb-3">
                           <div className="flex text-amber-500">
                             {[...Array(5)].map((_, index) => (
                               <Star
                                 key={index}
                                 className={`h-4 w-4 ${
-                                  index < Math.floor(book.rating) ? "fill-current" : ""
+                                  index < Math.floor(book.rating)
+                                    ? "fill-current"
+                                    : ""
                                 }`}
                               />
                             ))}
@@ -490,15 +523,14 @@ const ProfilePage = () => {
                             {book.rating}
                           </span>
                         </div>
-                        
+
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-bold text-gray-800 dark:text-white">
                             ${book.price.toFixed(2)}
                           </span>
                           <Link
                             to={`/books/${book.id}`}
-                            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors text-sm"
-                          >
+                            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors text-sm">
                             View Book
                           </Link>
                         </div>
@@ -514,12 +546,11 @@ const ProfilePage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                   Account Settings
                 </h2>
-                
+
                 <div className="space-y-6">
                   {/* Security Settings */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
@@ -543,7 +574,7 @@ const ProfilePage = () => {
                           <Edit3 className="h-5 w-5 text-gray-400" />
                         </div>
                       </button>
-                      
+
                       <button className="w-full text-left p-4 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <div className="flex justify-between items-center">
                           <div>
@@ -554,7 +585,9 @@ const ProfilePage = () => {
                               Add an extra layer of security to your account
                             </p>
                           </div>
-                          <span className="text-sm text-red-600 dark:text-red-400">Disabled</span>
+                          <span className="text-sm text-red-600 dark:text-red-400">
+                            Disabled
+                          </span>
                         </div>
                       </button>
                     </div>
@@ -579,11 +612,15 @@ const ProfilePage = () => {
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" defaultChecked />
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            defaultChecked
+                          />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-600"></div>
                         </label>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-medium text-gray-800 dark:text-white">
@@ -630,7 +667,7 @@ const ProfilePage = () => {
                           </button>
                         </div>
                       </div>
-                      
+
                       <button className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md text-gray-500 dark:text-gray-400 hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
                         + Add New Payment Method
                       </button>

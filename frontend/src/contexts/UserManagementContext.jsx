@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useState } from 'react';
-import { userService } from '../services';
+import React, { createContext, useContext, useState } from "react";
+import { userService } from "../services";
 
 const UserManagementContext = createContext();
 
 export const useUserManagement = () => {
   const context = useContext(UserManagementContext);
   if (!context) {
-    throw new Error('useUserManagement must be used within a UserManagementProvider');
+    throw new Error(
+      "useUserManagement must be used within a UserManagementProvider"
+    );
   }
   return context;
 };
@@ -23,14 +25,16 @@ export const UserManagementProvider = ({ children }) => {
     setError(null);
     try {
       const response = await userService.getAllUsers(params);
-      console.log('API Response:', response);
-      console.log('Users data:', response.data);
-      console.log('Response type:', typeof response);
-      console.log('Response keys:', Object.keys(response || {}));
+      // console.log('API Response:', response);
+      // console.log('Users data:', response.data);
+      // console.log('Response type:', typeof response);
+      // console.log('Response keys:', Object.keys(response || {}));
       setUsers(response.data || []);
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách người dùng';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi tải danh sách người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -46,7 +50,9 @@ export const UserManagementProvider = ({ children }) => {
       const response = await userService.getUserById(id);
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin người dùng';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi tải thông tin người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -55,24 +61,24 @@ export const UserManagementProvider = ({ children }) => {
   };
 
   // Toggle user status (lock/unlock account)
-  const toggleUserStatus = async (id, reason = '') => {
+  const toggleUserStatus = async (id, reason = "") => {
     setLoading(true);
     setError(null);
     try {
       const response = await userService.toggleUserStatus(id, reason);
-      
+
       // Update local state
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === id 
-            ? { ...user, is_active: !user.is_active }
-            : user
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === id ? { ...user, is_active: !user.is_active } : user
         )
       );
-      
+
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi thay đổi trạng thái tài khoản';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi thay đổi trạng thái tài khoản";
       setError(errorMessage);
       throw error;
     } finally {
@@ -86,19 +92,19 @@ export const UserManagementProvider = ({ children }) => {
     setError(null);
     try {
       const response = await userService.updateUser(id, userData);
-      
+
       // Update local state
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === id 
-            ? { ...user, ...response.user }
-            : user
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === id ? { ...user, ...response.user } : user
         )
       );
-      
+
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin người dùng';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi cập nhật thông tin người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -112,13 +118,14 @@ export const UserManagementProvider = ({ children }) => {
     setError(null);
     try {
       const response = await userService.deleteUser(id);
-      
+
       // Update local state
-      setUsers(prevUsers => prevUsers.filter(user => user.id !== id));
-      
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi xóa người dùng';
+      const errorMessage =
+        error.response?.data?.message || "Có lỗi xảy ra khi xóa người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -132,17 +139,17 @@ export const UserManagementProvider = ({ children }) => {
     setError(null);
     try {
       const response = await userService.updateUserRole(userId, role);
-      
+
       // Update local state
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId ? { ...user, role } : user
-        )
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === userId ? { ...user, role } : user))
       );
-      
+
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật vai trò người dùng';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi cập nhật vai trò người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -159,7 +166,9 @@ export const UserManagementProvider = ({ children }) => {
       setUserStats(response.data || response);
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê người dùng';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi tải thống kê người dùng";
       setError(errorMessage);
       throw error;
     } finally {
@@ -184,7 +193,7 @@ export const UserManagementProvider = ({ children }) => {
     deleteUser,
     updateUserRole,
     getUserStats,
-    clearError
+    clearError,
   };
 
   return (

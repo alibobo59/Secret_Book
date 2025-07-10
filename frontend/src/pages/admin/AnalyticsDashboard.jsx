@@ -157,8 +157,8 @@ const AnalyticsDashboard = () => {
     );
   }
 
-  // Use real data from backend only
-  const displayData = analytics || dashboardStats;
+  // Use dashboardStats (raw API response) as primary data source
+  const displayData = dashboardStats || analytics;
   const isLoading = loading || localLoading;
 
   // Debug logging

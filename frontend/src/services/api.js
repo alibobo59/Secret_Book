@@ -8,7 +8,7 @@ const api = axios.create({
   },
   withCredentials: true, // Enable cookies for CSRF and session
   timeout: 30000, // 30 seconds timeout
-  timeoutErrorMessage: 'Request timeout - the server took too long to respond',
+  timeoutErrorMessage: "Request timeout - the server took too long to respond",
   // Add retry logic
   retry: 3,
   retryDelay: 1000,
@@ -21,11 +21,11 @@ const fetchCsrfToken = async () => {
       withCredentials: true,
       headers: { Accept: "application/json" },
     });
-    console.log("CSRF token response:", {
-      status: response.status,
-      headers: response.headers,
-      cookies: document.cookie,
-    });
+    // console.log("CSRF token response:", {
+    //   status: response.status,
+    //   headers: response.headers,
+    //   cookies: document.cookie,
+    // });
     return true;
   } catch (error) {
     console.error("CSRF token fetch failed:", {
@@ -64,12 +64,12 @@ api.interceptors.request.use(
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
-    console.log("Request config:", {
-      method: config.method,
-      url: config.url,
-      headers: config.headers,
-      data: config.data instanceof FormData ? "[FormData]" : config.data,
-    });
+    // console.log("Request config:", {
+    //   method: config.method,
+    //   url: config.url,
+    //   headers: config.headers,
+    //   data: config.data instanceof FormData ? "[FormData]" : config.data,
+    // });
 
     return config;
   },
@@ -80,13 +80,13 @@ api.interceptors.request.use(
 api.interceptors.request.use(
   (config) => {
     // Log timezone info cho debug
-    if (config.url.includes('vnpay')) {
-      console.log('Frontend Timezone Info:', {
+    if (config.url.includes("vnpay")) {
+      console.log("Frontend Timezone Info:", {
         browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         current_time: new Date().toISOString(),
-        vietnam_time: new Date().toLocaleString('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh'
-        })
+        vietnam_time: new Date().toLocaleString("vi-VN", {
+          timeZone: "Asia/Ho_Chi_Minh",
+        }),
       });
     }
     return config;
@@ -99,7 +99,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config } = error;
-    
+
     // Skip retry for specific status codes
     if (error.response?.status === 401 || error.response?.status === 419) {
       return Promise.reject(error);
@@ -111,23 +111,31 @@ api.interceptors.response.use(
     // Check if we should retry the request
     if (config.retryCount < config.retry) {
       config.retryCount += 1;
-      
+
       // Delay before retrying
-      await new Promise(resolve => setTimeout(resolve, config.retryDelay * config.retryCount));
-      
-      console.log(`Retrying request (${config.retryCount}/${config.retry}):`, config.url);
+      await new Promise((resolve) =>
+        setTimeout(resolve, config.retryDelay * config.retryCount)
+      );
+
+      // console.log(`Retrying request (${config.retryCount}/${config.retry}):`, config.url);
       return api(config);
     }
 
     // If all retries failed, handle the error
-    if (error.code === 'ECONNABORTED') {
-      console.error('Request timeout:', error.message);
-      return Promise.reject(new Error('The request timed out. Please try again.'));
+    if (error.code === "ECONNABORTED") {
+      console.error("Request timeout:", error.message);
+      return Promise.reject(
+        new Error("The request timed out. Please try again.")
+      );
     }
 
     if (!error.response) {
-      console.error('Network error:', error.message);
-      return Promise.reject(new Error('Unable to connect to the server. Please check your connection.'));
+      console.error("Network error:", error.message);
+      return Promise.reject(
+        new Error(
+          "Unable to connect to the server. Please check your connection."
+        )
+      );
     }
 
     if (error.response?.status === 419) {
@@ -142,10 +150,10 @@ api.interceptors.response.use(
       return null;
     }
 
-    console.error('API Error:', {
+    console.error("API Error:", {
       status: error.response?.status,
       data: error.response?.data,
-      url: error.config?.url
+      url: error.config?.url,
     });
 
     return Promise.reject(error);
@@ -161,7 +169,7 @@ export const reviewAPI = {
 
   // Submit a new review
   submitReview: (reviewData) => {
-    return api.post('/reviews', reviewData);
+    return api.post("/reviews", reviewData);
   },
 
   // Update an existing review
@@ -177,7 +185,7 @@ export const reviewAPI = {
   // Check if user can review a book
   canReviewBook: (bookId) => {
     return api.get(`/books/${bookId}/can-review`);
-  }
+  },
 };
 
 export { api, fetchCsrfToken };

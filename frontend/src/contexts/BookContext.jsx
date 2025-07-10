@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { api } from "../services/api";
 
 const BookContext = createContext();
@@ -46,12 +52,12 @@ export const BookProvider = ({ children }) => {
       const fetchedPublishers = publishersResponse.data.data || [];
 
       // Log fetched data for debugging
-      console.log("Fetched data:", {
-        books: fetchedBooks,
-        categories: fetchedCategories,
-        authors: fetchedAuthors,
-        publishers: fetchedPublishers,
-      });
+      // console.log("Fetched data:", {
+      //   books: fetchedBooks,
+      //   categories: fetchedCategories,
+      //   authors: fetchedAuthors,
+      //   publishers: fetchedPublishers,
+      // });
 
       // Update state
       setBooks(fetchedBooks);
@@ -60,17 +66,17 @@ export const BookProvider = ({ children }) => {
       setPublishers(fetchedPublishers);
 
       // Log state after update
-      console.log("State updated:", {
-        books: fetchedBooks,
-        categories: fetchedCategories,
-        authors: fetchedAuthors,
-        publishers: fetchedPublishers,
-      });
+      // console.log("State updated:", {
+      //   books: fetchedBooks,
+      //   categories: fetchedCategories,
+      //   authors: fetchedAuthors,
+      //   publishers: fetchedPublishers,
+      // });
     } catch (err) {
       console.error("Error fetching data:", err);
       let errorMessage = "Failed to fetch data";
-      
-      if (err.code === 'ECONNABORTED') {
+
+      if (err.code === "ECONNABORTED") {
         errorMessage = "Connection timeout. Please try again.";
       } else if (!err.response) {
         errorMessage = "Network error. Please check your connection.";
@@ -79,18 +85,18 @@ export const BookProvider = ({ children }) => {
       } else if (err.response.data?.error) {
         errorMessage = err.response.data.error;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
-      console.log("Final state:", {
-        loading: false,
-        error,
-        booksLength: books.length,
-        categoriesLength: categories.length,
-        authorsLength: authors.length,
-        publishersLength: publishers.length,
-      });
+      // console.log("Final state:", {
+      //   loading: false,
+      //   error,
+      //   booksLength: books.length,
+      //   categoriesLength: categories.length,
+      //   authorsLength: authors.length,
+      //   publishersLength: publishers.length,
+      // });
     }
   }, []);
 

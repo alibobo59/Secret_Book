@@ -143,10 +143,10 @@ api.interceptors.response.use(
       return Promise.reject(new Error("CSRF token mismatch"));
     }
 
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.assign("/login");
+    if (error.response?.status === 401 && !config.url.includes("login")) {
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("user");
+      // window.location.assign("/login");
       return null;
     }
 

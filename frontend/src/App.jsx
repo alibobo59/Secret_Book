@@ -1,12 +1,8 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import { CouponProvider } from "./contexts/CouponContext";
-import { UserManagementProvider } from "./contexts/UserManagementContext";
-import { ReviewManagementProvider } from "./contexts/ReviewManagementContext";
-import { OrderManagementProvider } from "./contexts/OrderManagementContext";
-import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { ClientLayout, AdminLayout } from "./layouts";
+import PaymentVNPayReturn from "./pages/PaymentVNPayReturn";
 import {
   OrderManagement as OrderManagementClient,
   HomePage,
@@ -47,27 +43,23 @@ import CouponEdit from "./pages/admin/CouponEdit";
 function App() {
   const { user, hasRole, loading: authLoading } = useAuth();
 
-  if (authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">
-            Đang tải từ trang chính...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // if (authLoading) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">
+  //       <div className="flex flex-col items-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
+  //         <p className="mt-4 text-gray-600 dark:text-gray-300">
+  //           Đang tải từ trang chính...
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <CouponProvider>
-      <UserManagementProvider>
-        <ReviewManagementProvider>
-          <OrderManagementProvider>
-            <AnalyticsProvider>
-              <Routes>
+    <Routes>
       <Route element={<ClientLayout />}>
+        <Route path="/payment/vnpay/return" element={<PaymentVNPayReturn />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/books" element={<BrowseBooksPage />} />
         <Route path="/books/:id" element={<BookDetailPage />} />
@@ -79,7 +71,10 @@ function App() {
         <Route path="/orders/:orderId/review" element={<ReviewPage />} />
         <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
         <Route path="/order-failed/:orderId?" element={<OrderFailedPage />} />
-        <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+        <Route
+          path="/order-confirmation/:orderId"
+          element={<OrderConfirmationPage />}
+        />
       </Route>
 
       <Route
@@ -112,12 +107,7 @@ function App() {
         <Route path="analytics" element={<AnalyticsDashboard />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </AnalyticsProvider>
-          </OrderManagementProvider>
-        </ReviewManagementProvider>
-      </UserManagementProvider>
-    </CouponProvider>
+    </Routes>
   );
 }
 

@@ -14,6 +14,7 @@ use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\CartController;
 
 // Root route
 Route::get('/', function () {
@@ -113,8 +114,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Coupon validation for authenticated users
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
+    
+    // Cart routes
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add-item');
+    Route::put('/cart/items/{bookId}', [CartController::class, 'updateItem'])->name('cart.update-item');
+    Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
+    Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
 });
-
-// Public routes for VNPay
-Route::get('/payment/vnpay', [PaymentController::class, 'createVNPayPaymentUrl']);
-Route::get('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);

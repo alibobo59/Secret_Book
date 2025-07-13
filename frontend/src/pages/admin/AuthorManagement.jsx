@@ -139,14 +139,18 @@ const AuthorManagement = () => {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {authors.map((author) => (
-                    <tr key={author.id}>
+                    <tr 
+                      key={author.id}
+                      className="hover:bg-purple-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200"
+                      onClick={() => navigate(`/admin/authors/${author.id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                         {author.name}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
                         {author.bio || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => handleEdit(author)}
                           className="text-amber-600 hover:text-amber-800 mr-4"

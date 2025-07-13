@@ -89,6 +89,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Add this getToken function
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
   // Add this hasRole function
   const hasRole = (roles) => {
     if (!user || !user.role) {
@@ -115,8 +120,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    hasRole, // Add this to the exported value
-    isAdmin, // Add this to the exported value
+    hasRole,
+    isAdmin,
+    getToken, // Add this to the exported value
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

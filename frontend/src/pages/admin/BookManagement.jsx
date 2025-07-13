@@ -108,7 +108,11 @@ const BookManagement = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {books.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr 
+                    key={book.id} 
+                    className="hover:bg-amber-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200"
+                    onClick={() => handleViewDetail(book.id)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       {book.title}
                     </td>
@@ -124,7 +128,7 @@ const BookManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       {book.category?.name || "Không xác định"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleViewDetail(book.id)}
                         className="text-blue-600 hover:text-blue-800 mr-4"

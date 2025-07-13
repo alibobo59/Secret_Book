@@ -377,7 +377,9 @@ const UserManagement = () => {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    className="hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200"
+                    onClick={() => navigate(`/admin/users/${user.id}`)}
+                  >
                     <td className="px-3 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
@@ -423,7 +425,7 @@ const UserManagement = () => {
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                       {new Date(user.created_at).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => openRoleModal(user)}

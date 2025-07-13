@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Star, ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { motion } from "framer-motion";
-
+import { getImageUrl } from "../../utils/imageUtils";
 
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();
@@ -17,10 +17,8 @@ const BookCard = ({ book }) => {
   const averageRating = book.average_rating || 0;
   const ratingsCount = book.reviews_count || 0;
 
-  // Construct the full image URL
-  const imageUrl = book.image
-    ? `http://127.0.0.1:8000/storage/${book.image}`
-    : null;
+  // Use utility function instead of hardcoded URL
+  const imageUrl = getImageUrl(book.image);
 
   return (
     <Link to={`/books/${book.id}`}>

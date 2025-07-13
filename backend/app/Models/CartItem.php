@@ -29,4 +29,25 @@ class CartItem extends Model
     ];
 
     // TODO: thêm quan hệ cart(), book() ở commit sau
+    /**
+ * Nhiều CartItem thuộc 1 Cart.
+ * Quan hệ này giúp truy xuất giỏ hàng chứa item hiện tại.
+ * Dùng để tính tổng giá trị giỏ, hiển thị chi tiết giỏ, hoặc quản lý trạng thái item.
+ */
+public function cart()
+{
+    return $this->belongsTo(Cart::class);
+}
+
+/**
+ * Mỗi CartItem tham chiếu 1 Book.
+ * Giúp truy xuất thông tin sách từ item,
+ * có thể dùng để hiển thị tên sách, giá, hình ảnh,
+ * hoặc để kiểm tra tồn kho khi tạo đơn hàng.
+ */
+public function book()
+{
+    return $this->belongsTo(Book::class);
+}
+
 }

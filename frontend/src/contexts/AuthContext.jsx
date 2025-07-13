@@ -89,12 +89,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Add this hasRole function
+  const hasRole = (roles) => {
+    if (!user || !user.role) {
+      return false;
+    }
+    
+    // If roles is an array, check if user's role is in the array
+    if (Array.isArray(roles)) {
+      return roles.includes(user.role);
+    }
+    
+    // If roles is a string, check direct match
+    return user.role === roles;
+  };
+
+  // Add this isAdmin function
+  const isAdmin = () => {
+    return user && (user.role === 'admin' || user.role === 'mod');
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    hasRole, // Add this to the exported value
+    isAdmin, // Add this to the exported value
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

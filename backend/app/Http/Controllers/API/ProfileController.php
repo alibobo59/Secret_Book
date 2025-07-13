@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
+class ProfileController extends Controller
+{
+    /**
+     * Get user profile
+     */
+    public function show()
+    {
+        $user = Auth::user();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'bio' => $user->bio,
+                'avatar' => $user->avatar ? url('storage/' . $user->avatar) : null,
+                'role' => $user->role,
+                'is_active' => $user->is_active,
+                'created_at' => $user->created_at,
+                'email_verified_at' => $user->email_verified_at,
+            ]
+        ]);
+    }
+
+    /**
+     * Update user profile
+     */
+    public function update(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'bio' => 'nullable|string|max:1000',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data = $request->only(['name', 'phone', 'address', 'bio']);
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Store new avatar
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật hồ sơ thành công',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'bio' => $user->bio,
+                'avatar' => $user->avatar ? url('storage/' . $user->avatar) : null,
+                'role' => $user->role,
+                'is_active' => $user->is_active,
+                'created_at' => $user->created_at,
+                'email_verified_at' => $user->email_verified_at,
+            ]
+        ]);
+    }
+}

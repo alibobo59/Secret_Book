@@ -14,3 +14,4 @@ export { default as PublisherEdit } from "./PublisherEdit";
 
 export { default as AuditLogDashboard } from "./AuditLogDashboard";
 export { default as ReviewManagement } from "./ReviewManagement";
+export { default as LogManagement } from "./LogManagement";

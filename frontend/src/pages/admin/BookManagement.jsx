@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Loading } from "../../components/admin";
 import { api } from "../../services/api";
+import { getImageUrl } from "../../utils/imageUtils";
 import axios from "axios";
 
 const BookManagement = () => {
@@ -300,6 +301,7 @@ const BookManagement = () => {
       "Danh mục",
       "Tác giả",
       "Nhà xuất bản",
+      "Hình ảnh",
     ];
     const csvRows = [headers.join(",")];
 
@@ -313,6 +315,7 @@ const BookManagement = () => {
         `"${book.category?.name || ""}"`,
         `"${book.author?.name || ""}"`,
         `"${book.publisher?.name || ""}"`,
+        `"${book.image || ""}"`,
       ];
       csvRows.push(row.join(","));
     });
@@ -341,42 +344,25 @@ const BookManagement = () => {
       )}
       {hasRole(["admin", "mod"]) && (
         <>
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="lg:col-span-2">
-                <label
-                  htmlFor="search"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tìm kiếm
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="text-gray-400" size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    name="search"
-                    id="search"
-                    value={searchTerm}
-                    onChange={handleFilterChange}
-                    className="focus:ring-amber-500 focus:border-amber-500 block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-gray-200"
-                    placeholder="Tiêu đề hoặc SKU..."
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="search"
+                  value={searchTerm}
+                  onChange={handleFilterChange}
+                  placeholder="Tìm kiếm theo tiêu đề hoặc SKU..."
+                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
+                />
               </div>
               <div>
-                <label
-                  htmlFor="category_id"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Danh mục
-                </label>
                 <select
-                  id="category_id"
                   name="category_id"
                   value={filters.category_id}
                   onChange={handleFilterChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md dark:bg-gray-800 dark:text-gray-200">
-                  <option value="">Tất cả</option>
+                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200">
+                  <option value="">Tất cả danh mục</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -385,18 +371,12 @@ const BookManagement = () => {
                 </select>
               </div>
               <div>
-                <label
-                  htmlFor="author_id"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tác giả
-                </label>
                 <select
-                  id="author_id"
                   name="author_id"
                   value={filters.author_id}
                   onChange={handleFilterChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md dark:bg-gray-800 dark:text-gray-200">
-                  <option value="">Tất cả</option>
+                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200">
+                  <option value="">Tất cả tác giả</option>
                   {authors.map((author) => (
                     <option key={author.id} value={author.id}>
                       {author.name}
@@ -405,18 +385,12 @@ const BookManagement = () => {
                 </select>
               </div>
               <div>
-                <label
-                  htmlFor="publisher_id"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Nhà xuất bản
-                </label>
                 <select
-                  id="publisher_id"
                   name="publisher_id"
                   value={filters.publisher_id}
                   onChange={handleFilterChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md dark:bg-gray-800 dark:text-gray-200">
-                  <option value="">Tất cả</option>
+                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200">
+                  <option value="">Tất cả nhà xuất bản</option>
                   {publishers.map((pub) => (
                     <option key={pub.id} value={pub.id}>
                       {pub.name}
@@ -425,17 +399,10 @@ const BookManagement = () => {
                 </select>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-end space-x-3">
-              <button
-                onClick={applyFilters}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <Search size={16} className="-ml-1 mr-2" />
-                Lọc
-              </button>
+            <div className="mt-4">
               <button
                 onClick={resetFilters}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                <X size={16} className="-ml-1 mr-2" />
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                 Reset
               </button>
             </div>
@@ -500,6 +467,9 @@ const BookManagement = () => {
                     </button>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Hình ảnh
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Tiêu đề
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
@@ -514,6 +484,9 @@ const BookManagement = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Danh mục
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Tác giả
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                     Hành động
                   </th>
@@ -522,14 +495,14 @@ const BookManagement = () => {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {loading ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-10">
+                    <td colSpan="10" className="text-center py-10">
                       <Loading />
                     </td>
                   </tr>
                 ) : books.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="8"
+                      colSpan="10"
                       className="text-center py-10 text-gray-500 dark:text-gray-400">
                       Không tìm thấy sách nào.
                     </td>
@@ -557,6 +530,24 @@ const BookManagement = () => {
                         </button>
                       </td>
                       <td
+                         className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                         onClick={() => handleViewDetail(book.id)}>
+                         {book.image ? (
+                           <img
+                             src={getImageUrl(book.image)}
+                             alt={book.title}
+                             className="h-12 w-12 object-cover rounded-md"
+                             onError={(e) => {
+                               e.target.src = '/placeholder-book.png';
+                             }}
+                           />
+                         ) : (
+                           <div className="h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center">
+                             <span className="text-xs text-gray-500 dark:text-gray-400">No Image</span>
+                           </div>
+                         )}
+                       </td>
+                      <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
                         {book.title}
@@ -580,6 +571,11 @@ const BookManagement = () => {
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
                         {book.category?.name || "Không xác định"}
+                      </td>
+                      <td
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
+                        onClick={() => handleViewDetail(book.id)}>
+                        {book.author?.name || "Không xác định"}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-right text-sm"

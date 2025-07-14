@@ -11,16 +11,10 @@ const BulkUpdateBooks = () => {
   const { getToken, hasRole } = useAuth();
   const { books, categories, authors, publishers, setBooks } = useBook();
   
-  const selectedBookIds = location.state?.selectedBooks || [];
+  const selectedBookIds = location.state?.selectedBookIds || [];
   const selectedBooksData = books.filter(book => selectedBookIds.includes(book.id));
   
-  const [formData, setFormData] = useState({
-    price: '',
-    stock_quantity: '',
-    category_id: '',
-    author_id: '',
-    publisher_id: ''
-  });
+  const [booksData, setBooksData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,7 +28,23 @@ const BulkUpdateBooks = () => {
     if (selectedBookIds.length === 0) {
       navigate('/admin/books');
     }
-  }, [hasRole, selectedBookIds.length, navigate]);
+
+    // Initialize form data for each selected book
+    const initialData = {};
+    selectedBooksData.forEach(book => {
+      initialData[book.id] = {
+        title: book.title || '',
+        sku: book.sku || '',
+        description: book.description || '',
+        price: book.price || '',
+        stock_quantity: book.stock_quantity || '',
+        category_id: book.category_id || '',
+        author_id: book.author_id || '',
+        publisher_id: book.publisher_id || ''
+      };
+    });
+    setBooksData(initialData);
+  }, [hasRole, selectedBookIds.length, navigate, selectedBooksData]);
 
   if (!selectedBookIds || selectedBookIds.length === 0) {
     return (
@@ -59,10 +69,13 @@ const BulkUpdateBooks = () => {
     );
   }
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+  const handleInputChange = (bookId, field, value) => {
+    setBooksData(prev => ({
       ...prev,
-      [field]: value
+      [bookId]: {
+        ...prev[bookId],
+        [field]: value
+      }
     }));
   };
 
@@ -74,13 +87,24 @@ const BulkUpdateBooks = () => {
       return;
     }
 
-    // Filter out empty values
-    const updates = Object.fromEntries(
-      Object.entries(formData).filter(([key, value]) => value !== '')
-    );
+    // Prepare updates for each book
+    const bookUpdates = [];
+    Object.entries(booksData).forEach(([bookId, bookData]) => {
+      // Filter out empty values for each book
+      const updates = Object.fromEntries(
+        Object.entries(bookData).filter(([key, value]) => value !== '' && value !== null)
+      );
+      
+      if (Object.keys(updates).length > 0) {
+        bookUpdates.push({
+          id: parseInt(bookId),
+          updates: updates
+        });
+      }
+    });
 
-    if (Object.keys(updates).length === 0) {
-      setError('Vui lòng cung cấp ít nhất một trường để cập nhật.');
+    if (bookUpdates.length === 0) {
+      setError('Vui lòng cung cấp ít nhất một trường để cập nhật cho ít nhất một cuốn sách.');
       return;
     }
 
@@ -89,8 +113,7 @@ const BulkUpdateBooks = () => {
     
     try {
       const response = await api.post('/books/bulk-update', {
-        book_ids: selectedBookIds,
-        updates: updates
+        books: bookUpdates
       }, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -99,7 +122,7 @@ const BulkUpdateBooks = () => {
       });
       
       if (response.data.success) {
-        setSuccess(`Đã cập nhật thành công ${selectedBookIds.length} sách.`);
+        setSuccess(`Đã cập nhật thành công ${bookUpdates.length} sách.`);
         setError('');
         
         // Redirect after 2 seconds
@@ -156,106 +179,148 @@ const BulkUpdateBooks = () => {
         </div>
       )}
 
-      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
-          Sách Đã Chọn ({selectedBooksData.length})
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            Chỉnh Sửa Từng Sách ({selectedBooksData.length} sách)
+          </h3>
+          
           {selectedBooksData.map(book => (
-            <div key={book.id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100">{book.title}</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">SKU: {book.sku}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Giá hiện tại: {book.price}đ</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tồn kho hiện tại: {book.stock_quantity}</p>
+            <div key={book.id} className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  {book.title}
+                </h4>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  ID: {book.id} | SKU: {book.sku}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tiêu Đề
+                  </label>
+                  <input
+                    type="text"
+                    value={booksData[book.id]?.title || ''}
+                    onChange={(e) => handleInputChange(book.id, 'title', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                    placeholder="Nhập tiêu đề sách"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={booksData[book.id]?.sku || ''}
+                    onChange={(e) => handleInputChange(book.id, 'sku', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                    placeholder="Nhập mã SKU"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Giá (VNĐ)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={booksData[book.id]?.price || ''}
+                    onChange={(e) => handleInputChange(book.id, 'price', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                    placeholder="Nhập giá"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Số Lượng Tồn Kho
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={booksData[book.id]?.stock_quantity || ''}
+                    onChange={(e) => handleInputChange(book.id, 'stock_quantity', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                    placeholder="Nhập số lượng tồn kho"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Danh Mục
+                  </label>
+                  <select
+                    value={booksData[book.id]?.category_id || ''}
+                    onChange={(e) => handleInputChange(book.id, 'category_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                  >
+                    <option value="">Chọn danh mục</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tác Giả
+                  </label>
+                  <select
+                    value={booksData[book.id]?.author_id || ''}
+                    onChange={(e) => handleInputChange(book.id, 'author_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                  >
+                    <option value="">Chọn tác giả</option>
+                    {authors.map(author => (
+                      <option key={author.id} value={author.id}>
+                        {author.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nhà Xuất Bản
+                  </label>
+                  <select
+                    value={booksData[book.id]?.publisher_id || ''}
+                    onChange={(e) => handleInputChange(book.id, 'publisher_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                  >
+                    <option value="">Chọn nhà xuất bản</option>
+                    {publishers.map(publisher => (
+                      <option key={publisher.id} value={publisher.id}>
+                        {publisher.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mô Tả
+                </label>
+                <textarea
+                  rows={3}
+                  value={booksData[book.id]?.description || ''}
+                  onChange={(e) => handleInputChange(book.id, 'description', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-600 dark:text-gray-200"
+                  placeholder="Nhập mô tả sách"
+                />
+              </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Giá (VNĐ)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.price}
-              onChange={(e) => handleInputChange('price', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-200"
-              placeholder="Nhập giá mới"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Số Lượng Tồn Kho
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.stock_quantity}
-              onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-200"
-              placeholder="Nhập số lượng tồn kho mới"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Danh Mục
-            </label>
-            <select
-              value={formData.category_id}
-              onChange={(e) => handleInputChange('category_id', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-200"
-            >
-              <option value="">Giữ danh mục hiện tại</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tác Giả
-            </label>
-            <select
-              value={formData.author_id}
-              onChange={(e) => handleInputChange('author_id', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-200"
-            >
-              <option value="">Giữ tác giả hiện tại</option>
-              {authors.map(author => (
-                <option key={author.id} value={author.id}>
-                  {author.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Nhà Xuất Bản
-            </label>
-            <select
-              value={formData.publisher_id}
-              onChange={(e) => handleInputChange('publisher_id', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-gray-200"
-            >
-              <option value="">Giữ nhà xuất bản hiện tại</option>
-              {publishers.map(publisher => (
-                <option key={publisher.id} value={publisher.id}>
-                  {publisher.name}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">

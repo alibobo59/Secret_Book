@@ -40,6 +40,9 @@ class BookController extends Controller
             $query->where('publisher_id', $request->input('publisher_id'));
         }
 
+        // Default ordering by created date (newest first)
+        $query->orderBy('created_at', 'desc');
+
         // Pagination
         $perPage = $request->input('per_page', 15); // Default to 15 items per page
         $books = $query->paginate($perPage);
@@ -364,13 +367,13 @@ class BookController extends Controller
         }
 
         $query = Book::with(['category', 'author', 'publisher']);
-        
+
         if ($request->has('ids')) {
             $query->whereIn('id', $request->ids);
         }
 
         $books = $query->get();
-        
+
         $exportData = $books->map(function($book) {
             return [
                 'ID' => $book->id,

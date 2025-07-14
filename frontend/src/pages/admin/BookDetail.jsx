@@ -37,7 +37,7 @@ const BookDetail = () => {
         const response = await api.get(`/books/${id}`);
         setBook(response.data.data);
       } catch (err) {
-        console.error("Error fetching book detail:", err);
+        console.error("Lỗi khi tải chi tiết sách:", err);
         setError(err.response?.data?.error || "Không thể tải chi tiết sách");
       } finally {
         setLoading(false);
@@ -370,7 +370,7 @@ const BookDetail = () => {
                       <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {variation.type || `Variation ${index + 1}`}
+                            {variation.type || `Biến thể ${index + 1}`}
                           </span>
                           {variation.price && (
                             <span className="text-green-600 dark:text-green-400 font-semibold">
@@ -391,7 +391,7 @@ const BookDetail = () => {
                         {variation.image && (
                           <img
                             src={variation.image}
-                            alt={`Variation ${index + 1}`}
+                            alt={`Biến thể ${index + 1}`}
                             className="w-16 h-16 object-cover rounded mt-2"
                           />
                         )}

@@ -98,6 +98,7 @@ export const LogProvider = ({ children }) => {
         details: generateLogDetails(randomAction, randomUser),
         module: getModuleFromAction(randomAction),
         severity: getSeverityFromType(randomType),
+        modelType: getModelTypeFromAction(randomAction),
       });
     }
 
@@ -161,6 +162,16 @@ export const LogProvider = ({ children }) => {
     return 'General';
   };
 
+  const getModelTypeFromAction = (action) => {
+    if (action.includes('Book')) return 'App\\Models\\Book';
+    if (action.includes('User')) return 'App\\Models\\User';
+    if (action.includes('Order')) return 'App\\Models\\Order';
+    if (action.includes('Category')) return 'App\\Models\\Category';
+    if (action.includes('Payment')) return 'App\\Models\\Payment';
+    if (action.includes('Inventory')) return 'App\\Models\\Inventory';
+    return null;
+  };
+
   const getSeverityFromType = (type) => {
     switch (type) {
       case 'error': return 'High';
@@ -183,6 +194,7 @@ export const LogProvider = ({ children }) => {
       userAgent: navigator.userAgent,
       severity: getSeverityFromType(logData.type),
       module: logData.module || 'General',
+      modelType: logData.modelType || getModelTypeFromAction(logData.action || ''),
       ...logData,
     };
 
@@ -237,6 +249,10 @@ export const LogProvider = ({ children }) => {
 
     if (filters.severity && filters.severity !== 'all') {
       filteredLogs = filteredLogs.filter(log => log.severity === filters.severity);
+    }
+
+    if (filters.modelType && filters.modelType !== 'all') {
+      filteredLogs = filteredLogs.filter(log => log.modelType === filters.modelType);
     }
 
     if (filters.user && filters.user !== 'all') {

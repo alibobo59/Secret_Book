@@ -598,7 +598,7 @@ const OrderManagementPage = () => {
                           Họ Và Tên
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.full_name ||
+                          {selectedOrder.address?.name ||
                             selectedOrder.shippingAddress?.name}
                         </p>
                       </div>
@@ -618,39 +618,13 @@ const OrderManagementPage = () => {
                           Địa Chỉ
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.address_line_1 ||
+                          {selectedOrder.address?.address ||
                             selectedOrder.shippingAddress?.address}
                         </p>
-                        {selectedOrder.address?.address_line_2 && (
-                          <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            {selectedOrder.address.address_line_2}
-                          </p>
-                        )}
+
                       </div>
 
-                      {(selectedOrder.address?.state ||
-                        selectedOrder.address?.postal_code) && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tỉnh/Thành & Mã Bưu Điện
-                          </p>
-                          <p className="text-gray-800 dark:text-white">
-                            {selectedOrder.address?.state}{" "}
-                            {selectedOrder.address?.postal_code}
-                          </p>
-                        </div>
-                      )}
 
-                      {selectedOrder.address?.country && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Quốc Gia
-                          </p>
-                          <p className="text-gray-800 dark:text-white">
-                            {selectedOrder.address.country}
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -663,7 +637,8 @@ const OrderManagementPage = () => {
                       <div className="flex items-center gap-3">
                         <Mail className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.user?.email ||
+                          {selectedOrder.address?.email ||
+                            selectedOrder.user?.email ||
                             selectedOrder.contactInfo?.email}
                         </span>
                       </div>

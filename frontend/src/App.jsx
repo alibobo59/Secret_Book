@@ -43,6 +43,8 @@ import {
 import BulkUpdateBooks from "./pages/admin/BulkUpdateBooks";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import CouponManagement from "./pages/admin/CouponManagement";
+import CouponCreate from "./pages/admin/CouponCreate";
+import CouponEdit from "./pages/admin/CouponEdit";
 
 function App() {
   const { user, hasRole, loading: authLoading } = useAuth();
@@ -129,6 +131,8 @@ function App() {
                   <Route path="orders/:id" element={<OrderDetail />} />
                   <Route path="audit-logs" element={<LogManagement />} />
                   <Route path="coupons" element={<CouponManagement />} />
+                  <Route path="coupons/create" element={<CouponCreate />} />
+                  <Route path="coupons/edit/:id" element={<CouponEdit />} />
                   <Route path="reviews" element={<ReviewManagement />} />
                   <Route path="analytics" element={<AnalyticsDashboard />} />
                 </Route>

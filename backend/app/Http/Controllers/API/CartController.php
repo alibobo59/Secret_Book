@@ -18,7 +18,7 @@ class CartController extends Controller
         try {
             $user = Auth::user();
             $cart = $user->cart()->with(['items.book'])->first();
-            
+
             if (!$cart) {
                 return response()->json([
                     'cart' => null,
@@ -68,9 +68,9 @@ class CartController extends Controller
 
             $user = Auth::user();
             $cart = $user->getOrCreateCart();
-            
+
             $existingItem = $cart->items()->where('book_id', $request->book_id)->first();
-            
+
             if ($existingItem) {
                 $existingItem->update([
                     'quantity' => $existingItem->quantity + $request->quantity
@@ -120,13 +120,13 @@ class CartController extends Controller
 
             $user = Auth::user();
             $cart = $user->cart;
-            
+
             if (!$cart) {
                 return response()->json(['message' => 'Cart not found'], 404);
             }
 
             $cartItem = $cart->items()->where('book_id', $bookId)->first();
-            
+
             if (!$cartItem) {
                 return response()->json(['message' => 'Item not found in cart'], 404);
             }
@@ -158,13 +158,13 @@ class CartController extends Controller
         try {
             $user = Auth::user();
             $cart = $user->cart;
-            
+
             if (!$cart) {
                 return response()->json(['message' => 'Cart not found'], 404);
             }
 
             $cartItem = $cart->items()->where('book_id', $bookId)->first();
-            
+
             if (!$cartItem) {
                 return response()->json(['message' => 'Item not found in cart'], 404);
             }
@@ -185,7 +185,7 @@ class CartController extends Controller
         try {
             $user = Auth::user();
             $cart = $user->cart;
-            
+
             if ($cart) {
                 $cart->items()->delete();
             }
@@ -222,7 +222,7 @@ class CartController extends Controller
             DB::transaction(function () use ($cart, $guestCart) {
                 foreach ($guestCart as $guestItem) {
                     $existingItem = $cart->items()->where('book_id', $guestItem['id'])->first();
-                    
+
                     if ($existingItem) {
                         // Merge quantities
                         $existingItem->update([

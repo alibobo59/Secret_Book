@@ -111,7 +111,12 @@ export const AuthProvider = ({ children }) => {
 
   // Add this isAdmin function
   const isAdmin = () => {
-    return user && (user.role === 'admin' || user.role === 'mod');
+    return user && user.role === 'admin';
+  };
+
+  // Add this isMod function
+  const isMod = () => {
+    return user && user.role === 'mod';
   };
 
   const value = {
@@ -122,6 +127,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     hasRole,
     isAdmin,
+    isMod,
     getToken, // Add this to the exported value
   };
 

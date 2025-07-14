@@ -77,23 +77,23 @@ const CouponCreate = () => {
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={() => navigate('/admin/coupons')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
         >
           <ArrowLeft className="w-4 h-4" />
           Quay lại
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tạo mã khuyến mại mới</h1>
-          <p className="text-gray-600 mt-1">Tạo mã khuyến mại cho khách hàng</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tạo mã khuyến mại mới</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">Tạo mã khuyến mại cho khách hàng</p>
         </div>
       </div>
 
       {/* Form */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Mã khuyến mại *
             </label>
             <div className="flex gap-2">
@@ -107,8 +107,8 @@ const CouponCreate = () => {
                     value: e.target.value.toUpperCase()
                   }
                 })}
-                className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.code ? 'border-red-300' : 'border-gray-300'
+                className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
+                  errors.code ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: SUMMER2024"
                 required
@@ -116,7 +116,7 @@ const CouponCreate = () => {
               <button
                 type="button"
                 onClick={handleGenerateCode}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 title="Tạo mã ngẫu nhiên"
               >
                 <RefreshCw className="w-4 h-4" />

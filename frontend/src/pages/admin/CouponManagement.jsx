@@ -144,12 +144,12 @@ const CouponManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý mã khuyến mại</h1>
-          <p className="text-gray-600 mt-1">Tạo và quản lý các mã khuyến mại cho khách hàng</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý mã khuyến mại</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">Tạo và quản lý các mã khuyến mại cho khách hàng</p>
         </div>
         <button
           onClick={() => navigate('/admin/coupons/create')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Tạo mã khuyến mại
@@ -157,17 +157,17 @@ const CouponManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Tìm kiếm mã hoặc tên..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
@@ -175,7 +175,7 @@ const CouponManagement = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="active">Đang hoạt động</option>
@@ -189,7 +189,7 @@ const CouponManagement = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="all">Tất cả loại</option>
             <option value="percentage">Phần trăm</option>
@@ -199,7 +199,7 @@ const CouponManagement = () => {
           {/* Refresh */}
           <button
             onClick={loadCoupons}
-            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300"
           >
             <RefreshCw className="w-4 h-4" />
             Làm mới
@@ -208,39 +208,39 @@ const CouponManagement = () => {
       </div>
 
       {/* Coupons Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Mã khuyến mại
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Tên & Mô tả
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Giá trị
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Thời gian
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Sử dụng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
                   <td colSpan="7" className="px-6 py-4 text-center">
-                    <div className="flex justify-center items-center">
+                    <div className="flex justify-center items-center text-gray-600 dark:text-gray-300">
                       <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                       Đang tải...
                     </div>
@@ -248,7 +248,7 @@ const CouponManagement = () => {
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     Không có mã khuyến mại nào
                   </td>
                 </tr>
@@ -258,15 +258,15 @@ const CouponManagement = () => {
                   const StatusIcon = statusDisplay.icon;
                   
                   return (
-                    <tr key={coupon.id} className="hover:bg-gray-50">
+                    <tr key={coupon.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-medium text-gray-900">
+                          <span className="font-mono font-medium text-gray-900 dark:text-white">
                             {coupon.code}
                           </span>
                           <button
                             onClick={() => copyToClipboard(coupon.code)}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                             title="Sao chép mã"
                           >
                             <Copy className="w-4 h-4" />
@@ -275,9 +275,9 @@ const CouponManagement = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium text-gray-900">{coupon.name}</div>
+                          <div className="font-medium text-gray-900 dark:text-white">{coupon.name}</div>
                           {coupon.description && (
-                            <div className="text-sm text-gray-500 mt-1">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                               {coupon.description}
                             </div>
                           )}
@@ -298,12 +298,12 @@ const CouponManagement = () => {
                           )}
                         </div>
                         {coupon.minimum_amount && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Tối thiểu: {coupon.minimum_amount.toLocaleString()}đ
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1 mb-1">
                           <Calendar className="w-4 h-4" />
                           <span>{new Date(coupon.start_date).toLocaleDateString('vi-VN')}</span>
@@ -313,11 +313,11 @@ const CouponManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                          <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                           <span>{coupon.used_count}</span>
                           {coupon.usage_limit && (
-                            <span className="text-gray-400">/{coupon.usage_limit}</span>
+                            <span className="text-gray-400 dark:text-gray-500">/{coupon.usage_limit}</span>
                           )}
                         </div>
                       </td>
@@ -331,21 +331,21 @@ const CouponManagement = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleViewStats(coupon)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             title="Xem thống kê"
                           >
                             <BarChart3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(coupon)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                             title="Chỉnh sửa"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(coupon)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                             title="Xóa"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -362,25 +362,25 @@ const CouponManagement = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+          <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               Hiển thị {((currentPage - 1) * perPage) + 1} đến {Math.min(currentPage * perPage, coupons.length)} trong tổng số {coupons.length} mã khuyến mại
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
               >
                 Trước
               </button>
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 Trang {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
               >
                 Sau
               </button>
@@ -393,15 +393,15 @@ const CouponManagement = () => {
 
       {/* Stats Modal */}
       {showStatsModal && couponStats && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl border dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Thống kê mã khuyến mại: {selectedCoupon?.code}
               </h2>
               <button
                 onClick={() => setShowStatsModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -409,32 +409,32 @@ const CouponManagement = () => {
             
             {/* Stats Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-600">Tổng lượt sử dụng</span>
+                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Tổng lượt sử dụng</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-900 mt-1">
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-300 mt-1">
                   {couponStats.coupon.used_count}
                 </div>
               </div>
               
-              <div className="bg-green-50 p-4 rounded-lg">
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">Tổng tiền giảm</span>
+                  <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Tổng tiền giảm</span>
                 </div>
-                <div className="text-2xl font-bold text-green-900 mt-1">
+                <div className="text-2xl font-bold text-green-900 dark:text-green-300 mt-1">
                   {couponStats.total_discount?.toLocaleString()}đ
                 </div>
               </div>
               
-              <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-600">Khách hàng duy nhất</span>
+                  <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <span className="text-sm font-medium text-purple-600 dark:text-purple-400">Khách hàng duy nhất</span>
                 </div>
-                <div className="text-2xl font-bold text-purple-900 mt-1">
+                <div className="text-2xl font-bold text-purple-900 dark:text-purple-300 mt-1">
                   {couponStats.unique_users}
                 </div>
               </div>
@@ -442,30 +442,30 @@ const CouponManagement = () => {
 
             {/* Usage History */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">Lịch sử sử dụng</h3>
+              <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Lịch sử sử dụng</h3>
               <div className="overflow-x-auto">
-                <table className="w-full border border-gray-200 rounded-lg">
-                  <thead className="bg-gray-50">
+                <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Khách hàng</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Đơn hàng</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Giảm giá</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Thời gian</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-300">Khách hàng</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-300">Đơn hàng</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-300">Giảm giá</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-300">Thời gian</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                     {couponStats.usages.data?.map((usage) => (
                       <tr key={usage.id}>
-                        <td className="px-4 py-2 text-sm">
+                        <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
                           {usage.user?.name || 'N/A'}
                         </td>
-                        <td className="px-4 py-2 text-sm">
+                        <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
                           #{usage.order?.id || 'N/A'}
                         </td>
-                        <td className="px-4 py-2 text-sm font-medium text-green-600">
+                        <td className="px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400">
                           {usage.discount_amount?.toLocaleString()}đ
                         </td>
-                        <td className="px-4 py-2 text-sm text-gray-500">
+                        <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
                           {new Date(usage.created_at).toLocaleString('vi-VN')}
                         </td>
                       </tr>
@@ -480,7 +480,7 @@ const CouponManagement = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+        <div className="fixed bottom-4 right-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded z-50">
           {error}
         </div>
       )}

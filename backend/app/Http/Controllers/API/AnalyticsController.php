@@ -55,7 +55,7 @@ class AnalyticsController extends Controller
 
         $dailySales = Order::where('status', 'delivered')
             ->where('created_at', '>=', now()->subDays(7))
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(created_at)'))
             ->get([
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(total) as revenue'),
@@ -64,7 +64,7 @@ class AnalyticsController extends Controller
 
         $monthlySales = Order::where('status', 'delivered')
             ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('month')
+            ->groupBy(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'))
             ->get([
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('SUM(total) as revenue')

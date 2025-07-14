@@ -3,25 +3,105 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * -----------------------------------------------------------------------------
- * CategoriesSeeder (skeleton)
+ * CategoriesSeeder (full implementation)
  * -----------------------------------------------------------------------------
- * Seeder này sẽ chịu trách nhiệm thêm dữ liệu mẫu cho bảng `categories`.
- *
- * Hiện tại chỉ khởi tạo class và hàm run() trống.
- * Logic seed thực sự sẽ được bổ sung ở commit tiếp theo.
+ * Bổ sung dữ liệu mẫu vào bảng `categories`.
+ * Mỗi phần tử gồm: name, description, timestamps.
  */
 class CategoriesSeeder extends Seeder
 {
-    /**
-     * Chạy seeder.
-     *
-     * @return void
-     */
     public function run(): void
     {
-        // TODO: thêm logic seed ở commit sau
+        // Danh sách dữ liệu mẫu
+        $items = [
+            // Fiction
+            [
+                'name'        => 'Fiction',
+                'description' => 'Books that contain fictional stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Science Fiction
+            [
+                'name'        => 'Science Fiction',
+                'description' => 'Sci-fi stories about the future',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Drama
+            [
+                'name'        => 'Drama',
+                'description' => 'Emotional and dramatic stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Adventure
+            [
+                'name'        => 'Adventure',
+                'description' => 'Exciting tales of exploration',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Classics
+            [
+                'name'        => 'Classics',
+                'description' => 'Timeless literary works',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+        ];
+
+        // Insert vào DB
+        DB::table('categories')->insert($items);
     }
+    /*
+    $items = [
+            // Fiction
+            [
+                'name'        => 'Fiction',
+                'description' => 'Books that contain fictional stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Science Fiction
+            [
+                'name'        => 'Science Fiction',
+                'description' => 'Sci-fi stories about the future',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Drama
+            [
+                'name'        => 'Drama',
+                'description' => 'Emotional and dramatic stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            $items = [
+            // Fiction
+            [
+                'name'        => 'Fiction',
+                'description' => 'Books that contain fictional stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Science Fiction
+            [
+                'name'        => 'Science Fiction',
+                'description' => 'Sci-fi stories about the future',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+            // Drama
+            [
+                'name'        => 'Drama',
+                'description' => 'Emotional and dramatic stories',
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ],
+    */
 }

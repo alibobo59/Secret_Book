@@ -21,6 +21,7 @@ import {
   OrderSuccessPage,
   OrderFailedPage,
   OrderConfirmationPage,
+  PaymentVNPayReturn,
 } from "./pages/client";
 import ReviewPage from "./pages/client/ReviewPage";
 import {
@@ -94,6 +95,10 @@ function App() {
                   <Route
                     path="/order-confirmation/:orderId"
                     element={<OrderConfirmationPage />}
+                  />
+                  <Route
+                    path="/payment/vnpay/return"
+                    element={<PaymentVNPayReturn />}
                   />
                 </Route>
 

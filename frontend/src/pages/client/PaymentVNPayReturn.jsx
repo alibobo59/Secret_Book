@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import { api } from "../services/api";
+import { api } from "../../services/api";
 
 const PaymentVNPayReturn = () => {
   const [status, setStatus] = useState("processing"); // processing, success, failed, error

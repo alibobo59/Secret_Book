@@ -39,6 +39,7 @@ import {
   AuditLogDashboard,
   ReviewManagement,
 } from "./pages/admin";
+import BulkUpdateBooks from "./pages/admin/BulkUpdateBooks";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import CouponManagement from "./pages/admin/CouponManagement";
 
@@ -93,6 +94,7 @@ function App() {
         <Route path="books" element={<BookManagement />} />
         <Route path="books/create" element={<BookCreate />} />
         <Route path="books/edit/:id" element={<BookEdit />} />
+        <Route path="books/bulk-update" element={<BulkUpdateBooks />} />
         <Route path="books/:id" element={<BookDetail />} />
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="authors" element={<AuthorManagement />} />

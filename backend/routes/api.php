@@ -50,6 +50,12 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::post('/books', [BookController::class, 'store'])->name('books.store');
     Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update');
     Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
+    
+    // Bulk Operations for Books
+    Route::post('/books/bulk-delete', [BookController::class, 'bulkDelete'])->name('books.bulk-delete');
+    Route::post('/books/bulk-update', [BookController::class, 'bulkUpdate'])->name('books.bulk-update');
+    Route::post('/books/bulk-stock-update', [BookController::class, 'bulkStockUpdate'])->name('books.bulk-stock-update');
+    Route::post('/books/bulk-export', [BookController::class, 'bulkExport'])->name('books.bulk-export');
 
     // Authors
     Route::apiResource('authors', AuthorController::class)->except(['index', 'show']);

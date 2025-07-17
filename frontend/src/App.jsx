@@ -50,18 +50,18 @@ import CouponEdit from "./pages/admin/CouponEdit";
 function App() {
   const { user, hasRole, loading: authLoading } = useAuth();
 
-  if (authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">
-            Đang tải từ trang chính...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // if (authLoading) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">
+  //       <div className="flex flex-col items-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600"></div>
+  //         <p className="mt-4 text-gray-600 dark:text-gray-300">
+  //           Đang tải từ trang chính...
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <CouponProvider>

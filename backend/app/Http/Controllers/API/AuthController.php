@@ -38,16 +38,9 @@ class AuthController extends Controller
                 'token' => $token,
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Registration error: ' . $e->getMessage());
+            Log::error('Lỗi đăng ký: ' . $e->getMessage());
             return response()->json([
-                // Dòng 43
                 'message' => 'Đăng ký thất bại: ' . $e->getMessage(),
-                
-                // Dòng 60
-                'message' => 'Thông tin đăng nhập không hợp lệ',
-                
-                // Dòng 80
-                'message' => 'Đăng nhập thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -64,11 +57,16 @@ class AuthController extends Controller
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
-                    'message' => 'Invalid credentials',
+                    'message' => 'Thông tin đăng nhập không hợp lệ',
                 ], 401);
             }
 
-            // Missing check for is_active status!
+            // Kiểm tra trạng thái tài khoản
+            if (!$user->is_active) {
+                return response()->json([
+                    'message' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+                ], 403);
+            }
 
             $token = $user->createToken($user->name)->plainTextToken;
 
@@ -82,9 +80,25 @@ class AuthController extends Controller
                 'token' => $token,
             ]);
         } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
+            Log::error('Lỗi đăng nhập: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Login failed: ' . $e->getMessage(),
+                'message' => 'Đăng nhập thất bại: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function logout(Request $request)
+    {
+        try {
+            $request->user()->currentAccessToken()->delete();
+            
+            return response()->json([
+                'message' => 'Đăng xuất thành công'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Lỗi đăng xuất: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Đăng xuất thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }

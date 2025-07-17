@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Star, ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { motion } from "framer-motion";
-import { getImageUrl } from "../../utils/imageUtils";
+import { getImageUrl, handleImageError } from "../../utils/imageUtils";
 
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();
@@ -31,6 +31,7 @@ const BookCard = ({ book }) => {
             src={imageUrl}
             alt={book.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            onError={handleImageError}
           />
           <div className="absolute top-2 right-2">
             <button

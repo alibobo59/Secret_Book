@@ -30,11 +30,11 @@ const AdminProfile = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Admin User',
+    name: user?.name || 'Người Dùng Quản Trị', // Admin User
     email: user?.email || 'admin@bookstore.com',
-    phone: '+1 (555) 123-4567',
-    bio: 'System Administrator for Secret Bookstore',
-    location: 'New York, NY',
+    phone: '+84 (028) 123-4567', // +1 (555) 123-4567
+    bio: 'Quản trị viên hệ thống cho Secret Bookstore', // System Administrator for Secret Bookstore
+    location: 'Hồ Chí Minh, Việt Nam', // New York, NY
     avatar: user?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
     joinDate: '2022-01-15',
     lastLogin: new Date().toISOString(),
@@ -58,24 +58,24 @@ const AdminProfile = () => {
       id: 1,
       timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows',
-      location: 'New York, NY',
+      device: 'Chrome trên Windows', // Chrome on Windows
+      location: 'Hồ Chí Minh, Việt Nam', // New York, NY
       status: 'success',
     },
     {
       id: 2,
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       ipAddress: '192.168.1.100',
-      device: 'Safari on iPhone',
-      location: 'New York, NY',
+      device: 'Safari trên iPhone', // Safari on iPhone
+      location: 'Hồ Chí Minh, Việt Nam', // New York, NY
       status: 'success',
     },
     {
       id: 3,
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
       ipAddress: '10.0.0.45',
-      device: 'Firefox on Mac',
-      location: 'Brooklyn, NY',
+      device: 'Firefox trên Mac', // Firefox on Mac
+      location: 'Hà Nội, Việt Nam', // Brooklyn, NY
       status: 'success',
     },
   ]);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Star, ShoppingCart } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { motion } from 'framer-motion';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 
 
 const BookListView = ({ book }) => {
@@ -45,12 +46,10 @@ const BookListView = ({ book }) => {
           {/* Book Image */}
           <div className="shrink-0">
             <img
-              src={book.image || '/api/placeholder/120/160'}
+              src={getImageUrl(book.image)}
               alt={book.title}
               className="w-20 h-28 object-cover rounded-md shadow-sm"
-              onError={(e) => {
-                e.target.src = '/api/placeholder/120/160';
-              }}
+              onError={handleImageError}
             />
           </div>
 

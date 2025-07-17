@@ -6,7 +6,7 @@ import { ArrowLeft, Edit, Trash2, Calendar, User, Building, Tag, DollarSign, Pac
 import { api } from "../../services/api";
 import Loading from "../../components/admin/Loading";
 import AuditLogTable from "../../components/admin/AuditLogTable";
-import { getImageUrl } from "../../utils/imageUtils";
+import { getImageUrl, handleImageError } from "../../utils/imageUtils";
 
 const BookDetail = () => {
   const { id } = useParams();
@@ -243,6 +243,7 @@ const BookDetail = () => {
                         src={getImageUrl(book.cover_image || book.image)}
                         alt={book.title}
                         className="w-48 h-64 object-cover rounded-lg shadow-md"
+                        onError={handleImageError}
                       />
                     </div>
                   )}
@@ -394,6 +395,7 @@ const BookDetail = () => {
                             src={getImageUrl(variation.image)}
                             alt={`Biến thể ${index + 1}`}
                             className="w-16 h-16 object-cover rounded mt-2"
+                            onError={handleImageError}
                           />
                         )}
                       </div>

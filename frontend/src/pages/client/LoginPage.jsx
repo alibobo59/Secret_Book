@@ -43,19 +43,33 @@ const LoginPage = () => {
       user,
       error,
     });
-    // Only redirect if there's no error and user exists
-    if (!authLoading && user && !error) {
+    // Only redirect if user exists and is authenticated (don't check error state)
+    if (!authLoading && user) {
       console.log(
         "%c--> Redirecting because user exists!",
         "color: cyan; font-weight: bold;"
       );
       navigate(from, { replace: true });
     }
-  }, [user, authLoading, error, navigate, from]);
+  }, [user, authLoading, navigate, from]);
 
   const validateForm = () => {
-    // ... (no changes needed here)
-    return true; // Simplified for debugging
+    const errors = {};
+    
+    // Email validation
+    if (!email.trim()) {
+      errors.email = "Email là bắt buộc";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Vui lòng nhập địa chỉ email hợp lệ";
+    }
+    
+    // Password validation
+    if (!password.trim()) {
+      errors.password = "Mật khẩu là bắt buộc";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {

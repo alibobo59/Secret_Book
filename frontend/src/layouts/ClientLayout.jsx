@@ -14,8 +14,8 @@ const ClientLayout = () => {
   }, [user, authLoading, navigate]);
 
   // Don't show loading on auth pages to prevent LoginPage state reset
-  const isAuthPage = ['/login', '/register'].includes(location.pathname);
-  
+  const isAuthPage = ["/login", "/register"].includes(location.pathname);
+
   if (authLoading && !isAuthPage) {
     return (
       <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">

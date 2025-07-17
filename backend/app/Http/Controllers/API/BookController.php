@@ -397,9 +397,3 @@ class BookController extends Controller
         ], Response::HTTP_OK);
     }
 }
-
-// Dòng 57, 143, 258
-return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
-
-// Dòng 72
-'error' => ['variations.*.attributes' => ['Định dạng JSON không hợp lệ trong thuộc tính.']]

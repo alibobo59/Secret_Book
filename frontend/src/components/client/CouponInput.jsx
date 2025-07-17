@@ -24,11 +24,12 @@ const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved }) => {
     try {
       const response = await validateCoupon(couponCode, orderAmount);
       
-      if (response.valid) {
-        const discount = response.discount_amount;
-        setAppliedCoupon(response.coupon);
+      if (response.success && response.data) {
+        const discount = response.data.discount_amount;
+        const coupon = response.data.coupon;
+        setAppliedCoupon(coupon);
         setDiscountAmount(discount);
-        onCouponApplied(response.coupon, discount);
+        onCouponApplied(coupon, discount);
         showSuccess("Thành công", `Áp dụng mã khuyến mại thành công! Giảm ${discount.toLocaleString("vi-VN")} ₫`);
       } else {
         setValidationError(response.message || "Mã khuyến mại không hợp lệ");

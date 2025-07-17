@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { analyticsService } from '../services';
 
 const AnalyticsContext = createContext();
 
@@ -16,131 +17,164 @@ export const AnalyticsProvider = ({ children }) => {
     performance: {},
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [orderStats, setOrderStats] = useState(null);
+  const [auditLogStats, setAuditLogStats] = useState(null);
 
-  // Generate mock analytics data
-  const generateAnalyticsData = () => {
-    const now = new Date();
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    const last12Months = Array.from({ length: 12 }, (_, i) => {
-      const date = new Date(now);
-      date.setMonth(date.getMonth() - i);
-      return date.toISOString().slice(0, 7);
-    }).reverse();
-
-    return {
-      sales: {
-        totalRevenue: 125430.50,
-        totalOrders: 1247,
-        averageOrderValue: 100.58,
-        conversionRate: 3.2,
-        dailySales: last30Days.map(date => ({
-          date,
-          revenue: Math.floor(Math.random() * 5000) + 1000,
-          orders: Math.floor(Math.random() * 50) + 10,
-        })),
-        monthlySales: last12Months.map(month => ({
-          month,
-          revenue: Math.floor(Math.random() * 50000) + 20000,
-          orders: Math.floor(Math.random() * 500) + 100,
-        })),
-        topProducts: [
-          { id: 1, title: 'The Great Gatsby', sales: 156, revenue: 2028.44 },
-          { id: 2, title: 'To Kill a Mockingbird', sales: 134, revenue: 2008.66 },
-          { id: 3, title: '1984', sales: 128, revenue: 1789.72 },
-          { id: 4, title: 'Pride and Prejudice', sales: 112, revenue: 1230.88 },
-          { id: 5, title: 'The Hobbit', sales: 98, revenue: 1567.02 },
-        ],
-        categoryPerformance: [
-          { category: 'Fiction', sales: 450, revenue: 15678.90 },
-          { category: 'Fantasy', sales: 320, revenue: 12456.80 },
-          { category: 'Romance', sales: 280, revenue: 9876.40 },
-          { category: 'Mystery', sales: 197, revenue: 7654.30 },
-        ],
-      },
-      users: {
-        totalUsers: 5847,
-        activeUsers: 2341,
-        newUsers: 156,
-        userGrowth: 12.5,
-        userRegistrations: last30Days.map(date => ({
-          date,
-          registrations: Math.floor(Math.random() * 20) + 5,
-        })),
-        userSegments: [
-          { segment: 'New Customers', count: 1234, percentage: 21.1 },
-          { segment: 'Returning Customers', count: 2890, percentage: 49.4 },
-          { segment: 'VIP Customers', count: 567, percentage: 9.7 },
-          { segment: 'Inactive', count: 1156, percentage: 19.8 },
-        ],
-        topCustomers: [
-          { id: 1, name: 'John Doe', orders: 23, spent: 2456.78 },
-          { id: 2, name: 'Jane Smith', orders: 19, spent: 2134.56 },
-          { id: 3, name: 'Bob Johnson', orders: 17, spent: 1987.43 },
-          { id: 4, name: 'Alice Williams', orders: 15, spent: 1765.32 },
-          { id: 5, name: 'Charlie Brown', orders: 14, spent: 1654.21 },
-        ],
-      },
-      inventory: {
-        totalProducts: 1247,
-        lowStockItems: 23,
-        outOfStockItems: 8,
-        totalValue: 234567.89,
-        stockMovement: last30Days.map(date => ({
-          date,
-          sold: Math.floor(Math.random() * 100) + 20,
-          restocked: Math.floor(Math.random() * 50) + 10,
-        })),
-        categoryStock: [
-          { category: 'Fiction', inStock: 456, lowStock: 12, outOfStock: 3 },
-          { category: 'Fantasy', inStock: 234, lowStock: 8, outOfStock: 2 },
-          { category: 'Romance', inStock: 189, lowStock: 5, outOfStock: 1 },
-          { category: 'Mystery', inStock: 167, lowStock: 4, outOfStock: 2 },
-        ],
-      },
-      performance: {
-        pageViews: 45678,
-        uniqueVisitors: 12345,
-        bounceRate: 34.5,
-        averageSessionDuration: 245, // seconds
-        topPages: [
-          { page: '/books', views: 12345, uniqueViews: 8901 },
-          { page: '/', views: 9876, uniqueViews: 7654 },
-          { page: '/books/1', views: 5432, uniqueViews: 4321 },
-          { page: '/checkout', views: 3456, uniqueViews: 2987 },
-          { page: '/cart', views: 2345, uniqueViews: 1987 },
-        ],
-        deviceBreakdown: [
-          { device: 'Desktop', percentage: 45.6, sessions: 5678 },
-          { device: 'Mobile', percentage: 38.2, sessions: 4756 },
-          { device: 'Tablet', percentage: 16.2, sessions: 2019 },
-        ],
-      },
-    };
-  };
+  // Removed mock data generation - using only backend data
 
   useEffect(() => {
-    if (user?.isAdmin) {
-      setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setAnalytics(generateAnalyticsData());
-        setLoading(false);
-      }, 1000);
+    if (user && (user.role === 'admin' || user.role === 'mod')) {
+      console.log('User is admin/mod, loading dashboard stats...', user);
+      loadDashboardStats();
+    } else {
+      console.log('User is not admin/mod or not logged in:', user);
     }
   }, [user]);
 
-  const refreshAnalytics = async () => {
+  // Load dashboard statistics from backend
+  const loadDashboardStats = async (period = '30d') => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setAnalytics(generateAnalyticsData());
+    setError(null);
+    try {
+      const response = await analyticsService.getDashboardStats(period);
+      console.log('Raw API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', Object.keys(response || {}));
+      console.log('Category Performance:', response?.sales?.categoryPerformance);
+      setDashboardStats(response);
+      // Map the response to the expected analytics structure
+      setAnalytics({
+        sales: response.sales || {},
+        users: response.users || {},
+        inventory: response.inventory || {},
+        performance: response.performance || {},
+        reviews: response.reviews || {},
+        promotions: response.promotions || {},
+        behavior: response.behavior || {}
+      });
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê';
+      setError(errorMessage);
+      console.error('Error loading dashboard stats:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const refreshAnalytics = async (period = '30d') => {
+    await loadDashboardStats(period);
+  };
+
+  // Get dashboard statistics
+  const getDashboardStats = async (period = '30d') => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await analyticsService.getDashboardStats(period);
+      console.log('Raw API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', Object.keys(response || {}));
+      setDashboardStats(response);
+      // Map the response to the expected analytics structure
+      setAnalytics({
+        sales: response.sales || {},
+        users: response.users || {},
+        inventory: response.inventory || {},
+        performance: response.performance || {},
+        reviews: response.reviews || {},
+        promotions: response.promotions || {},
+        behavior: response.behavior || {}
+      });
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê dashboard';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get order statistics
+  const getOrderStats = async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await analyticsService.getOrderStats(params);
+      setOrderStats(response.data || response);
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê đơn hàng';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get audit log statistics
+  const getAuditLogStats = async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await analyticsService.getAuditLogStats(params);
+      setAuditLogStats(response.data || response);
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê audit log';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export audit logs
+  const exportAuditLogs = async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await analyticsService.exportAuditLogs(params);
+      
+      // Create download link for the exported file
+      if (response.data) {
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+      
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi xuất audit logs';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get model audit logs
+  const getModelAuditLogs = async (model, modelId, params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await analyticsService.getModelAuditLogs(model, modelId, params);
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải audit logs của model';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getDateRangeData = (startDate, endDate, dataType) => {
@@ -167,12 +201,59 @@ export const AnalyticsProvider = ({ children }) => {
     return JSON.stringify(data, null, 2);
   };
 
+  // Helper functions
+  const formatStatsForDisplay = (stats) => {
+    if (!stats) return null;
+    
+    return {
+      ...stats,
+      formattedRevenue: stats.revenue ? new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+      }).format(stats.revenue) : '0 ₫',
+      formattedOrders: stats.orders ? new Intl.NumberFormat('vi-VN').format(stats.orders) : '0',
+      formattedUsers: stats.users ? new Intl.NumberFormat('vi-VN').format(stats.users) : '0',
+      formattedProducts: stats.products ? new Intl.NumberFormat('vi-VN').format(stats.products) : '0'
+    };
+  };
+
+  const calculatePercentageChange = (current, previous) => {
+    if (!previous || previous === 0) return 0;
+    return ((current - previous) / previous * 100).toFixed(1);
+  };
+
+  const getTrendDirection = (current, previous) => {
+    const change = calculatePercentageChange(current, previous);
+    if (change > 0) return 'up';
+    if (change < 0) return 'down';
+    return 'stable';
+  };
+
+  const clearError = () => {
+    setError(null);
+  };
+
   const value = {
+    // Legacy support
     analytics,
     loading,
     refreshAnalytics,
     getDateRangeData,
     exportAnalytics,
+    // New backend integration
+    error,
+    dashboardStats,
+    orderStats,
+    auditLogStats,
+    getDashboardStats,
+    getOrderStats,
+    getAuditLogStats,
+    exportAuditLogs,
+    getModelAuditLogs,
+    formatStatsForDisplay,
+    calculatePercentageChange,
+    getTrendDirection,
+    clearError,
   };
 
   return (

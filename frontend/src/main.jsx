@@ -8,7 +8,11 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { OrderProvider } from './contexts/OrderContext';
-
+import { CouponProvider } from './contexts/CouponContext';
+import { UserManagementProvider } from './contexts/UserManagementContext';
+import { ReviewManagementProvider } from './contexts/ReviewManagementContext';
+import { OrderManagementProvider } from './contexts/OrderManagementContext';
+import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { ChangelogProvider } from './contexts/ChangelogContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { AttributeProvider } from './contexts/AttributeContext';
@@ -24,15 +28,25 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <BookProvider>
               <CartProvider>
                 <OrderProvider>
-                  <ChangelogProvider>
-                    <ToastProvider>
-                      <AttributeProvider>
-                        <VariationProvider>
-                          <App />
-                        </VariationProvider>
-                      </AttributeProvider>
-                    </ToastProvider>
-                  </ChangelogProvider>
+                  <CouponProvider>
+                    <UserManagementProvider>
+                      <ReviewManagementProvider>
+                        <OrderManagementProvider>
+                          <AnalyticsProvider>
+                            <ChangelogProvider>
+                              <ToastProvider>
+                                <AttributeProvider>
+                                  <VariationProvider>
+                                    <App />
+                                  </VariationProvider>
+                                </AttributeProvider>
+                              </ToastProvider>
+                            </ChangelogProvider>
+                          </AnalyticsProvider>
+                        </OrderManagementProvider>
+                      </ReviewManagementProvider>
+                    </UserManagementProvider>
+                  </CouponProvider>
                 </OrderProvider>
               </CartProvider>
             </BookProvider>

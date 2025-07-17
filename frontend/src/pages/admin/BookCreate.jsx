@@ -7,10 +7,13 @@ import { api } from "../../services/api";
 import { Loading } from "../../components/admin";
 
 const BookCreate = () => {
-  const { loading, error, setError } = useOutletContext();
+  const { loading } = useOutletContext();
   const { user, getToken, hasRole } = useAuth();
   const { categories, authors, publishers, books, setBooks } = useBook();
   const navigate = useNavigate();
+  
+  // Local error state
+  const [error, setError] = useState(null);
 
   const [isVariableProduct, setIsVariableProduct] = useState(false);
   const [attributes, setAttributes] = useState([{ name: "", values: "" }]);

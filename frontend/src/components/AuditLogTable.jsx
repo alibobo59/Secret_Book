@@ -14,6 +14,13 @@ import {
   X,
   Clock,
   Info,
+  Book,
+  ShoppingCart,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Package,
 } from "lucide-react";
 import { api } from "../services/api";
 import Loading from "./admin/Loading";
@@ -206,7 +213,108 @@ const AuditLogTable = ({
     return String(value);
   };
 
-  const renderChanges = (oldValues, newValues, event, logId, isModal = false) => {
+  const renderEnhancedMetadata = (log, isModal = false) => {
+    if (!log.enhanced_metadata) return null;
+
+    const metadata = log.enhanced_metadata;
+    const isBookOrOrder = log.model_display_name === 'Book' || log.model_display_name === 'Order';
+    
+    if (!isBookOrOrder) return null;
+
+    return (
+      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center mb-3">
+          {log.model_display_name === 'Book' ? (
+            <Book className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2" />
+          ) : (
+            <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2" />
+          )}
+          <h5 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+            Chi tiết {log.model_display_name}
+          </h5>
+        </div>
+        
+        {/* Change Summary */}
+        {metadata.change_summary && metadata.change_summary.length > 0 && (
+          <div className="mb-3">
+            <h6 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tóm tắt thay đổi:</h6>
+            <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              {metadata.change_summary.map((summary, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="w-1 h-1 bg-blue-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                  {summary}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Status Transition for Orders */}
+        {log.status_transition && (
+          <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800">
+            <h6 className="text-xs font-medium text-amber-800 dark:text-amber-200 mb-2 flex items-center">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              Chuyển đổi trạng thái
+            </h6>
+            <div className="flex items-center space-x-2 text-xs">
+              <span className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded">
+                {log.status_transition.from_display}
+              </span>
+              <span className="text-gray-400">→</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded">
+                {log.status_transition.to_display}
+              </span>
+              {log.status_transition.is_valid_transition ? (
+                <CheckCircle className="w-3 h-3 text-green-500" />
+              ) : (
+                <AlertTriangle className="w-3 h-3 text-yellow-500" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Business Impact */}
+        {metadata.business_impact && metadata.business_impact.length > 0 && (
+          <div className="mb-3">
+            <h6 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              Tác động kinh doanh:
+            </h6>
+            <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              {metadata.business_impact.map((impact, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="w-1 h-1 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                  {impact}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Additional Details for Books */}
+        {log.model_display_name === 'Book' && metadata.book_details && (
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="font-medium">Sách:</span> {metadata.book_details.title}
+            {metadata.book_details.sku && (
+              <span className="ml-2">({metadata.book_details.sku})</span>
+            )}
+          </div>
+        )}
+
+        {/* Additional Details for Orders */}
+        {log.model_display_name === 'Order' && metadata.order_details && (
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="font-medium">Đơn hàng:</span> {metadata.order_details.order_number}
+            {metadata.order_details.total_amount && (
+              <span className="ml-2">({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(metadata.order_details.total_amount)})</span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderChanges = (oldValues, newValues, event, logId, isModal = false, log = null) => {
     const isExpanded = expandedRows.has(logId) || isModal;
     
     if (event === "created") {
@@ -241,6 +349,7 @@ const AuditLogTable = ({
                )}
              </button>
            )}
+          {log && renderEnhancedMetadata(log, isModal)}
         </div>
       );
     }
@@ -265,7 +374,7 @@ const AuditLogTable = ({
               </div>
             ))}
           </div>
-          {entries.length > 2 && (
+          {entries.length > 2 && !isModal && (
             <button
               onClick={() => toggleRowExpansion(logId)}
               className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
@@ -277,6 +386,7 @@ const AuditLogTable = ({
               )}
             </button>
           )}
+          {log && renderEnhancedMetadata(log, isModal)}
         </div>
       );
     }
@@ -331,7 +441,7 @@ const AuditLogTable = ({
               </div>
             ))}
           </div>
-          {changes.length > 2 && (
+          {changes.length > 2 && !isModal && (
             <button
               onClick={() => toggleRowExpansion(logId)}
               className="flex items-center text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
@@ -348,6 +458,7 @@ const AuditLogTable = ({
               {changes.length} trường đã thay đổi
             </div>
           )}
+          {log && renderEnhancedMetadata(log, isModal)}
         </div>
       );
     }
@@ -458,7 +569,7 @@ const AuditLogTable = ({
                 Thay đổi chi tiết
               </h4>
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                {renderChanges(selectedLog.old_values, selectedLog.new_values, selectedLog.event, selectedLog.id, true)}
+                {renderChanges(selectedLog.old_values, selectedLog.new_values, selectedLog.event, selectedLog.id, true, selectedLog)}
               </div>
             </div>
 
@@ -653,7 +764,7 @@ const AuditLogTable = ({
                   </td>
                   <td className="px-6 py-4">
                     <div className="max-w-md">
-                      {renderChanges(log.old_values, log.new_values, log.event, log.id)}
+                      {renderChanges(log.old_values, log.new_values, log.event, log.id, false, log)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

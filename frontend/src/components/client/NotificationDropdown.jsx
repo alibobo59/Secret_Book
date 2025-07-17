@@ -101,7 +101,7 @@ const NotificationDropdown = ({ className = "" }) => {
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium"
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium border-2 border-white dark:border-gray-800"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </motion.span>
@@ -111,7 +111,7 @@ const NotificationDropdown = ({ className = "" }) => {
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="absolute -top-1 -right-1 bg-red-500 rounded-full w-[18px] h-[18px] opacity-75"
+            className="absolute -top-1 -right-1 bg-red-500 rounded-full w-[18px] h-[18px] opacity-75 border-2 border-white dark:border-gray-800"
           />
         )}
       </button>

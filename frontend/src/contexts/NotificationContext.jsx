@@ -110,28 +110,48 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // Create a new notification
+  // Create a new notification with role-based filtering
   const addNotification = (notification) => {
     if (!user) return;
-
+  
+    // Filter notifications based on user role and notification type
+    const shouldReceiveNotification = (notificationType, userRole) => {
+      const adminOnlyNotifications = ['order', 'low_stock', 'system'];
+      const userNotifications = ['success', 'info', 'warning', 'error'];
+      
+      // Admin notifications should only go to admins
+      if (adminOnlyNotifications.includes(notificationType)) {
+        return userRole === 'admin' || userRole === 'mod';
+      }
+      
+      // User notifications can go to all users
+      return userNotifications.includes(notificationType);
+    };
+  
+    // Check if user should receive this notification
+    if (!shouldReceiveNotification(notification.type, user.role)) {
+      return; // Don't add notification for this user
+    }
+  
     const newNotification = {
       id: Date.now() + Math.random(),
       userId: user.id,
       title: notification.title,
       message: notification.message,
-      type: notification.type || "info", // info, success, warning, error, order, system
+      type: notification.type || "info",
       read: false,
       createdAt: new Date().toISOString(),
       actionUrl: notification.actionUrl || null,
       actionText: notification.actionText || null,
       metadata: notification.metadata || {},
     };
-
+  
     setNotifications((prev) => [newNotification, ...prev]);
     setUnreadCount((prev) => prev + 1);
-
+  
     // Show toast notification
     showToast(newNotification);
-
+  
     return newNotification;
   };
 
@@ -348,4 +368,25 @@ export const NotificationProvider = ({ children }) => {
       {children}
     </NotificationContext.Provider>
   );
+};
+
+// Add admin-specific notification methods
+const notifyAdminsOnly = (notification) => {
+  // Only send to admins and mods
+  if (user?.role === 'admin' || user?.role === 'mod') {
+    addNotification({
+      ...notification,
+      type: 'order' // Ensure it's marked as admin notification
+    });
+  }
+};
+
+const notifyNewOrderToAdmins = (orderId, customerName) => {
+  notifyAdminsOnly({
+    title: "Đã nhận đơn hàng mới",
+    message: `Đơn hàng mới #${orderId} từ ${customerName} cần sự chú ý của bạn.`,
+    type: "order",
+    actionUrl: `/admin/orders`,
+    actionText: "View Order",
+  });
 };

@@ -12,12 +12,42 @@ use Symfony\Component\HttpFoundation\Response;
 
 class BookController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()
-        ->json([
-            'data' => Book::with(['category', 'author', 'publisher', 'variations', 'reviews'])->get()
-        ], Response::HTTP_OK);
+        $query = Book::with(['category', 'author', 'publisher']);
+
+        // Search
+        if ($request->has('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('sku', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Category Filter
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
+        }
+
+        // Author Filter
+        if ($request->has('author_id')) {
+            $query->where('author_id', $request->input('author_id'));
+        }
+
+        // Publisher Filter
+        if ($request->has('publisher_id')) {
+            $query->where('publisher_id', $request->input('publisher_id'));
+        }
+
+        // Default ordering by created date (newest first)
+        $query->orderBy('created_at', 'desc');
+
+        // Pagination
+        $perPage = $request->input('per_page', 15); // Default to 15 items per page
+        $books = $query->paginate($perPage);
+
+        return response()->json($books, Response::HTTP_OK);
     }
 
     public function show($id)
@@ -240,5 +270,130 @@ class BookController extends Controller
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
         // --- END: MODIFIED LOGIC ---
+    }
+
+    // Bulk Operations
+    public function bulkDelete(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:books,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $books = Book::with('variations')->whereIn('id', $request->ids)->get();
+        $deletedCount = 0;
+
+        foreach ($books as $book) {
+            // Delete all images and directories for each book
+            $bookDirectory = 'books/' . $book->id;
+            if (Storage::disk('public')->exists($bookDirectory)) {
+                Storage::disk('public')->deleteDirectory($bookDirectory);
+            }
+            $book->delete();
+            $deletedCount++;
+        }
+
+        return response()->json([
+            'message' => "Đã xóa thành công {$deletedCount} sách",
+            'deleted_count' => $deletedCount
+        ], Response::HTTP_OK);
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:books,id',
+            'updates' => 'required|array',
+            'updates.price' => 'sometimes|numeric|min:0',
+            'updates.stock_quantity' => 'sometimes|integer|min:0',
+            'updates.category_id' => 'sometimes|nullable|exists:categories,id',
+            'updates.author_id' => 'sometimes|nullable|exists:authors,id',
+            'updates.publisher_id' => 'sometimes|nullable|exists:publishers,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $updatedCount = Book::whereIn('id', $request->ids)
+            ->update($request->updates);
+
+        return response()->json([
+            'message' => "Đã cập nhật thành công {$updatedCount} sách",
+            'updated_count' => $updatedCount
+        ], Response::HTTP_OK);
+    }
+
+    public function bulkStockUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'updates' => 'required|array|min:1',
+            'updates.*.id' => 'required|integer|exists:books,id',
+            'updates.*.stock_quantity' => 'required|integer|min:0'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $updatedCount = 0;
+        foreach ($request->updates as $update) {
+            Book::where('id', $update['id'])
+                ->update(['stock_quantity' => $update['stock_quantity']]);
+            $updatedCount++;
+        }
+
+        return response()->json([
+            'message' => "Đã cập nhật kho cho {$updatedCount} sách",
+            'updated_count' => $updatedCount
+        ], Response::HTTP_OK);
+    }
+
+    public function bulkExport(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'sometimes|array',
+            'ids.*' => 'integer|exists:books,id',
+            'format' => 'sometimes|string|in:csv,excel'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $query = Book::with(['category', 'author', 'publisher']);
+
+        if ($request->has('ids')) {
+            $query->whereIn('id', $request->ids);
+        }
+
+        $books = $query->get();
+
+        $exportData = $books->map(function($book) {
+            return [
+                'ID' => $book->id,
+                'Tiêu đề' => $book->title,
+                'SKU' => $book->sku,
+                'Mô tả' => $book->description,
+                'Giá' => $book->price,
+                'Số lượng kho' => $book->stock_quantity,
+                'Danh mục' => $book->category ? $book->category->name : '',
+                'Tác giả' => $book->author ? $book->author->name : '',
+                'Nhà xuất bản' => $book->publisher ? $book->publisher->name : '',
+                'Ngày tạo' => $book->created_at->format('Y-m-d H:i:s'),
+                'Ngày cập nhật' => $book->updated_at->format('Y-m-d H:i:s')
+            ];
+        });
+
+        return response()->json([
+            'message' => "Đã xuất {$books->count()} sách",
+            'data' => $exportData,
+            'count' => $books->count()
+        ], Response::HTTP_OK);
     }
 }

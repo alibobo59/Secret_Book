@@ -13,6 +13,8 @@ use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\CouponController;
+use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\CartController;
 
 // Root route
 Route::get('/', function () {
@@ -48,6 +50,12 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::post('/books', [BookController::class, 'store'])->name('books.store');
     Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update');
     Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
+    
+    // Bulk Operations for Books
+    Route::post('/books/bulk-delete', [BookController::class, 'bulkDelete'])->name('books.bulk-delete');
+    Route::post('/books/bulk-update', [BookController::class, 'bulkUpdate'])->name('books.bulk-update');
+    Route::post('/books/bulk-stock-update', [BookController::class, 'bulkStockUpdate'])->name('books.bulk-stock-update');
+    Route::post('/books/bulk-export', [BookController::class, 'bulkExport'])->name('books.bulk-export');
 
     // Authors
     Route::apiResource('authors', AuthorController::class)->except(['index', 'show']);
@@ -77,6 +85,20 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::apiResource('coupons', CouponController::class);
     Route::post('/coupons/generate-code', [CouponController::class, 'generateCode'])->name('coupons.generate-code');
     Route::get('/coupons/{coupon}/stats', [CouponController::class, 'stats'])->name('coupons.stats');
+
+    // User Management (Admin)
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/admin/users/stats', [UserController::class, 'getStats'])->name('admin.users.stats');
+    Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+    // Review Management (Admin)
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+    Route::patch('/admin/reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
+    Route::get('/admin/reviews/stats', [ReviewController::class, 'getStats'])->name('admin.reviews.stats');
+    Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 });
 
 // Authenticated user routes
@@ -90,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payment routes
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
     Route::post('/payment/vnpay/verify', [PaymentController::class, 'verifyVNPayPayment']);
+    Route::post('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);
     // Review routes for authenticated users
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
@@ -98,8 +121,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Coupon validation for authenticated users
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
+    
+    // Cart routes
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add-item');
+    Route::put('/cart/items/{bookId}', [CartController::class, 'updateItem'])->name('cart.update-item');
+    Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
+    Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
 });
-
-// Public routes for VNPay
-Route::get('/payment/vnpay', [PaymentController::class, 'createVNPayPaymentUrl']);
-Route::get('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);

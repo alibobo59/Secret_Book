@@ -253,7 +253,7 @@ const CategoryDetail = () => {
 
         {activeTab === 'audit' && (
           <AuditLogTable 
-            modelType="App\\Models\\Category" 
+            modelType="Category" 
             modelId={id}
             className="mt-6"
           />

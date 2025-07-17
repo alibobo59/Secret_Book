@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\OrderStatusChanged;
+use App\Mail\OrderPlaced;
+use App\Mail\OrderCancelledByAdmin;
 use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
@@ -27,7 +29,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $query = Order::with(['items.book', 'user', 'address'])
+        $query = Order::with(['items.book.author', 'user', 'address'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -54,7 +56,7 @@ class OrderController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Order::with(['items.book', 'user', 'address'])
+        $query = Order::with(['items.book.author', 'user', 'address'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status if provided
@@ -248,7 +250,17 @@ class OrderController extends Controller
             }
 
             // Load relationships for response
-            $order->load(['items.book', 'user', 'address']);
+            $order->load(['items.book.author', 'user', 'address']);
+
+            // Send order placed email notification
+            if ($order->user && $order->user->email) {
+                try {
+                    Mail::to($order->user->email)->send(new OrderPlaced($order));
+                } catch (\Exception $mailException) {
+                    // Log email error but don't fail the order creation
+                    Log::error('Failed to send order placed email: ' . $mailException->getMessage());
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -271,7 +283,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $order = Order::with(['items.book', 'user', 'address'])
+        $order = Order::with(['items.book.author', 'user', 'address'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->first();
@@ -294,7 +306,7 @@ class OrderController extends Controller
      */
     public function adminShow($id)
     {
-        $order = Order::with(['items.book', 'user', 'address'])->find($id);
+        $order = Order::with(['items.book.author', 'user', 'address'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -366,14 +378,23 @@ class OrderController extends Controller
                 'notes' => $request->notes ?? $order->notes,
             ]);
 
-            $order->load(['items.book', 'user', 'address']);
+            $order->load(['items.book.author', 'user', 'address']);
 
             // Send email notification if status changed and user has email
             if ($oldStatus !== $request->status && $order->user && $order->user->email) {
                 try {
-                    Mail::to($order->user->email)->send(
-                        new OrderStatusChanged($order, $oldStatus, $request->status)
-                    );
+                    // Send order cancelled by admin email if status changed to cancelled
+                    if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
+                        $reason = $request->notes ?? 'Không có lý do cụ thể';
+                        Mail::to($order->user->email)->send(
+                            new OrderCancelledByAdmin($order, $reason)
+                        );
+                    } else {
+                        // Send regular status change email
+                        Mail::to($order->user->email)->send(
+                            new OrderStatusChanged($order, $oldStatus, $request->status)
+                        );
+                    }
                 } catch (\Exception $mailException) {
                     // Log email error but don't fail the status update
                     Log::error('Failed to send order status email: ' . $mailException->getMessage());
@@ -418,7 +439,7 @@ class OrderController extends Controller
                 'payment_status' => 'cancelled'
             ]);
 
-            $order->load(['items.book', 'user']);
+            $order->load(['items.book.author', 'user']);
 
             return response()->json([
                 'success' => true,
@@ -482,7 +503,7 @@ class OrderController extends Controller
         }
 
         try {
-            $order = Order::with(['items.book', 'user', 'address'])->findOrFail($id);
+            $order = Order::with(['items.book.author', 'user', 'address'])->findOrFail($id);
             $oldPaymentStatus = $order->payment_status;
             
             $order->update([

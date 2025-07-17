@@ -583,3 +583,24 @@ class OrderController extends Controller
         ]);
     }
 }
+
+// Dòng 131, 337, 500
+'message' => 'Xác thực thất bại',
+
+// Dòng 274
+'message' => 'Tạo đơn hàng thất bại: ' . $e->getMessage()
+
+// Dòng 412
+'message' => 'Cập nhật trạng thái đơn hàng thất bại: ' . $e->getMessage()
+
+// Dòng 452
+'message' => 'Hủy đơn hàng thất bại: ' . $e->getMessage()
+
+// Dòng 483
+'message' => 'Lấy thống kê đơn hàng thất bại: ' . $e->getMessage()
+
+// Dòng 521
+'message' => 'Cập nhật trạng thái thanh toán thất bại: ' . $e->getMessage()
+
+// Dòng 547
+'message' => 'Xóa đơn hàng thất bại: ' . $e->getMessage()

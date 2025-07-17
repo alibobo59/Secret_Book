@@ -40,7 +40,14 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Registration error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Registration failed: ' . $e->getMessage(),
+                // Dòng 43
+                'message' => 'Đăng ký thất bại: ' . $e->getMessage(),
+                
+                // Dòng 60
+                'message' => 'Thông tin đăng nhập không hợp lệ',
+                
+                // Dòng 80
+                'message' => 'Đăng nhập thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -61,6 +68,8 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            // Missing check for is_active status!
+
             $token = $user->createToken($user->name)->plainTextToken;
 
             return response()->json([
@@ -76,21 +85,6 @@ class AuthController extends Controller
             Log::error('Login error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Login failed: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function logout(Request $request)
-    {
-        try {
-            $request->user()->tokens()->delete();
-            return response()->json([
-                'message' => 'Logged out successfully',
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Logout failed: ' . $e->getMessage(),
             ], 500);
         }
     }

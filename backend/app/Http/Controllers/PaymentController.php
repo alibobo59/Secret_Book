@@ -219,7 +219,8 @@ class PaymentController extends Controller
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'Payment creation failed');
+            // Dòng 222
+            return redirect()->back()->with('error', 'Tạo thanh toán thất bại');
         }
     }
 }

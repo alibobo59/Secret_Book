@@ -266,3 +266,36 @@ class CartController extends Controller
         }
     }
 }
+
+// Dòng 48
+'message' => 'Lấy giỏ hàng thất bại',
+
+// Dòng 64, 116, 213
+'message' => 'Xác thực thất bại',
+
+// Dòng 101
+'message' => 'Thêm sản phẩm vào giỏ hàng thất bại',
+
+// Dòng 125
+return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
+
+// Dòng 131, 169
+return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
+
+// Dòng 150
+'message' => 'Cập nhật sản phẩm thất bại',
+
+// Dòng 174
+return response()->json(['message' => 'Xóa sản phẩm khỏi giỏ hàng thành công']);
+
+// Dòng 177
+'message' => 'Xóa sản phẩm thất bại',
+
+// Dòng 193
+return response()->json(['message' => 'Xóa giỏ hàng thành công']);
+
+// Dòng 196
+'message' => 'Xóa giỏ hàng thất bại',
+
+// Dòng 263
+'message' => 'Gộp giỏ hàng thất bại',

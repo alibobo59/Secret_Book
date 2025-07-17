@@ -71,77 +71,83 @@ function App() {
             <AnalyticsProvider>
               <LogProvider>
                 <Routes>
-                <Route element={<ClientLayout />}>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/books" element={<BrowseBooksPage />} />
-                  <Route path="/books/:id" element={<BookDetailPage />} />
-                  <Route path="/checkout" element={<CheckOutPage />} />
-                  <Route path="/profile/:username" element={<ProfilePage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/orders" element={<OrderManagementClient />} />
-                  <Route
-                    path="/orders/:orderId/review"
-                    element={<ReviewPage />}
-                  />
-                  <Route
-                    path="/order-success/:orderId"
-                    element={<OrderSuccessPage />}
-                  />
-                  <Route
-                    path="/order-failed/:orderId?"
-                    element={<OrderFailedPage />}
-                  />
-                  <Route
-                    path="/order-confirmation/:orderId"
-                    element={<OrderConfirmationPage />}
-                  />
-                  <Route
-                    path="/payment/vnpay/return"
-                    element={<PaymentVNPayReturn />}
-                  />
-                </Route>
+                  <Route element={<ClientLayout />}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/books" element={<BrowseBooksPage />} />
+                    <Route path="/books/:id" element={<BookDetailPage />} />
+                    <Route path="/checkout" element={<CheckOutPage />} />
+                    <Route
+                      path="/profile/:username"
+                      element={<ProfilePage />}
+                    />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/orders" element={<OrderManagementClient />} />
+                    <Route
+                      path="/orders/:orderId/review"
+                      element={<ReviewPage />}
+                    />
+                    <Route
+                      path="/order-success/:orderId"
+                      element={<OrderSuccessPage />}
+                    />
+                    <Route
+                      path="/order-failed/:orderId?"
+                      element={<OrderFailedPage />}
+                    />
+                    <Route
+                      path="/order-confirmation/:orderId"
+                      element={<OrderConfirmationPage />}
+                    />
+                    <Route
+                      path="/payment/vnpay/return"
+                      element={<PaymentVNPayReturn />}
+                    />
+                  </Route>
 
-                <Route
-                  path="/admin"
-                  element={
-                    user && hasRole(["admin", "mod"]) ? (
-                      <AdminLayout />
-                    ) : (
-                      <Navigate to="/login" />
-                    )
-                  }>
-                  <Route index element={<DashboardHome />} />
-                  <Route path="books" element={<BookManagement />} />
-                  <Route path="books/create" element={<BookCreate />} />
-                  <Route path="books/edit/:id" element={<BookEdit />} />
                   <Route
-                    path="books/bulk-update"
-                    element={<BulkUpdateBooks />}
-                  />
-                  <Route path="books/:id" element={<BookDetail />} />
-                  <Route path="categories" element={<CategoryManagement />} />
-                  <Route path="authors" element={<AuthorManagement />} />
-                  <Route path="publishers" element={<PublisherManagement />} />
-                  <Route
-                    path="publishers/create"
-                    element={<PublisherCreate />}
-                  />
-                  <Route
-                    path="publishers/edit/:id"
-                    element={<PublisherEdit />}
-                  />
-                  <Route path="users" element={<UserManagement />} />
-                  <Route path="orders" element={<OrderManagement />} />
-                  <Route path="orders/:id" element={<OrderDetail />} />
-                  <Route path="audit-logs" element={<LogManagement />} />
-                  <Route path="coupons" element={<CouponManagement />} />
-                  <Route path="coupons/create" element={<CouponCreate />} />
-                  <Route path="coupons/edit/:id" element={<CouponEdit />} />
-                  <Route path="reviews" element={<ReviewManagement />} />
-                  <Route path="analytics" element={<AnalyticsDashboard />} />
-                </Route>
-                <Route path="*" element={<NotFoundPage />} />
+                    path="/admin"
+                    element={
+                      user && hasRole(["admin", "mod"]) ? (
+                        <AdminLayout />
+                      ) : (
+                        <Navigate to="/login" />
+                      )
+                    }>
+                    <Route index element={<DashboardHome />} />
+                    <Route path="books" element={<BookManagement />} />
+                    <Route path="books/create" element={<BookCreate />} />
+                    <Route path="books/edit/:id" element={<BookEdit />} />
+                    <Route
+                      path="books/bulk-update"
+                      element={<BulkUpdateBooks />}
+                    />
+                    <Route path="books/:id" element={<BookDetail />} />
+                    <Route path="categories" element={<CategoryManagement />} />
+                    <Route path="authors" element={<AuthorManagement />} />
+                    <Route
+                      path="publishers"
+                      element={<PublisherManagement />}
+                    />
+                    <Route
+                      path="publishers/create"
+                      element={<PublisherCreate />}
+                    />
+                    <Route
+                      path="publishers/edit/:id"
+                      element={<PublisherEdit />}
+                    />
+                    <Route path="users" element={<UserManagement />} />
+                    <Route path="orders" element={<OrderManagement />} />
+                    <Route path="orders/:id" element={<OrderDetail />} />
+                    <Route path="audit-logs" element={<LogManagement />} />
+                    <Route path="coupons" element={<CouponManagement />} />
+                    <Route path="coupons/create" element={<CouponCreate />} />
+                    <Route path="coupons/edit/:id" element={<CouponEdit />} />
+                    <Route path="reviews" element={<ReviewManagement />} />
+                    <Route path="analytics" element={<AnalyticsDashboard />} />
+                  </Route>
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </LogProvider>
             </AnalyticsProvider>

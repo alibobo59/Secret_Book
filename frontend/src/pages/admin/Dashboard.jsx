@@ -185,30 +185,30 @@ const AdminDashboard = () => {
   const navItems = [
     {
       id: "dashboard",
-      label: "Dashboard",
+      label: "Bảng Điều Khiển", // Dashboard
       icon: <LayoutDashboard size={20} />,
     },
-    { id: "books", label: "Books", icon: <BookOpen size={20} /> },
-    { id: "categories", label: "Categories", icon: <Tag size={20} /> },
-    { id: "attributes", label: "Attributes", icon: <Settings size={20} /> },
-    { id: "authors", label: "Authors", icon: <UserSquare2 size={20} /> },
-    { id: "publishers", label: "Publishers", icon: <Building2 size={20} /> },
-    { id: "users", label: "Users", icon: <Users size={20} /> },
+    { id: "books", label: "Sách", icon: <BookOpen size={20} /> }, // Books
+    { id: "categories", label: "Danh Mục", icon: <Tag size={20} /> }, // Categories
+    { id: "attributes", label: "Thuộc Tính", icon: <Settings size={20} /> }, // Attributes
+    { id: "authors", label: "Tác Giả", icon: <UserSquare2 size={20} /> }, // Authors
+    { id: "publishers", label: "Nhà Xuất Bản", icon: <Building2 size={20} /> }, // Publishers
+    { id: "users", label: "Người Dùng", icon: <Users size={20} /> }, // Users
     {
       id: "enhanced-users",
-      label: "Enhanced Users",
+      label: "Người Dùng Nâng Cao", // Enhanced Users
       icon: <UserCheck size={20} />,
     },
-    { id: "orders", label: "Orders", icon: <ShoppingCart size={20} /> },
-    { id: "analytics", label: "Analytics", icon: <BarChart3 size={20} /> },
-    { id: "marketing", label: "Marketing", icon: <Megaphone size={20} /> },
-    { id: "bulk-ops", label: "Bulk Operations", icon: <Package size={20} /> },
-    { id: "security", label: "Security", icon: <Shield size={20} /> },
-    { id: "content", label: "Content", icon: <FileText size={20} /> },
-    { id: "media", label: "Media Library", icon: <Image size={20} /> },
-    { id: "profile", label: "Profile", icon: <User size={20} /> },
-    { id: "settings", label: "Settings", icon: <Settings size={20} /> },
-    { id: "logs", label: "System Logs", icon: <Activity size={20} /> },
+    { id: "orders", label: "Đơn Hàng", icon: <ShoppingCart size={20} /> }, // Orders
+    { id: "analytics", label: "Phân Tích", icon: <BarChart3 size={20} /> }, // Analytics
+    { id: "marketing", label: "Tiếp Thị", icon: <Megaphone size={20} /> }, // Marketing
+    { id: "bulk-ops", label: "Thao Tác Hàng Loạt", icon: <Package size={20} /> }, // Bulk Operations
+    { id: "security", label: "Bảo Mật", icon: <Shield size={20} /> }, // Security
+    { id: "content", label: "Nội Dung", icon: <FileText size={20} /> }, // Content
+    { id: "media", label: "Thư Viện Media", icon: <Image size={20} /> }, // Media Library
+    { id: "profile", label: "Hồ Sơ", icon: <User size={20} /> }, // Profile
+    { id: "settings", label: "Cài Đặt", icon: <Settings size={20} /> }, // Settings
+    { id: "logs", label: "Nhật Ký Hệ Thống", icon: <Activity size={20} /> }, // System Logs
   ];
 
   return (
@@ -225,9 +225,9 @@ const AdminDashboard = () => {
             isSidebarCollapsed ? "p-4 flex justify-center" : "p-6"
           }`}>
           {!isSidebarCollapsed ? (
-            <h1 className="text-2xl font-bold text-amber-600">Admin Panel</h1>
+            <h1 className="text-2xl font-bold text-amber-600">Bảng Quản Trị</h1> // Admin Panel
           ) : (
-            <h1 className="text-xl font-bold text-amber-600">AP</h1>
+            <h1 className="text-xl font-bold text-amber-600">BQT</h1> // AP
           )}
         </div>
         <nav className="mt-6">
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
             <span className={isSidebarCollapsed ? "" : "mr-3"}>
               <LogOut size={20} />
             </span>
-            {!isSidebarCollapsed && "Logout"}
+            {!isSidebarCollapsed && "Đăng Xuất"} // Logout
           </button>
         </nav>
       </aside>

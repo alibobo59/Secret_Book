@@ -10,7 +10,11 @@ class Handler extends ExceptionHandler
 {
     protected function unauthenticated($request, AuthenticationException $exception)
     {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+        // Dòng 13
+        return response()->json(['message' => 'Chưa xác thực.'], 401);
+        
+        // Dòng 19
+        return response()->json(['message' => 'Không tìm thấy đường dẫn.'], 404);
     }
 
     public function render($request, Throwable $exception)

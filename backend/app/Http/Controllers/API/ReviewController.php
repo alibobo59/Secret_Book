@@ -91,7 +91,7 @@ class ReviewController extends Controller
         // Check if user owns the review or is admin
         if ($review->user_id !== $user->id && $user->role !== 'admin') {
             return response()->json([
-                'message' => 'Unauthorized to update this review.'
+                'message' => 'Không có quyền cập nhật đánh giá này.'
             ], 403);
         }
 

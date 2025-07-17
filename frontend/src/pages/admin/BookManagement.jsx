@@ -543,7 +543,7 @@ const BookManagement = () => {
                            />
                          ) : (
                            <div className="h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center">
-                             <span className="text-xs text-gray-500 dark:text-gray-400">No Image</span>
+                             <span className="text-xs text-gray-500 dark:text-gray-400">Không có ảnh</span> // No Image
                            </div>
                          )}
                        </td>

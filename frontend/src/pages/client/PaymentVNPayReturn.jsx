@@ -97,7 +97,7 @@ const PaymentVNPayReturn = () => {
 
   const handleContinue = () => {
     if (status === "success") {
-      navigate(`/orders/${orderNumber}`);
+      navigate(`/orders`);
     } else {
       navigate("/orders");
     }

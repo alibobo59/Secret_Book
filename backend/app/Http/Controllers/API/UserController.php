@@ -79,7 +79,8 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                // Dòng 82, 144
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], 422);
         }

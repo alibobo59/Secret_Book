@@ -53,4 +53,72 @@ class CategoryController extends Controller
     // const CATEGORY_TYPE_DEFAULT = 'default';
 
     // TODO: có thể thêm middleware, helper hoặc traits ở commit sau
+    /**
+ * Lấy danh sách tất cả các danh mục.
+ *
+ * Mỗi category được sắp xếp theo tên (ascending).
+ * Response trả về dưới dạng JSON với HTTP code 200.
+ *
+ * Có thể mở rộng:
+ *  - Thêm phân trang
+ *  - Thêm filter theo tên, trạng thái
+ *  - Thêm cache để tăng hiệu suất
+ *
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function index()
+{
+    // Lấy tất cả các category từ database
+    $categories = Category::orderBy('name', 'asc')->get();
+
+    // TODO: có thể thêm transform data hoặc resource
+    $dataToReturn = [
+        'total' => count($categories),
+        'categories' => $categories,
+        'timestamp' => now(), // thêm timestamp cho debug
+    ];
+
+    return response()->json(['data' => $dataToReturn], Response::HTTP_OK);
+}
+
+/**
+ * Xem chi tiết một danh mục theo ID.
+ *
+ * Response:
+ *  - 200: nếu tìm thấy
+ *  - 404: nếu không tìm thấy
+ *
+ * TODO:
+ *  - Thêm cache cho category
+ *  - Thêm log khi category không tồn tại
+ *
+ * @param int $id
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function show($id)
+{
+    // Tìm category theo ID
+    $category = Category::find($id);
+
+    // Nếu không tìm thấy, trả về 404 với message
+    if (!$category) {
+        return response()->json([
+            'error' => 'Không tìm thấy danh mục',
+            'requested_id' => $id,
+            'timestamp' => now(),
+        ], Response::HTTP_NOT_FOUND);
+    }
+
+    // Trả về category dưới dạng JSON
+    $dataToReturn = [
+        'id' => $category->id,
+        'name' => $category->name,
+        'created_at' => $category->created_at,
+        'updated_at' => $category->updated_at,
+        // TODO: có thể thêm số lượng sách trong category
+    ];
+
+    return response()->json(['data' => $dataToReturn], Response::HTTP_OK);
+}
+
 }

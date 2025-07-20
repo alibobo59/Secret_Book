@@ -23,6 +23,8 @@ import {
   OrderConfirmationPage,
   PaymentVNPayReturn,
 } from "./pages/client";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ReviewPage from "./pages/client/ReviewPage";
 import {
   DashboardHome,
@@ -82,6 +84,8 @@ function App() {
                     />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/orders" element={<OrderManagementClient />} />
                     <Route
                       path="/orders/:orderId/review"

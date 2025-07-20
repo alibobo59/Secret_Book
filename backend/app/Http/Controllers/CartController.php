@@ -206,5 +206,28 @@ class CartController extends Controller
 
         return response()->json(['data' => $cart], Response::HTTP_OK);
     }
+/**
+     * -------------------------------------------------------------------------
+     * Xoá toàn bộ giỏ hàng
+     * -------------------------------------------------------------------------
+     * Logic:
+     *  - Xác định user_id.
+     *  - Lấy giỏ hiện tại của user.
+     *  - Xoá hết CartItem liên quan đến giỏ.
+     *  - Load lại quan hệ items để trả về giỏ trống.
+     */
+    public function clear(Request $request)
+    {
+        $userId = $request->user()->id ?? null;
 
+        $cart = Cart::firstOrCreate(['user_id' => $userId]);
+
+        // Xoá tất cả item trong giỏ
+        CartItem::where('cart_id', $cart->id)->delete();
+
+        // Load lại để trả về JSON
+        $cart->load('items.book');
+
+        return response()->json(['data' => $cart], Response::HTTP_OK);
+    }
 }

@@ -16,7 +16,7 @@ const Footer = () => {
             <Link to="/" className="flex items-center mb-4">
               <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-500" />
               <span className="ml-2 text-2xl font-serif font-bold text-gray-800 dark:text-white">
-                BookStore
+                Secret Book
               </span>
             </Link>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -205,7 +205,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-12 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            &copy; {currentYear} BookStore. Tất cả quyền được bảo lưu.
+            &copy; {currentYear} Secret Book. Tất cả quyền được bảo lưu.
           </p>
         </div>
       </div>

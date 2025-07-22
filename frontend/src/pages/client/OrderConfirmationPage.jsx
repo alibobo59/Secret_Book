@@ -298,10 +298,10 @@ const OrderConfirmationPage = () => {
                 </h4>
                 <div className="space-y-2 text-sm">
                   <a
-                    href="mailto:support@bookstore.com"
+                    href="mailto:support@secretbook.com"
                     className="flex items-center gap-2 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
                     <Mail className="h-4 w-4" />
-                    support@bookstore.com
+                    support@secretbook.com
                   </a>
                   <a
                     href="tel:+1234567890"

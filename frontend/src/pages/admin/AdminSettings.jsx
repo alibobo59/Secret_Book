@@ -21,8 +21,8 @@ const AdminSettings = () => {
 
   // General Settings
   const [generalSettings, setGeneralSettings] = useState({
-    siteName: 'BookStore Admin',
-    contactEmail: 'admin@bookstore.com',
+    siteName: 'Secret Book Admin',
+    contactEmail: 'admin@secretbook.com',
     siteDescription: 'Your premier online bookstore',
     contactPhone: '+1 (555) 123-4567',
     timezone: 'UTC',
@@ -35,8 +35,8 @@ const AdminSettings = () => {
     smtpPort: 587,
     smtpUsername: '',
     smtpPassword: '',
-    fromName: 'BookStore',
-    fromEmail: 'noreply@bookstore.com',
+    fromName: 'Secret Book',
+    fromEmail: 'noreply@secretbook.com',
     enableSSL: true,
     testMode: false
   });

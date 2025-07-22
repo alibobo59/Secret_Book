@@ -31,9 +31,9 @@ const AdminProfile = () => {
   
   const [profileData, setProfileData] = useState({
     name: user?.name || 'Admin User',
-    email: user?.email || 'admin@bookstore.com',
+    email: user?.email || 'admin@secretbook.com',
     phone: '+1 (555) 123-4567',
-    bio: 'System Administrator for Secret Bookstore',
+    bio: 'System Administrator for Secret Book',
     location: 'New York, NY',
     avatar: user?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
     joinDate: '2022-01-15',

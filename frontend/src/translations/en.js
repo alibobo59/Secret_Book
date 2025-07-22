@@ -117,7 +117,7 @@ export const enTranslations = {
   "footer.returns": "Returns Policy",
 
   // Messages
-  "message.welcome": "Welcome to our BookStore",
+  "message.welcome": "Welcome to our Secret Book",
   "message.error": "An error occurred",
   "message.success": "Operation successful",
   "message.loading": "Loading...",

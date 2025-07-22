@@ -128,7 +128,7 @@ export const viTranslations = {
   "login.error.invalidCredentials": "Email hoặc mật khẩu không đúng. Vui lòng kiểm tra thông tin đăng nhập và thử lại.",
 
   // Messages
-  "message.welcome": "Chào mừng đến với BookStore",
+  "message.welcome": "Chào mừng đến với Secret Book",
   "message.error": "Đã xảy ra lỗi",
   "message.success": "Thao tác thành công",
   "message.loading": "Đang tải...",

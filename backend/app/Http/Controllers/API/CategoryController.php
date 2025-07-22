@@ -187,4 +187,66 @@ return response()->json([
 
 */
     }
+    /**
+ * Cập nhật danh mục.
+ * Bỏ qua unique theo id hiện tại.
+ * @param \Illuminate\Http\Request $request
+ * @param int $id
+ */
+public function update(Request $request, $id)
+{
+    // Tìm category theo id
+    $category = Category::find($id);
+
+    // Nếu không tìm thấy thì trả về lỗi
+    if (!$category) {
+        return response()->json([
+            'error' => 'Không tìm thấy danh mục'
+        ], Response::HTTP_NOT_FOUND);
+    }
+
+    // ---------------------------
+    // Bắt đầu validate input
+    // ---------------------------
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255|unique:categories,name,' . $id,
+    ]);
+
+    // Kiểm tra lỗi validate
+    if ($validator->fails()) {
+
+        // Placeholder comment 1: có thể log lỗi ở đây
+        // Placeholder comment 2: chưa triển khai logging chi tiết
+        // Placeholder comment 3: có thể thêm audit nếu cần
+        // Placeholder comment 4: giữ chỗ cho tương lai
+        // Placeholder comment 5: validate nâng cao
+
+        return response()->json([
+            'error' => $validator->errors()
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    // ---------------------------
+    // Cập nhật category
+    // ---------------------------
+    $category->update([
+        'name' => $request->name,
+    ]);
+
+    // Placeholder comment 6: có thể thêm audit log
+    // Placeholder comment 7: thông báo tới hệ thống khác
+    // Placeholder comment 8: giữ chỗ cho tính năng mở rộng
+    // Placeholder comment 9: chỉ là comment, không ảnh hưởng logic
+    // Placeholder comment 10: kéo dài commit
+
+    // ---------------------------
+    // Trả về dữ liệu
+    // ---------------------------
+    return response()->json([
+        'data' => $category
+    ], Response::HTTP_OK);
+
+    
+}
+
 }

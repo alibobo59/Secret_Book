@@ -50,30 +50,40 @@ class Category extends Model
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function books()
-    {
-        return $this->hasMany(Book::class);
-    }
+{
+    // Thiết lập quan hệ 1-n với bảng books
+    // Mỗi Category có thể có nhiều Book
+    return $this->hasMany(Book::class);
+}
 
-    /**
-     * Trả về label dễ đọc cho các field (dùng cho audit log / UI).
-     *
-     * Key: tên cột trong DB.
-     * Value: tên hiển thị cho người dùng.
-     *
-     * @return array<string, string>
-     */
-    public function getAuditFieldLabels()
-    {
-        return [
-            'name'        => 'Name',
-                      // Tên danh mục
-            'slug'        => 'Slug',
-                      // Đường dẫn thân thiện
-            'description' => 'Description',
-               // Mô tả
-            'created_by'  => 'Created By',
-                // Người tạo
-                
-        ];
-    }
+/**
+ * Trả về label dễ đọc cho các field (dùng cho audit log / UI).
+ *
+ * Key: tên cột trong DB.
+ * Value: tên hiển thị cho người dùng.
+ *
+ * Ví dụ:
+ * 'name' => 'Tên danh mục'
+ * 'slug' => 'Đường dẫn thân thiện'
+ *
+ * @return array<string, string>
+ */
+public function getAuditFieldLabels()
+{
+    return [
+        'name'        => 'Name',         // Tên danh mục, hiển thị trên UI và log
+        'slug'        => 'Slug',         // Đường dẫn thân thiện, dùng trong URL
+        'description' => 'Description',  // Mô tả chi tiết về danh mục
+        'created_by'  => 'Created By',   // Người tạo danh mục, dùng cho audit
+        'updated_by'  => 'Updated By',   // Người cập nhật cuối cùng (nếu có)
+        'created_at'  => 'Created At',   // Ngày tạo danh mục
+        'updated_at'  => 'Updated At',   // Ngày cập nhật danh mục cuối cùng
+        'deleted_at'  => 'Deleted At',   // Ngày xóa danh mục (soft delete)
+    ];
+}
+
+// TODO: có thể bổ sung thêm các phương thức helper
+// ví dụ: getBooksCount(), isActive(), hay scopeActive()
+// để tiện cho việc lọc và thống kê trong hệ thống
+
 }

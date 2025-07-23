@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\RestrictToAdminOrMod;
+use App\Http\Middleware\CheckUserStatus;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,9 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Register middleware aliases
         $middleware->alias([
-            'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'admin.or.mod' => RestrictToAdminOrMod::class,
+            'check.user.status' => CheckUserStatus::class,
         ]);
+        
+        // Configure Sanctum authentication
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Handle unauthenticated API requests

@@ -42,7 +42,7 @@ class ReviewController extends Controller
         // Check if user has purchased the book
         if (!$user->hasPurchased($bookId)) {
             return response()->json([
-                'message' => 'You must purchase this book before reviewing it.'
+                'message' => 'Bạn phải mua sách này trước khi đánh giá.'
             ], 403);
         }
 
@@ -53,7 +53,7 @@ class ReviewController extends Controller
 
         if ($existingReview) {
             return response()->json([
-                'message' => 'You have already reviewed this book.'
+                'message' => 'Bạn đã đánh giá sách này rồi.'
             ], 409);
         }
 
@@ -76,7 +76,7 @@ class ReviewController extends Controller
         $review->load('user:id,name');
 
         return response()->json([
-            'message' => 'Review submitted successfully.',
+            'message' => 'Gửi đánh giá thành công.',
             'review' => $review
         ], 201);
     }
@@ -108,7 +108,7 @@ class ReviewController extends Controller
         $review->load('user:id,name');
 
         return response()->json([
-            'message' => 'Review updated successfully.',
+            'message' => 'Cập nhật đánh giá thành công.',
             'review' => $review
         ]);
     }
@@ -123,14 +123,14 @@ class ReviewController extends Controller
         // Check if user owns the review or is admin
         if ($review->user_id !== $user->id && $user->role !== 'admin') {
             return response()->json([
-                'message' => 'Unauthorized to delete this review.'
+                'message' => 'Không có quyền xóa đánh giá này.'
             ], 403);
         }
 
         $review->delete();
 
         return response()->json([
-            'message' => 'Review deleted successfully.'
+            'message' => 'Xóa đánh giá thành công.'
         ]);
     }
 
@@ -144,7 +144,7 @@ class ReviewController extends Controller
         if (!$user) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'User not authenticated'
+                'reason' => 'Người dùng chưa xác thực'
             ]);
         }
 
@@ -152,7 +152,7 @@ class ReviewController extends Controller
         if (!$user->hasPurchased($book->id)) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'You must purchase this book to review it'
+                'reason' => 'Bạn phải mua sách này để đánh giá'
             ]);
         }
 
@@ -164,7 +164,7 @@ class ReviewController extends Controller
         if ($existingReview) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'You have already reviewed this book',
+                'reason' => 'Bạn đã đánh giá sách này rồi',
                 'existing_review' => $existingReview
             ]);
         }
@@ -270,7 +270,7 @@ class ReviewController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get review statistics: ' . $e->getMessage()
+                'message' => 'Lấy thống kê đánh giá thất bại: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -1,3 +1,5 @@
+// src/pages/client/HomePage.jsx
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
@@ -5,11 +7,9 @@ import { motion } from "framer-motion";
 import { Search, ChevronRight } from "lucide-react";
 import BookCard from "../../components/client/BookCard";
 
-
 const HomePage = () => {
   const { books, categories, loading, error } = useBook();
   const [searchQuery, setSearchQuery] = React.useState("");
-
 
   useEffect(() => {
     console.log(
@@ -170,7 +170,7 @@ const HomePage = () => {
             </div>
           ) : categories.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              Không có danh mục nào (Debug: categories length: 
+              Không có danh mục nào (Debug: categories length:
               {categories.length})
             </p>
           ) : (
@@ -233,7 +233,7 @@ const HomePage = () => {
             </div>
           ) : newReleases.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              Không có sách nào (Debug: newReleases length: 
+              Không có sách nào (Debug: newReleases length:
               {newReleases.length})
             </p>
           ) : (

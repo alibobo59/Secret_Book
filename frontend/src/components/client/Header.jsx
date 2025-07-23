@@ -16,7 +16,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 
-import NotificationDropdown from "./NotificationDropdown";
+import NotificationDropdown from "../common/NotificationDropdown";
 import CartDropdown from "./CartDropdown";
 import UserProfileDropdown from "./UserProfileDropdown";
 import { motion, AnimatePresence } from "framer-motion";

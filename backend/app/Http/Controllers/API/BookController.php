@@ -54,7 +54,7 @@ class BookController extends Controller
     {
         $book = Book::with(['category', 'author', 'publisher', 'variations', 'reviews'])->find($id);
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
         return response()->json(['data' => $book], Response::HTTP_OK);
     }
@@ -69,7 +69,7 @@ class BookController extends Controller
                     $variation['attributes'] = json_decode($variation['attributes'], true);
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         return response()->json([
-                            'error' => ['variations.*.attributes' => ['Invalid JSON format in attributes.']]
+                            'error' => ['variations.*.attributes' => ['Định dạng JSON không hợp lệ trong thuộc tính.']]
                         ], Response::HTTP_UNPROCESSABLE_ENTITY);
                     }
                 }
@@ -140,7 +140,7 @@ class BookController extends Controller
         $book = Book::with('variations')->find($id);
 
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
 
         // 1. Preprocess variations to decode JSON attributes, just like in store()
@@ -255,7 +255,7 @@ class BookController extends Controller
         // Eager load variations to get their data
         $book = Book::with('variations')->find($id);
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
 
         // Delete all variation images and the entire book folder

@@ -45,7 +45,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Registration error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Registration failed: ' . $e->getMessage(),
+                'message' => 'Đăng ký thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -62,8 +62,15 @@ class AuthController extends Controller
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
-                    'message' => 'Invalid credentials',
+                    'message' => 'Thông tin đăng nhập không chính xác',
                 ], 401);
+            }
+
+            // Check if user account is active
+            if (!$user->is_active) {
+                return response()->json([
+                    'message' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+                ], 403);
             }
 
             $token = $user->createToken($user->name)->plainTextToken;
@@ -80,7 +87,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Login failed: ' . $e->getMessage(),
+                'message' => 'Đăng nhập thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -90,12 +97,12 @@ class AuthController extends Controller
         try {
             $request->user()->tokens()->delete();
             return response()->json([
-                'message' => 'Logged out successfully',
+                'message' => 'Đăng xuất thành công',
             ], 200);
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Logout failed: ' . $e->getMessage(),
+                'message' => 'Đăng xuất thất bại: ' . $e->getMessage(),
             ], 500);
         }
     }

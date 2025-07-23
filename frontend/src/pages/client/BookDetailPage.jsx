@@ -1,3 +1,4 @@
+// src/pages/client/BookDetailPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
@@ -230,7 +231,7 @@ const BookDetailPage = () => {
           <div className="space-y-3">
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Calendar className="h-5 w-5 mr-2" />
-              Xuất bản: 
+              Xuất bản:
               {new Date(book.published_date).toLocaleDateString()}
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">

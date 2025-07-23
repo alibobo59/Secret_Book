@@ -76,7 +76,7 @@ class AuthorController extends Controller
         $author = Author::find($id);
 
         if (!$author) {
-            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy tác giả'], Response::HTTP_NOT_FOUND);
         }
 
         $validator = Validator::make($request->all(), [
@@ -107,7 +107,7 @@ class AuthorController extends Controller
         $author = Author::find($id);
 
         if (!$author) {
-            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy tác giả'], Response::HTTP_NOT_FOUND);
         }
 
         $author->delete();

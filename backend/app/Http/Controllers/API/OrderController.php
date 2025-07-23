@@ -128,7 +128,7 @@ class OrderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -264,14 +264,14 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order created successfully',
+                'message' => 'Tạo đơn hàng thành công',
                 'data' => $order
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create order: ' . $e->getMessage()
+                'message' => 'Tạo đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -291,7 +291,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Không tìm thấy đơn hàng'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -334,7 +334,7 @@ class OrderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -403,13 +403,13 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully',
+                'message' => 'Cập nhật trạng thái đơn hàng thành công',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update order status: ' . $e->getMessage()
+                'message' => 'Cập nhật trạng thái đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -429,7 +429,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found or cannot be cancelled'
+                'message' => 'Không tìm thấy đơn hàng hoặc không thể hủy'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -443,13 +443,13 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order cancelled successfully',
+                'message' => 'Hủy đơn hàng thành công',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cancel order: ' . $e->getMessage()
+                'message' => 'Hủy đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

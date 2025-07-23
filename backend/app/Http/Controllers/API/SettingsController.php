@@ -38,8 +38,11 @@ class SettingsController extends Controller
                 'shipping.freeShippingThreshold' => 'sometimes|numeric|min:0',
                 'shipping.standardShippingCost' => 'sometimes|numeric|min:0',
                 'shipping.expressShippingCost' => 'sometimes|numeric|min:0',
+                'shipping.internationalShippingCost' => 'sometimes|numeric|min:0',
                 'shipping.estimatedDeliveryDays' => 'sometimes|integer|min:1',
                 'shipping.expressDeliveryDays' => 'sometimes|integer|min:1',
+                'shipping.internationalShipping' => 'sometimes|boolean',
+                'shipping.enableTracking' => 'sometimes|boolean',
             ]);
 
             if ($validator->fails()) {
@@ -191,8 +194,11 @@ class SettingsController extends Controller
                 'freeShippingThreshold' => 500000,
                 'standardShippingCost' => 30000,
                 'expressShippingCost' => 50000,
+                'internationalShippingCost' => 100000,
                 'estimatedDeliveryDays' => 5,
-                'expressDeliveryDays' => 2
+                'expressDeliveryDays' => 2,
+                'internationalShipping' => true,
+                'enableTracking' => true
             ],
             'notifications' => [
                 'orderConfirmation' => true,

@@ -24,6 +24,7 @@ class TestEmail extends Command
     protected $description = 'Test email functionality with Gmail SMTP';
 
     /**
+     * 
      * Execute the console command.
      */
     public function handle()

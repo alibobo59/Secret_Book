@@ -248,5 +248,38 @@ public function update(Request $request, $id)
 
     
 }
+/**
+ * Xóa danh mục.
+ * Các bước thực hiện:
+ *  1. Tìm category theo id.
+ *  2. Nếu không tìm thấy, trả về lỗi 404 với message tiếng Việt.
+ *  3. Nếu tìm thấy, thực hiện xóa category.
+ *  4. Trả về phản hồi 204 No Content.
+ *
+ * @param int $id
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function destroy($id)
+{
+    // Tìm category theo id
+    $category = Category::find($id);
+
+    // Kiểm tra xem category có tồn tại không
+    if (!$category) {
+        // Nếu không tồn tại, trả về lỗi
+        return response()->json([
+            'error' => 'Không tìm thấy danh mục'
+        ], Response::HTTP_NOT_FOUND);
+    }
+
+    // Thực hiện xóa category
+    $category->delete();
+
+    // Trả về kết quả thành công (không có nội dung)
+    return response()->json(null, Response::HTTP_NO_CONTENT);
+
+    // TODO: Có thể bổ sung log hoặc event sau khi xóa ở commit sau
+    // TODO: Cân nhắc thêm soft delete nếu cần
+}
 
 }

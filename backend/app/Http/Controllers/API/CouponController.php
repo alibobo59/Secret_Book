@@ -15,9 +15,9 @@ class CouponController extends Controller
     /**
      * Lấy danh sách mã khuyến mại (Admin)
      */
-    public function index(Request $request)
+    public function index(Request $request) //get request
     {
-        $query = Coupon::query();
+        $query = Coupon::query(); //thực hiện câu truy vấn từ bảng coupon
 
         // Tìm kiếm theo mã hoặc tên
         if ($request->has('search') && $request->search) {
@@ -151,9 +151,9 @@ class CouponController extends Controller
     {
         $coupon->load(['usages.user', 'usages.order']);
         
-        $coupon->status_display = $coupon->status_display_name;
-        $coupon->type_display = $coupon->type_display_name;
-        $coupon->value_display = $coupon->value_display;
+        $coupon->status_display = $coupon->status_display_name; //trạng thái
+        $coupon->type_display = $coupon->type_display_name; //phan tram hoac gia tien
+        $coupon->value_display = $coupon->value_display; //gia tri ma giam gia
         
         return response()->json([
             'success' => true,

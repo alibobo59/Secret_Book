@@ -43,6 +43,21 @@ class SettingsController extends Controller
                 'shipping.expressDeliveryDays' => 'sometimes|integer|min:1',
                 'shipping.internationalShipping' => 'sometimes|boolean',
                 'shipping.enableTracking' => 'sometimes|boolean',
+            ], [
+                'shipping.freeShippingThreshold.numeric' => 'Ngưỡng miễn phí vận chuyển phải là số.',
+                'shipping.freeShippingThreshold.min' => 'Ngưỡng miễn phí vận chuyển không được nhỏ hơn 0.',
+                'shipping.standardShippingCost.numeric' => 'Phí vận chuyển tiêu chuẩn phải là số.',
+                'shipping.standardShippingCost.min' => 'Phí vận chuyển tiêu chuẩn không được nhỏ hơn 0.',
+                'shipping.expressShippingCost.numeric' => 'Phí vận chuyển nhanh phải là số.',
+                'shipping.expressShippingCost.min' => 'Phí vận chuyển nhanh không được nhỏ hơn 0.',
+                'shipping.internationalShippingCost.numeric' => 'Phí vận chuyển quốc tế phải là số.',
+                'shipping.internationalShippingCost.min' => 'Phí vận chuyển quốc tế không được nhỏ hơn 0.',
+                'shipping.estimatedDeliveryDays.integer' => 'Số ngày giao hàng ước tính phải là số nguyên.',
+                'shipping.estimatedDeliveryDays.min' => 'Số ngày giao hàng ước tính phải lớn hơn 0.',
+                'shipping.expressDeliveryDays.integer' => 'Số ngày giao hàng nhanh phải là số nguyên.',
+                'shipping.expressDeliveryDays.min' => 'Số ngày giao hàng nhanh phải lớn hơn 0.',
+                'shipping.internationalShipping.boolean' => 'Vận chuyển quốc tế phải là true hoặc false.',
+                'shipping.enableTracking.boolean' => 'Theo dõi đơn hàng phải là true hoặc false.'
             ]);
 
             if ($validator->fails()) {

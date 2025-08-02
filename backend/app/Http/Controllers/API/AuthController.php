@@ -22,6 +22,19 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:3|confirmed',
+            ], [
+                'name.required' => 'Tên là bắt buộc.',
+                'name.string' => 'Tên phải là chuỗi ký tự.',
+                'name.max' => 'Tên không được vượt quá 255 ký tự.',
+                'email.required' => 'Email là bắt buộc.',
+                'email.string' => 'Email phải là chuỗi ký tự.',
+                'email.email' => 'Email không hợp lệ.',
+                'email.max' => 'Email không được vượt quá 255 ký tự.',
+                'email.unique' => 'Email đã được sử dụng.',
+                'password.required' => 'Mật khẩu là bắt buộc.',
+                'password.string' => 'Mật khẩu phải là chuỗi ký tự.',
+                'password.min' => 'Mật khẩu phải có ít nhất 3 ký tự.',
+                'password.confirmed' => 'Xác nhận mật khẩu không khớp.'
             ]);
 
             $user = User::create([
@@ -56,6 +69,12 @@ class AuthController extends Controller
             $request->validate([
                 'email' => 'required|string|email|max:255',
                 'password' => 'required',
+            ], [
+                'email.required' => 'Email là bắt buộc.',
+                'email.string' => 'Email phải là chuỗi ký tự.',
+                'email.email' => 'Email không hợp lệ.',
+                'email.max' => 'Email không được vượt quá 255 ký tự.',
+                'password.required' => 'Mật khẩu là bắt buộc.'
             ]);
 
             $user = User::where('email', $request->email)->first();

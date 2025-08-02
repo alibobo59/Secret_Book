@@ -1,7 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+// Added missing React import
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import { useNotification } from "./NotificationContext";
+import { api } from "../services/api";
+
+// Removed duplicate functions:
+// - Removed old synchronous getOrderById function
+// - Removed old cancelOrder function that used updateOrderStatus
+// - Kept the new async versions that work with the API
 
 const OrderContext = createContext();
 
@@ -22,27 +35,48 @@ export const OrderProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: 0,
+    to: 0
+  });
 
-  // Load orders from localStorage when component mounts
-  useEffect(() => {
-    const loadOrders = () => {
-      try {
-        const storedOrders = localStorage.getItem("orders");
-        if (storedOrders) {
-          setOrders(JSON.parse(storedOrders));
-        }
-      } catch (error) {
-        console.error("Failed to load orders from localStorage:", error);
+  const getUserOrders = useCallback(
+    async (forceRefresh = false) => {
+      if (!user) {
+        throw new Error("User must be logged in to fetch orders");
       }
-    };
 
-    loadOrders();
-  }, []);
+      setLoading(true);
+      setError(null);
 
-  // Save orders to localStorage whenever they change
+      try {
+        const response = await api.get("/orders");
+        const userOrders = response.data.data.data || response.data.data || [];
+        setOrders(userOrders);
+        return userOrders;
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        setError("Failed to fetch orders");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
+
+  // Load user orders when component mounts and user is available
   useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
+    if (user) {
+      getUserOrders().catch((error) => {
+        console.error("Failed to load initial orders:", error);
+      });
+    }
+  }, [user, getUserOrders]);
 
   const createOrder = async (orderData) => {
     if (!user) {
@@ -51,41 +85,30 @@ export const OrderProvider = ({ children }) => {
 
     setLoading(true);
     setError(null);
-
+  
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const newOrder = {
-        id: `ORD-${Date.now()}`,
-        userId: user.id,
-        customerName: user.name,
-        customerEmail: user.email,
+      const response = await api.post("/orders", {
+        customer_name: user.name,
+        customer_email: user.email,
         ...orderData,
-        status: "pending",
-        paymentMethod: "cod",
-        paymentStatus: "pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        estimatedDelivery: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 7 days from now
-      };
-
+        payment_method: orderData.paymentMethod || "cod",
+      });
+  
+      const newOrder = response.data.data;
+  
+      // Update local state
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
-
+  
       // Clear the cart after successful order creation
       clearCart();
-
+  
       // Send notifications
       notifyOrderPlaced(newOrder.id);
-
-      // Notify admin about new order (simulate admin notification)
-      if (user.isAdmin !== true) {
-        // In a real app, this would be sent to all admin users
-        notifyNewOrder(newOrder.id, newOrder.customerName);
-      }
-
+  
+      // Notify admin about new order - FIXED CONDITION
+      // This should only notify admins, not regular users
+      // Remove this from here since it should be handled server-side or in admin context
+      
       return newOrder;
     } catch (error) {
       setError("Failed to create order");
@@ -98,43 +121,39 @@ export const OrderProvider = ({ children }) => {
   const updateOrderStatus = async (orderId, newStatus) => {
     setLoading(true);
     setError(null);
-
+  
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      const response = await api.patch(`/admin/orders/${orderId}/status`, {
+        status: newStatus,
+      });
+  
+      const updatedOrder = response.data.data;
+  
+      // Update local state
       setOrders((prevOrders) =>
         prevOrders.map((order) => {
           if (order.id === orderId) {
-            const updatedOrder = {
-              ...order,
-              status: newStatus,
-              updatedAt: new Date().toISOString(),
-              // Update payment status if order is confirmed
-              paymentStatus:
-                newStatus === "confirmed" ? "pending" : order.paymentStatus,
-            };
-
-            // Send status update notifications to customer
-            switch (newStatus) {
-              case "confirmed":
-                notifyOrderConfirmed(orderId);
-                break;
-              case "shipped":
-                notifyOrderShipped(orderId);
-                break;
-              case "delivered":
-                notifyOrderDelivered(orderId);
-                break;
+            // Send status update notifications ONLY to customers, not admins
+            if (user?.role === 'user') {
+              switch (newStatus) {
+                case "processing":
+                  notifyOrderConfirmed(orderId);
+                  break;
+                case "shipped":
+                  notifyOrderShipped(orderId);
+                  break;
+                case "delivered":
+                  notifyOrderDelivered(orderId);
+                  break;
+              }
             }
-
             return updatedOrder;
           }
           return order;
         })
       );
-
-      return true;
+      
+      return updatedOrder;
     } catch (error) {
       setError("Failed to update order status");
       throw error;
@@ -148,22 +167,18 @@ export const OrderProvider = ({ children }) => {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await api.patch(`/admin/orders/${orderId}/payment`, {
+        payment_status: paymentStatus,
+      });
 
+      const updatedOrder = response.data.data;
+
+      // Update local state
       setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId
-            ? {
-                ...order,
-                paymentStatus,
-                updatedAt: new Date().toISOString(),
-              }
-            : order
-        )
+        prevOrders.map((order) => (order.id === orderId ? updatedOrder : order))
       );
 
-      return true;
+      return updatedOrder;
     } catch (error) {
       setError("Failed to update payment status");
       throw error;
@@ -172,39 +187,144 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const getOrderById = (orderId) => {
-    return orders.find((order) => order.id === orderId);
-  };
+  const getOrderById = useCallback(async (orderId) => {
+    setLoading(true);
+    setError(null);
 
-  const getUserOrders = (userId) => {
-    return orders.filter((order) => order.userId === userId);
-  };
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch order:", error);
+      setError("Failed to fetch order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []); // No dependencies needed for this function
 
-  const getAllOrders = () => {
-    return orders;
-  };
+  const cancelOrder = useCallback(async (orderId, cancellationReason) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.patch(`/orders/${orderId}/cancel`, {
+        cancellation_reason: cancellationReason,
+      });
+
+      // Update local state
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId
+            ? {
+                ...order,
+                status: "cancelled",
+                updated_at: new Date().toISOString(),
+              }
+            : order
+        )
+      );
+
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      setError("Failed to cancel order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []); // No dependencies needed for this function
+
+  const getAllOrders = useCallback(async (page = 1, perPage = 10, filters = {}) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...filters
+      });
+      
+      const response = await api.get(`/admin/orders?${params}`);
+      const responseData = response.data.data;
+      
+      // Handle paginated response structure
+      const allOrders = responseData.data || [];
+      const paginationData = {
+        current_page: responseData.current_page || 1,
+        last_page: responseData.last_page || 1,
+        per_page: responseData.per_page || 10,
+        total: responseData.total || 0,
+        from: responseData.from || 0,
+        to: responseData.to || 0
+      };
+      
+      setOrders(allOrders);
+      setPagination(paginationData);
+      
+      return {
+        orders: allOrders,
+        pagination: paginationData
+      };
+    } catch (error) {
+      console.error("Failed to fetch all orders:", error);
+      setError("Failed to fetch all orders");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const getOrdersByStatus = (status) => {
     return orders.filter((order) => order.status === status);
   };
 
-  const cancelOrder = async (orderId) => {
-    const order = getOrderById(orderId);
-    if (!order) {
-      throw new Error("Order not found");
-    }
+  const getOrderStats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    if (order.status === "delivered" || order.status === "cancelled") {
-      throw new Error("Cannot cancel this order");
+    try {
+      const response = await api.get("/admin/orders/stats");
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch order statistics:", error);
+      setError("Failed to fetch order statistics");
+      throw error;
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return updateOrderStatus(orderId, "cancelled");
-  };
+  const getAllowedStatuses = useCallback(async (orderId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get(`/admin/orders/${orderId}/allowed-statuses`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Failed to fetch allowed statuses:", error);
+      setError("Failed to fetch allowed statuses");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refreshOrders = useCallback(async (page = 1, perPage = 10, filters = {}) => {
+    if (user?.isAdmin) {
+      return await getAllOrders(page, perPage, filters);
+    } else {
+      return await getUserOrders(true);
+    }
+  }, [user, getAllOrders, getUserOrders]);
 
   const value = {
     orders,
     loading,
     error,
+    pagination,
     createOrder,
     updateOrderStatus,
     updatePaymentStatus,
@@ -212,6 +332,9 @@ export const OrderProvider = ({ children }) => {
     getUserOrders,
     getAllOrders,
     getOrdersByStatus,
+    getOrderStats,
+    getAllowedStatuses,
+    refreshOrders,
     cancelOrder,
   };
 
@@ -219,3 +342,7 @@ export const OrderProvider = ({ children }) => {
     <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
   );
 };
+// REMOVE OR COMMENT OUT these lines (105-107):
+// if (user.isAdmin !== true) {
+//   notifyNewOrder(newOrder.id, newOrder.customer_name || user.name);
+// }

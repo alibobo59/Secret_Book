@@ -22,7 +22,7 @@ const ActionButtons = ({
         <button
           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
           onClick={onEdit}
-          aria-label="Edit">
+          aria-label="Chỉnh sửa">
           <Edit className="h-5 w-5" />
         </button>
       )}
@@ -30,7 +30,7 @@ const ActionButtons = ({
         <button
           className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
           onClick={onDelete}
-          aria-label="Delete">
+          aria-label="Xóa">
           <Trash2 className="h-5 w-5" />
         </button>
       )}

@@ -12,6 +12,7 @@ class AuditLogController extends Controller
     /**
      * Get audit logs for a specific model
      */
+<<<<<<< HEAD
     public function getModelAuditLogs(Request $request, $modelType, $modelId): JsonResponse
     {
         $query = AuditLog::where('auditable_type', $modelType)
@@ -57,6 +58,75 @@ class AuditLogController extends Controller
         });
 
         return response()->json($auditLogs);
+=======
+    public function getModelAuditLogs(Request $request, $modelType, $modelId)
+    {
+        $query = AuditLog::where('auditable_type', 'App\\Models\\' . ucfirst($modelType))
+                         ->where('auditable_id', $modelId)
+                         ->with(['user', 'auditable'])
+                         ->orderBy('created_at', 'desc');
+
+        // Enhanced filtering for Book and Order models
+        if (in_array(strtolower($modelType), ['book', 'order'])) {
+            // Filter by event type if specified
+            if ($request->has('event_type')) {
+                $query->where('event', $request->event_type);
+            }
+            
+            // Filter by date range if specified
+            if ($request->has('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+            if ($request->has('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+            
+            // Filter by user if specified
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        }
+
+        $logs = $query->paginate($request->get('per_page', 10));
+
+        // Transform the data to include enhanced metadata
+        $transformedLogs = $logs->getCollection()->map(function ($log) {
+            $logArray = $log->toArray();
+            
+            // Add enhanced metadata for Book and Order models
+            if ($log->metadata) {
+                $logArray['enhanced_metadata'] = $log->metadata;
+                
+                // Add specific enhancements based on model type
+                if (str_contains($log->auditable_type, 'Book')) {
+                    $logArray['model_display_name'] = 'Book';
+                    $logArray['icon'] = 'book';
+                } elseif (str_contains($log->auditable_type, 'Order')) {
+                    $logArray['model_display_name'] = 'Order';
+                    $logArray['icon'] = 'shopping-cart';
+                    
+                    // Add status transition info if available
+                    if (isset($log->metadata['status_transition'])) {
+                        $logArray['status_transition'] = $log->metadata['status_transition'];
+                    }
+                }
+            }
+            
+            return $logArray;
+        });
+
+        $logs->setCollection($transformedLogs);
+
+        return response()->json([
+            'data' => $logs->items(),
+            'pagination' => [
+                'current_page' => $logs->currentPage(),
+                'last_page' => $logs->lastPage(),
+                'per_page' => $logs->perPage(),
+                'total' => $logs->total(),
+            ]
+        ]);
+>>>>>>> safety-checkpoint
     }
 
     /**

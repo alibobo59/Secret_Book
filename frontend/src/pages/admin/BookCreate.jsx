@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBook } from "../../contexts/BookContext";
+import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
 import { Loading } from "../../components/admin";
 
 const BookCreate = () => {
-  const { loading, error, setError } = useOutletContext();
+  const { loading } = useOutletContext();
   const { user, getToken, hasRole } = useAuth();
   const { categories, authors, publishers, books, setBooks } = useBook();
+  const { showSuccess } = useToast();
   const navigate = useNavigate();
+  
+  // Trạng thái lỗi cục bộ
+  const [error, setError] = useState(null);
 
   const [isVariableProduct, setIsVariableProduct] = useState(false);
   const [attributes, setAttributes] = useState([{ name: "", values: "" }]);
@@ -29,7 +34,7 @@ const BookCreate = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [localLoading, setLocalLoading] = useState(false);
 
-  // Toggle between simple and variable product
+  // Chuyển đổi giữa sản phẩm đơn giản và sản phẩm biến thể
   const toggleProductType = () => {
     setIsVariableProduct(!isVariableProduct);
     setForm({ ...form, variations: [], stock_quantity: "" });
@@ -37,7 +42,7 @@ const BookCreate = () => {
     setAttributeErrors([]);
   };
 
-  // Handle attribute changes
+  // Xử lý thay đổi thuộc tính
   const handleAttributeChange = (index, field, value) => {
     const updatedAttributes = attributes.map((attr, i) =>
       i === index ? { ...attr, [field]: value } : attr
@@ -46,22 +51,22 @@ const BookCreate = () => {
     validateAttributes(updatedAttributes);
   };
 
-  // Validate attributes
+  // Xác thực thuộc tính
   const validateAttributes = (attrs) => {
     const errors = [];
     const names = attrs.map((attr) => attr.name.trim().toLowerCase());
     attrs.forEach((attr, index) => {
       const err = {};
       if (!attr.name.trim()) {
-        err.name = "Attribute name is required.";
+        err.name = "Tên thuộc tính là bắt buộc.";
       } else if (
         names.filter((name) => name === attr.name.trim().toLowerCase()).length >
         1
       ) {
-        err.name = "Duplicate attribute name.";
+        err.name = "Tên thuộc tính bị trùng lặp.";
       }
       if (!attr.values.trim()) {
-        err.values = "Attribute values are required.";
+        err.values = "Giá trị thuộc tính là bắt buộc.";
       }
       if (Object.keys(err).length > 0) {
         errors[index] = err;
@@ -71,22 +76,22 @@ const BookCreate = () => {
     return errors.length === 0;
   };
 
-  // Add new attribute
+  // Thêm thuộc tính mới
   const addAttribute = () => {
     setAttributes([...attributes, { name: "", values: "" }]);
   };
 
-  // Remove attribute
+  // Xóa thuộc tính
   const removeAttribute = (index) => {
     const updatedAttributes = attributes.filter((_, i) => i !== index);
     setAttributes(updatedAttributes);
     validateAttributes(updatedAttributes);
   };
 
-  // Generate variations form based on attributes
+  // Tạo biểu mẫu biến thể dựa trên thuộc tính
   const generateVariationsForm = () => {
     if (!validateAttributes(attributes)) {
-      setError("Please fix attribute errors before generating variations.");
+      setError("Vui lòng sửa lỗi thuộc tính trước khi tạo biến thể.");
       return;
     }
 
@@ -94,7 +99,7 @@ const BookCreate = () => {
       (attr) => attr.name.trim() && attr.values.trim()
     );
     if (validAttributes.length === 0) {
-      setError("Please define at least one valid attribute with values.");
+      setError("Vui lòng định nghĩa ít nhất một thuộc tính hợp lệ với giá trị.");
       return;
     }
 
@@ -132,7 +137,7 @@ const BookCreate = () => {
     setError(null);
   };
 
-  // Generate variation SKU dynamically
+  // Tạo SKU biến thể động
   const generateVariationSku = (attributes, parentSku = form.sku) => {
     if (!parentSku) return "";
     const attrValues = Object.values(attributes)
@@ -141,7 +146,7 @@ const BookCreate = () => {
     return attrValues ? `${parentSku}-${attrValues}` : `${parentSku}-NEW`;
   };
 
-  // Add new variation manually
+  // Thêm biến thể mới thủ công
   const addVariation = () => {
     setForm({
       ...form,
@@ -158,7 +163,7 @@ const BookCreate = () => {
     });
   };
 
-  // Remove a variation
+  // Xóa một biến thể
   const removeVariation = (index) => {
     setForm({
       ...form,
@@ -166,7 +171,7 @@ const BookCreate = () => {
     });
   };
 
-  // Update a variation field
+  // Cập nhật trường biến thể
   const updateVariation = (index, field, value) => {
     const updatedVariations = form.variations.map((variation, i) =>
       i === index ? { ...variation, [field]: value } : variation
@@ -223,16 +228,13 @@ const BookCreate = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log("Selected file:", file);
     if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      console.log("Valid image file:", file.name, file.type);
       setForm({ ...form, image: file });
       setValidationErrors((prev) => ({ ...prev, image: null }));
     } else {
-      console.warn("Invalid file selected:", file ? file.type : "No file");
       setValidationErrors((prev) => ({
         ...prev,
-        image: ["Please select a valid image (JPEG, PNG, JPG)."],
+        image: ["Vui lòng chọn một hình ảnh hợp lệ (JPEG, PNG, JPG)."],
       }));
       setForm({ ...form, image: null });
       e.target.value = "";
@@ -241,23 +243,17 @@ const BookCreate = () => {
 
   const handleVariationFileChange = (index, e) => {
     const file = e.target.files[0];
-    console.log(`Variation ${index} selected file:`, file);
     if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-      console.log(`Variation ${index} valid image file:`, file.name, file.type);
       updateVariation(index, "image", file);
       setValidationErrors((prev) => ({
         ...prev,
         [`variations.${index}.image`]: null,
       }));
     } else {
-      console.warn(
-        `Variation ${index} invalid file selected:`,
-        file ? file.type : "No file"
-      );
       setValidationErrors((prev) => ({
         ...prev,
         [`variations.${index}.image`]: [
-          "Please select a valid image (JPEG, PNG, JPG).",
+          "Vui lòng chọn một hình ảnh hợp lệ (JPEG, PNG, JPG).",
         ],
       }));
       updateVariation(index, "image", null);
@@ -268,13 +264,13 @@ const BookCreate = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!hasRole(["admin", "mod"])) {
-      setError("Only admins or moderators can create books.");
+      setError("Chỉ quản trị viên hoặc người kiểm duyệt mới có thể tạo sách.");
       return;
     }
 
     const token = getToken();
     if (!token) {
-      setError("Authentication token is missing. Please log in.");
+      setError("Token xác thực bị thiếu. Vui lòng đăng nhập.");
       return;
     }
 
@@ -293,16 +289,8 @@ const BookCreate = () => {
       if (form.author_id) formData.append("author_id", form.author_id);
       if (form.publisher_id) formData.append("publisher_id", form.publisher_id);
 
-      console.log(
-        "form.image:",
-        form.image,
-        form.image instanceof File ? form.image.name : "Not a File"
-      );
       if (form.image && form.image instanceof File) {
-        console.log("Appending image:", form.image.name, form.image.type);
         formData.append("image", form.image);
-      } else {
-        console.log("No valid image to append");
       }
 
       if (isVariableProduct) {
@@ -311,7 +299,7 @@ const BookCreate = () => {
             (v) => Object.keys(v.attributes || {}).length === 0
           )
         ) {
-          setError("At least one variation with attributes is required.");
+          setError("Cần ít nhất một biến thể có thuộc tính.");
           setLocalLoading(false);
           return;
         }
@@ -322,7 +310,6 @@ const BookCreate = () => {
             return;
           }
           const attributesJson = JSON.stringify(attributes);
-          console.log(`Variation ${index} attributes:`, attributesJson);
           formData.append(`variations[${index}][attributes]`, attributesJson);
           if (variation.price)
             formData.append(`variations[${index}][price]`, variation.price);
@@ -333,23 +320,9 @@ const BookCreate = () => {
           if (variation.sku)
             formData.append(`variations[${index}][sku]`, variation.sku);
           if (variation.image && variation.image instanceof File) {
-            console.log(
-              `Appending variation ${index} image:`,
-              variation.image.name
-            );
             formData.append(`variations[${index}][image]`, variation.image);
           }
         });
-      }
-
-      console.log("FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(
-          `${key}:`,
-          value instanceof File
-            ? `[File: ${value.name}, Type: ${value.type}]`
-            : value
-        );
       }
 
       const config = {
@@ -360,6 +333,13 @@ const BookCreate = () => {
 
       const response = await api.post("/books", formData, config);
       setBooks([...books, response.data.data]);
+      
+      // Hiển thị thông báo thành công
+      showSuccess(
+        "Tạo sách thành công!",
+        `Sách "${form.title}" đã được tạo thành công và đã được thêm vào danh sách.`
+      );
+      
       setForm({
         title: "",
         sku: "",
@@ -381,14 +361,14 @@ const BookCreate = () => {
       setError(null);
       navigate("/admin/books");
     } catch (err) {
-      console.error("Submission error:", err.response?.data);
+      console.error("Lỗi gửi form:", err.response?.data);
       if (err.response?.status === 422) {
         setValidationErrors(err.response.data.error || {});
-        setError("Please correct the form errors.");
+        setError("Vui lòng sửa các lỗi trong biểu mẫu.");
       } else if (err.response?.status === 401) {
-        setError("Unauthorized: Invalid or missing authentication token.");
+        setError("Không được phép: Token xác thực không hợp lệ hoặc bị thiếu.");
       } else {
-        const message = err.response?.data?.error || "Failed to create book";
+        const message = err.response?.data?.error || "Không thể tạo sách";
         setError(message);
       }
     } finally {
@@ -396,6 +376,7 @@ const BookCreate = () => {
     }
   };
 
+  // Template JSX cho component BookCreate
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -407,12 +388,12 @@ const BookCreate = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-        Create Book
+        Tạo Sách Mới
       </h2>
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
       {!hasRole(["admin", "mod"]) && !error && (
         <p className="text-red-500 text-sm mb-16">
-          Only admins or moderators can create books.
+          Chỉ quản trị viên hoặc người kiểm duyệt mới có thể tạo sách.
         </p>
       )}
       {hasRole(["admin", "mod"]) && (
@@ -424,7 +405,7 @@ const BookCreate = () => {
               className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="text-gray-700 dark:text-gray-200 font-semibold">
-                  Product Type
+                  Loại Sản Phẩm
                 </label>
                 <div className="flex space-x-4 mt-2">
                   <button
@@ -435,7 +416,7 @@ const BookCreate = () => {
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
                     }`}>
-                    Simple Product
+                    Sản Phẩm Đơn Giản
                   </button>
                   <button
                     type="button"
@@ -445,23 +426,22 @@ const BookCreate = () => {
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
                     }`}>
-                    Variable Product
+                    Sản Phẩm Biến Thể
                   </button>
                 </div>
               </div>
 
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Title
+                  Tiêu Đề
                   <span className="text-red-600 text-xs font-semibold"> *</span>
                 </label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Book title"
+                  placeholder="Tiêu đề sách"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.title && (
                   <p className="text-red-500 text-sm mt-1">
@@ -490,9 +470,8 @@ const BookCreate = () => {
                       })),
                     });
                   }}
-                  placeholder="Unique SKU (e.g., BOOK001)"
+                  placeholder="SKU duy nhất (ví dụ: BOOK001)"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                 />
                 {validationErrors.sku && (
                   <p className="text-red-500 text-sm mt-1">
@@ -502,14 +481,14 @@ const BookCreate = () => {
               </div>
               <div className="md:col-span-2">
                 <label className="text-gray-700 dark:text-gray-200">
-                  Description
+                  Mô Tả
                 </label>
                 <textarea
                   value={form.description}
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
-                  placeholder="Book description (optional)"
+                  placeholder="Mô tả sách (tùy chọn)"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                   rows="4"
                 />
@@ -521,16 +500,15 @@ const BookCreate = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Price
+                  Giá
                   <span className="text-red-600 text-xs font-semibold"> *</span>
                 </label>
                 <input
                   type="number"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  placeholder="Price (e.g., 12.99)"
+                  placeholder="Giá (ví dụ: 12.99)"
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                  required
                   min="0"
                   step="0.01"
                 />
@@ -543,7 +521,7 @@ const BookCreate = () => {
               {!isVariableProduct && (
                 <div>
                   <label className="text-gray-700 dark:text-gray-200">
-                    Stock Quantity
+                    Số lượng tồn kho
                     <span className="text-red-600 text-xs font-semibold">
                       {" "}
                       *
@@ -555,9 +533,8 @@ const BookCreate = () => {
                     onChange={(e) =>
                       setForm({ ...form, stock_quantity: e.target.value })
                     }
-                    placeholder="Stock quantity (e.g., 100)"
+                    placeholder="Số lượng tồn kho (ví dụ: 100)"
                     className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                    required
                     min="0"
                   />
                   {validationErrors.stock_quantity && (
@@ -569,7 +546,7 @@ const BookCreate = () => {
               )}
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Category
+                  Danh Mục
                 </label>
                 <select
                   value={form.category_id}
@@ -577,7 +554,7 @@ const BookCreate = () => {
                     setForm({ ...form, category_id: e.target.value })
                   }
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full">
-                  <option value="">Select category (optional)</option>
+                  <option value="">Chọn danh mục (tùy chọn)</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -592,7 +569,7 @@ const BookCreate = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Author
+                  Tác Giả
                 </label>
                 <select
                   value={form.author_id}
@@ -600,7 +577,7 @@ const BookCreate = () => {
                     setForm({ ...form, author_id: e.target.value })
                   }
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full">
-                  <option value="">Select author (optional)</option>
+                  <option value="">Chọn tác giả (tùy chọn)</option>
                   {authors.map((author) => (
                     <option key={author.id} value={author.id}>
                       {author.name}
@@ -615,7 +592,7 @@ const BookCreate = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Publisher
+                  Nhà Xuất Bản
                 </label>
                 <select
                   value={form.publisher_id}
@@ -623,10 +600,10 @@ const BookCreate = () => {
                     setForm({ ...form, publisher_id: e.target.value })
                   }
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full">
-                  <option value="">Select publisher (optional)</option>
-                  {publishers.map((publisher) => (
-                    <option key={publisher.id} value={publisher.id}>
-                      {publisher.name}
+                  <option value="">Chọn nhà xuất bản (tùy chọn)</option>
+                  {publishers.map((pub) => (
+                    <option key={pub.id} value={pub.id}>
+                      {pub.name}
                     </option>
                   ))}
                 </select>
@@ -638,13 +615,12 @@ const BookCreate = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Image
+                  Hình Ảnh
                 </label>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/jpg"
                   onChange={handleFileChange}
-                  key={form.image ? form.image.name : "image-input"}
                   className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                 />
                 {validationErrors.image && (
@@ -657,7 +633,7 @@ const BookCreate = () => {
               {isVariableProduct && (
                 <div className="md:col-span-2">
                   <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-                    Attributes
+                    Thuộc Tính
                   </h3>
                   {attributes.map((attribute, index) => (
                     <div
@@ -665,19 +641,19 @@ const BookCreate = () => {
                       className="border p-4 mb-4 rounded-md bg-gray-50 dark:bg-gray-700">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">
-                          Attribute {index + 1}
+                          Thuộc Tính {index + 1}
                         </h4>
                         <button
                           type="button"
                           onClick={() => removeAttribute(index)}
                           className="text-red-500 hover:text-red-700">
-                          Remove
+                          Xóa
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Attribute Name
+                            Tên Thuộc Tính
                             <span className="text-red-600 text-xs font-semibold">
                               {" "}
                               *
@@ -693,9 +669,8 @@ const BookCreate = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="e.g., Format"
+                            placeholder="ví dụ: Định dạng"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                           />
                           {attributeErrors[index]?.name && (
                             <p className="text-red-500 text-sm mt-1">
@@ -705,7 +680,7 @@ const BookCreate = () => {
                         </div>
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Values
+                            Giá Trị
                             <span className="text-red-600 text-xs font-semibold">
                               {" "}
                               *
@@ -721,9 +696,8 @@ const BookCreate = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="Comma-separated (e.g., Hardcover,Paperback)"
+                            placeholder="Phân cách bằng dấu phẩy (ví dụ: Bìa cứng,Bìa mềm)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                           />
                           {attributeErrors[index]?.values && (
                             <p className="text-red-500 text-sm mt-1">
@@ -738,13 +712,13 @@ const BookCreate = () => {
                     type="button"
                     onClick={addAttribute}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mr-2">
-                    Add Attribute
+                    Thêm Thuộc Tính
                   </button>
                   <button
                     type="button"
                     onClick={generateVariationsForm}
                     className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                    Generate Variations
+                    Tạo Biến Thể
                   </button>
                 </div>
               )}
@@ -752,7 +726,7 @@ const BookCreate = () => {
               {isVariableProduct && form.variations.length > 0 && (
                 <div className="md:col-span-2">
                   <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-                    Variations
+                    Biến Thể
                   </h3>
                   {form.variations.map((variation, index) => (
                     <div
@@ -760,13 +734,13 @@ const BookCreate = () => {
                       className="border p-4 mb-4 rounded-md bg-gray-50 dark:bg-gray-700">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">
-                          Variation {index + 1}
+                          Biến Thể {index + 1}
                         </h4>
                         <button
                           type="button"
                           onClick={() => removeVariation(index)}
                           className="text-red-500 hover:text-red-700">
-                          Remove
+                          Xóa
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -785,9 +759,8 @@ const BookCreate = () => {
                                       attrValue
                                     )
                                   }
-                                  placeholder="Attribute name"
+                                  placeholder="Tên thuộc tính"
                                   className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                                  required
                                 />
                                 <input
                                   type="text"
@@ -800,9 +773,8 @@ const BookCreate = () => {
                                       e.target.value
                                     )
                                   }
-                                  placeholder="Attribute value"
+                                  placeholder="Giá trị thuộc tính"
                                   className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                                  required
                                 />
                               </div>
                               <button
@@ -821,12 +793,12 @@ const BookCreate = () => {
                             type="button"
                             onClick={() => addVariationAttribute(index)}
                             className="text-blue-600 hover:text-blue-700 text-sm">
-                            + Add Attribute
+                            + Thêm Thuộc Tính
                           </button>
                         </div>
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Price
+                            Giá
                           </label>
                           <input
                             type="number"
@@ -834,7 +806,7 @@ const BookCreate = () => {
                             onChange={(e) =>
                               updateVariation(index, "price", e.target.value)
                             }
-                            placeholder="Price (optional)"
+                            placeholder="Giá (tùy chọn)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                             min="0"
                             step="0.01"
@@ -847,7 +819,7 @@ const BookCreate = () => {
                         </div>
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Stock Quantity
+                            Số Lượng Tồn Kho
                             <span className="text-red-600 text-xs font-semibold">
                               {" "}
                               *
@@ -863,9 +835,8 @@ const BookCreate = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="Stock quantity (e.g., 50)"
+                            placeholder="Số lượng tồn kho (ví dụ: 50)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
-                            required
                             min="0"
                           />
                           {validationErrors[
@@ -890,7 +861,7 @@ const BookCreate = () => {
                             onChange={(e) =>
                               updateVariation(index, "sku", e.target.value)
                             }
-                            placeholder="Variation SKU (auto-generated)"
+                            placeholder="SKU biến thể (tự động tạo)"
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                           />
                           {validationErrors[`variations.${index}.sku`] && (
@@ -901,18 +872,13 @@ const BookCreate = () => {
                         </div>
                         <div>
                           <label className="text-gray-700 dark:text-gray-200">
-                            Image
+                            Hình Ảnh
                           </label>
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/jpg"
                             onChange={(e) =>
                               handleVariationFileChange(index, e)
-                            }
-                            key={
-                              variation.image
-                                ? variation.image.name
-                                : `variation-image-${index}`
                             }
                             className="mt-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-full"
                           />
@@ -929,7 +895,7 @@ const BookCreate = () => {
                     type="button"
                     onClick={addVariation}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                    Add Variation
+                    Thêm Biến Thể
                   </button>
                 </div>
               )}
@@ -938,7 +904,7 @@ const BookCreate = () => {
                 type="submit"
                 className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 md:col-span-2"
                 disabled={localLoading}>
-                Create Book
+                Tạo Sách
               </button>
             </form>
           )}
@@ -949,3 +915,4 @@ const BookCreate = () => {
 };
 
 export default BookCreate;
+

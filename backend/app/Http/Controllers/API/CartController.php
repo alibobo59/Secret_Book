@@ -1,5 +1,11 @@
 <?php
+<<<<<<< HEAD
 namespace App\Http\Controllers\API;
+=======
+
+namespace App\Http\Controllers\API;
+
+>>>>>>> safety-checkpoint
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -12,7 +18,10 @@ use Illuminate\Support\Facades\DB;
 class CartController extends Controller
 {
     public function index()
+<<<<<<< HEAD
     //Lấy giỏ hàng hiện tại
+=======
+>>>>>>> safety-checkpoint
     {
         try {
             $user = Auth::user();
@@ -51,7 +60,10 @@ class CartController extends Controller
     }
 
     public function addItem(Request $request)
+<<<<<<< HEAD
     //Thêm sản phẩm vào giỏ
+=======
+>>>>>>> safety-checkpoint
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -105,7 +117,10 @@ class CartController extends Controller
     }
 
     public function updateItem(Request $request, $bookId)
+<<<<<<< HEAD
     //Cập nhật số lượng sản phẩm
+=======
+>>>>>>> safety-checkpoint
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -155,7 +170,10 @@ class CartController extends Controller
     }
 
     public function removeItem($bookId)
+<<<<<<< HEAD
     //Xóa sản phẩm khỏi giỏ
+=======
+>>>>>>> safety-checkpoint
     {
         try {
             $user = Auth::user();
@@ -183,7 +201,10 @@ class CartController extends Controller
     }
 
     public function clear()
+<<<<<<< HEAD
     //Xóa toàn bộ giỏ
+=======
+>>>>>>> safety-checkpoint
     {
         try {
             $user = Auth::user();
@@ -204,7 +225,10 @@ class CartController extends Controller
 
     public function merge(Request $request)
     {
+<<<<<<< HEAD
         //Gộp giỏ hàng của khách với user khi đăng nhập
+=======
+>>>>>>> safety-checkpoint
         try {
             $validator = Validator::make($request->all(), [
                 'guest_cart' => 'required|array',

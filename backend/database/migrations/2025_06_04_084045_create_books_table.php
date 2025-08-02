@@ -11,12 +11,18 @@ return new class extends Migration {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->decimal('price', 15, 0);
+
+            // --- THIS IS THE CORRECTED LINE for VND ---
+            // Creates a large, positive integer column, perfect for whole-number currencies.
+            $table->unsignedBigInteger('price');
+
             $table->string('sku')->unique();
             $table->integer('stock_quantity')->nullable();
+
             $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('author_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('publisher_id')->nullable()->constrained()->onDelete('set null');
+
             $table->string('image')->nullable();
             $table->timestamps();
         });

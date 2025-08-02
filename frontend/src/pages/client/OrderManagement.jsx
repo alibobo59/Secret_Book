@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../../contexts/AuthContext";
+import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
+import CancelOrderModal from "../../components/common/CancelOrderModal";
+import { reviewAPI } from "../../services/api";
 import {
   Package,
   Truck,
@@ -23,9 +25,11 @@ import {
   Mail,
 } from "lucide-react";
 
+// Dữ liệu đơn hàng giả để kiểm tra
+
 const OrderManagementPage = () => {
   const { user } = useAuth();
-
+  const { getUserOrders, cancelOrder, loading, error } = useOrder();
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
@@ -37,42 +41,101 @@ const OrderManagementPage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [reviewEligibility, setReviewEligibility] = useState({});
 
+  // Hàm kiểm tra xem đơn hàng có sản phẩm nào có thể đánh giá không
+  const hasReviewableItems = (order) => {
+    if (!order.items || order.items.length === 0) return false;
+
+    const result = order.items.some((item) => {
+      const bookId = item.book_id || item.bookId;
+      const canReview = bookId && reviewEligibility[bookId] === true;
+      return canReview;
+    });
+
+    return result;
+  };
+
+  // In the useEffect where orders are loaded:
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    // Load user's orders
-    const userOrders = getUserOrders(user.id);
-    setOrders(userOrders);
-    setFilteredOrders(userOrders);
-  }, [user, getUserOrders, navigate]);
+    // Tải đơn hàng của người dùng từ API
+    const loadOrders = async () => {
+      try {
+        setIsLoadingOrders(true);
+        const userOrders = await getUserOrders(); // Xóa tham số userId
+        setOrders(userOrders || []);
+        setFilteredOrders(userOrders || []);
+
+        // Kiểm tra tính đủ điều kiện đánh giá cho các đơn hàng đã giao
+        await checkReviewEligibility(userOrders || []);
+      } catch (error) {
+        console.error("Không thể tải đơn hàng:", error);
+        setOrders([]);
+        setFilteredOrders([]);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    // Hàm kiểm tra tính đủ điều kiện đánh giá cho tất cả sách trong đơn hàng đã giao
+    const checkReviewEligibility = async (ordersList) => {
+      const eligibilityMap = {};
+
+      for (const order of ordersList) {
+        if (order.status === "delivered" && order.items) {
+          for (const item of order.items) {
+            const bookId = item.book_id || item.bookId;
+            if (bookId && !eligibilityMap[bookId]) {
+              try {
+                const response = await reviewAPI.canReviewBook(bookId);
+                eligibilityMap[bookId] = response.data.can_review;
+              } catch (error) {
+                console.error(
+                  `Failed to check review eligibility for book ${bookId}:`,
+                  error
+                );
+                eligibilityMap[bookId] = false;
+              }
+            }
+          }
+        }
+      }
+
+      setReviewEligibility(eligibilityMap);
+    };
+
+    loadOrders();
+  }, [user, navigate]); // Đã xóa getUserOrders khỏi dependencies để tránh vòng lặp vô hạn
 
   useEffect(() => {
-    // Filter and search orders
+    // Lọc và tìm kiếm đơn hàng
     let filtered = orders;
 
-    // Apply search filter
+    // Áp dụng bộ lọc tìm kiếm
     if (searchTerm) {
       filtered = filtered.filter(
         (order) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.items?.some(
             (item) =>
-              item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.author.toLowerCase().includes(searchTerm.toLowerCase())
+              item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.author?.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
     }
 
-    // Apply status filter
+    // Áp dụng bộ lọc trạng thái
     if (statusFilter) {
       filtered = filtered.filter((order) => order.status === statusFilter);
     }
 
-    // Apply sorting
+    // Áp dụng sắp xếp
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -101,14 +164,14 @@ const OrderManagementPage = () => {
     setIsCancelModalOpen(true);
   };
 
-  const confirmCancelOrder = async () => {
+  const confirmCancelOrder = async (cancellationReason) => {
     if (!selectedOrder) return;
 
     setCancellingOrderId(selectedOrder.id);
     try {
-      await cancelOrder(selectedOrder.id);
+      await cancelOrder(selectedOrder.id, cancellationReason);
 
-      // Update local state
+      // Cập nhật trạng thái cục bộ
       const updatedOrders = orders.map((order) =>
         order.id === selectedOrder.id
           ? {
@@ -123,8 +186,8 @@ const OrderManagementPage = () => {
       setIsCancelModalOpen(false);
       setSelectedOrder(null);
     } catch (error) {
-      console.error("Failed to cancel order:", error);
-      alert("Failed to cancel order. Please try again or contact support.");
+      console.error("Không thể hủy đơn hàng:", error);
+      alert("Không thể hủy đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.");
     } finally {
       setCancellingOrderId(null);
     }
@@ -168,25 +231,64 @@ const OrderManagementPage = () => {
   };
 
   const canCancelOrder = (order) => {
-    return order.status === "pending" || order.status === "confirmed";
+    return order.status === "pending";
   };
 
   const statusOptions = [
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "processing", label: "Processing" },
-    { value: "shipped", label: "Shipped" },
-    { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "pending", label: "Chờ Xử Lý" },
+    { value: "processing", label: "Đang Xử Lý" },
+    { value: "shipped", label: "Đã Giao" },
+    { value: "delivered", label: "Đã Nhận" },
+    { value: "cancelled", label: "Đã Hủy" },
   ];
 
   const sortOptions = [
-    { value: "newest", label: "Newest First" },
-    { value: "oldest", label: "Oldest First" },
-    { value: "highest", label: "Highest Amount" },
-    { value: "lowest", label: "Lowest Amount" },
+    { value: "newest", label: "Mới Nhất Trước" },
+    { value: "oldest", label: "Cũ Nhất Trước" },
+    { value: "highest", label: "Số Tiền Cao Nhất" },
+    { value: "lowest", label: "Số Tiền Thấp Nhất" },
   ];
 
+  // Loading state check
+  if (isLoadingOrders) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">
+              Đang tải đơn hàng...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state check
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 dark:text-red-400">
+                Không thể tải đơn hàng
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+                Thử Lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main component return
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="container mx-auto px-4">
@@ -199,22 +301,22 @@ const OrderManagementPage = () => {
             to="/"
             className="inline-flex items-center text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mb-4">
             <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Home
+            Về Trang Chủ
           </Link>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                My Orders
+                Đơn Hàng Của Tôi
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Track and manage your book orders
+                Theo dõi và quản lý đơn hàng sách của bạn
               </p>
             </div>
             <button
               onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              Làm Mới
             </button>
           </div>
         </motion.div>
@@ -231,7 +333,7 @@ const OrderManagementPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search orders or books..."
+                placeholder="Tìm kiếm đơn hàng hoặc sách..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -245,7 +347,7 @@ const OrderManagementPage = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 appearance-none">
-                <option value="">All Statuses</option>
+                <option value="">Tất Cả Trạng Thái</option>
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -272,8 +374,7 @@ const OrderManagementPage = () => {
             {/* Results Count */}
             <div className="flex items-center justify-center md:justify-end">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {filteredOrders.length} order
-                {filteredOrders.length !== 1 ? "s" : ""} found
+                Tìm thấy {filteredOrders.length} đơn hàng
               </span>
             </div>
           </div>
@@ -288,18 +389,18 @@ const OrderManagementPage = () => {
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
               {orders.length === 0
-                ? "No orders yet"
-                : "No orders match your filters"}
+                ? "Chưa có đơn hàng nào"
+                : "Không có đơn hàng nào phù hợp với bộ lọc của bạn"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {orders.length === 0
-                ? "Start shopping to see your orders here"
-                : "Try adjusting your search or filter criteria"}
+                ? "Bắt đầu mua sắm để xem đơn hàng tại đây"
+                : "Thử điều chỉnh tiêu chí tìm kiếm hoặc bộ lọc của bạn"}
             </p>
             <Link
               to="/books"
               className="inline-flex items-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
-              Start Shopping
+              Bắt Đầu Mua Sắm
             </Link>
           </motion.div>
         ) : (
@@ -317,18 +418,15 @@ const OrderManagementPage = () => {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                        Order {order.id}
+                        Đơn Hàng {order.order_number || order.id}
                       </h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span>
-                          Placed on{" "}
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          Đặt hàng vào{" "}
+                          {new Date(order.created_at).toLocaleDateString()}
                         </span>
                         <span>•</span>
-                        <span>
-                          {order.items?.length || 0} item
-                          {(order.items?.length || 0) !== 1 ? "s" : ""}
-                        </span>
+                        <span>{order.items?.length || 0} sản phẩm</span>
                       </div>
                     </div>
 
@@ -342,7 +440,7 @@ const OrderManagementPage = () => {
                           order.status.slice(1)}
                       </span>
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
-                        ${order.total.toFixed(2)}
+                        {(order.total / 100).toFixed(2)}đ
                       </span>
                     </div>
                   </div>
@@ -351,26 +449,30 @@ const OrderManagementPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {order.items?.slice(0, 3).map((item) => (
                       <div
-                        key={item.bookId}
+                        key={item.book_id || item.id}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <img
-                          src={item.coverImage}
-                          alt={item.title}
+                          src={
+                            item.book?.image_url ||
+                            item.coverImage ||
+                            "/placeholder-book.jpg"
+                          }
+                          alt={item.book?.title || item.title}
                           className="w-12 h-16 object-cover rounded"
                         />
                         <div className="flex-grow min-w-0">
                           <h4 className="font-medium text-gray-800 dark:text-white text-sm truncate">
-                            {item.title}
+                            {item.book?.title || item.title}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                            by {item.author}
+                            của {item.book?.author?.name || item.author}
                           </p>
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                              Qty: {item.quantity}
+                              SL: {item.quantity}
                             </span>
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              {((item.price / 100) * item.quantity).toFixed(2)}đ
                             </span>
                           </div>
                         </div>
@@ -379,46 +481,39 @@ const OrderManagementPage = () => {
                     {(order.items?.length || 0) > 3 && (
                       <div className="flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          +{(order.items?.length || 0) - 3} more item
-                          {(order.items?.length || 0) - 3 !== 1 ? "s" : ""}
+                          +{(order.items?.length || 0) - 3} sản phẩm khác
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Order Actions */}
+                  {/* Hành Động Đơn Hàng */}
                   <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => handleViewOrder(order)}
                       className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                       <Eye className="h-4 w-4" />
-                      View Details
+                      Xem Chi Tiết
                     </button>
-
-                    <Link
-                      to={`/order-confirmation/${order.id}`}
-                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <Download className="h-4 w-4" />
-                      View Receipt
-                    </Link>
 
                     {canCancelOrder(order) && (
                       <button
                         onClick={() => handleCancelOrder(order)}
                         className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <XCircle className="h-4 w-4" />
-                        Cancel Order
+                        Hủy Đơn Hàng
                       </button>
                     )}
 
-                    {order.status === "delivered" && (
-                      <Link
-                        to={`/books/${order.items?.[0]?.bookId}`}
-                        className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                        <Package className="h-4 w-4" />
-                        Review Items
-                      </Link>
-                    )}
+                    {order.status === "delivered" &&
+                      hasReviewableItems(order) && (
+                        <Link
+                          to={`/orders/${order.id}/review`}
+                          className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                          <Package className="h-4 w-4" />
+                          Đánh Giá Đơn Hàng
+                        </Link>
+                      )}
                   </div>
                 </motion.div>
               ))}
@@ -426,7 +521,7 @@ const OrderManagementPage = () => {
           </div>
         )}
 
-        {/* Order Detail Modal */}
+        {/* Modal Chi Tiết Đơn Hàng */}
         <AnimatePresence>
           {isDetailModalOpen && selectedOrder && (
             <motion.div
@@ -442,7 +537,8 @@ const OrderManagementPage = () => {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
                   <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Order Details - {selectedOrder.id}
+                    Chi Tiết Đơn Hàng -{" "}
+                    {selectedOrder.order_number || selectedOrder.id}
                   </h2>
                   <button
                     onClick={() => setIsDetailModalOpen(false)}
@@ -451,13 +547,13 @@ const OrderManagementPage = () => {
                   </button>
                 </div>
 
-                {/* Modal Content */}
+                {/* Nội Dung Modal */}
                 <div className="p-6 space-y-6">
-                  {/* Order Info */}
+                  {/* Thông Tin Đơn Hàng */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Order Status
+                        Trạng Thái Đơn Hàng
                       </h3>
                       <span
                         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
@@ -470,94 +566,127 @@ const OrderManagementPage = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Order Date
+                        Ngày Đặt Hàng
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                        {new Date(
+                          selectedOrder.created_at
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-2">
-                        Total Amount
+                        Tổng Tiền
                       </h3>
                       <p className="text-lg font-semibold text-gray-800 dark:text-white">
-                        ${selectedOrder.total.toFixed(2)}
+                        {(selectedOrder.total / 100).toFixed(2)}đ
                       </p>
                     </div>
                   </div>
 
-                  {/* Shipping Address */}
+                  {/* Địa Chỉ Giao Hàng */}
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                       <h3 className="font-medium text-gray-800 dark:text-white">
-                        Shipping Address
+                        Địa Chỉ Giao Hàng
                       </h3>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {selectedOrder.shippingAddress?.firstName}{" "}
-                        {selectedOrder.shippingAddress?.lastName}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.address}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {selectedOrder.shippingAddress?.city},{" "}
-                        {selectedOrder.shippingAddress?.postalCode}
-                      </p>
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Họ Và Tên
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.name ||
+                            selectedOrder.shippingAddress?.name}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Thành Phố
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.city ||
+                            selectedOrder.shippingAddress?.city}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Địa Chỉ
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.address ||
+                            selectedOrder.shippingAddress?.address}
+                        </p>
+
+                      </div>
+
+
                     </div>
                   </div>
 
-                  {/* Contact Information */}
+                  {/* Thông Tin Liên Hệ */}
                   <div>
                     <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                      Contact Information
+                      Thông Tin Liên Hệ
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-3">
                         <Mail className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.contactInfo?.email}
+                          {selectedOrder.address?.email ||
+                            selectedOrder.user?.email ||
+                            selectedOrder.contactInfo?.email}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="h-4 w-4 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.contactInfo?.phone}
+                          {selectedOrder.address?.phone ||
+                            selectedOrder.contactInfo?.phone}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Order Items */}
+                  {/* Sản Phẩm Trong Đơn Hàng */}
                   <div>
                     <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                      Order Items
+                      Sản Phẩm Trong Đơn Hàng
                     </h3>
                     <div className="space-y-3">
                       {selectedOrder.items?.map((item) => (
                         <div
-                          key={item.bookId}
+                          key={item.book_id || item.id}
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
-                            src={item.coverImage}
-                            alt={item.title}
+                            src={
+                              item.book?.image_url ||
+                              item.coverImage ||
+                              "/placeholder-book.jpg"
+                            }
+                            alt={item.book?.title || item.title}
                             className="w-16 h-20 object-cover rounded"
                           />
                           <div className="flex-grow">
                             <h4 className="font-medium text-gray-800 dark:text-white">
-                              {item.title}
+                              {item.book?.title || item.title}
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              by {item.author}
+                              của {item.book?.author?.name || item.author}
                             </p>
                             <div className="flex justify-between items-center mt-2">
                               <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Quantity: {item.quantity}
+                                Số lượng: {item.quantity}
                               </span>
                               <span className="font-medium text-gray-800 dark:text-white">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                {((item.price / 100) * item.quantity).toFixed(
+                                  2
+                                )}
+                                đ
                               </span>
                             </div>
                           </div>
@@ -566,30 +695,45 @@ const OrderManagementPage = () => {
                     </div>
                   </div>
 
-                  {/* Payment Method */}
+                  {/* Phương Thức Thanh Toán */}
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                       <h3 className="font-medium text-gray-800 dark:text-white">
-                        Payment Method
+                        Phương Thức Thanh Toán
                       </h3>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Cash on Delivery (COD)
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">
+                            {selectedOrder.payment_method ||
+                              selectedOrder.paymentMethod?.type ||
+                              "Thanh toán khi nhận hàng (COD)"}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Trạng thái:{" "}
+                            {selectedOrder.payment_status ||
+                              selectedOrder.paymentStatus ||
+                              "Đang chờ"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Order Notes */}
-                  {selectedOrder.notes && (
+                  {/* Ghi Chú Đơn Hàng */}
+                  {(selectedOrder.notes ||
+                    selectedOrder.special_instructions) && (
                     <div>
                       <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                        Order Notes
+                        Ghi Chú Đơn Hàng
                       </h3>
                       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.notes}
+                          {selectedOrder.notes ||
+                            selectedOrder.special_instructions}
                         </p>
                       </div>
                     </div>
@@ -600,53 +744,17 @@ const OrderManagementPage = () => {
           )}
         </AnimatePresence>
 
-        {/* Cancel Order Modal */}
-        <AnimatePresence>
-          {isCancelModalOpen && selectedOrder && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <AlertCircle className="h-6 w-6 text-red-500" />
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Cancel Order
-                  </h2>
-                </div>
-
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Are you sure you want to cancel order{" "}
-                  <strong>{selectedOrder.id}</strong>? This action cannot be
-                  undone.
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsCancelModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    Keep Order
-                  </button>
-                  <button
-                    onClick={confirmCancelOrder}
-                    disabled={cancellingOrderId === selectedOrder.id}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center">
-                    {cancellingOrderId === selectedOrder.id ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      "Cancel Order"
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Modal Hủy Đơn Hàng */}
+        <CancelOrderModal
+          isOpen={isCancelModalOpen}
+          onClose={() => {
+            setIsCancelModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onConfirm={confirmCancelOrder}
+          orderNumber={selectedOrder?.id}
+          loading={cancellingOrderId === selectedOrder?.id}
+        />
       </div>
     </div>
   );

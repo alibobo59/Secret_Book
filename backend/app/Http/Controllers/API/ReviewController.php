@@ -34,6 +34,15 @@ class ReviewController extends Controller
             'book_id' => 'required|exists:books,id',
             'rating' => 'required|integer|min:1|max:5',
             'review' => 'nullable|string|max:1000'
+        ], [
+            'book_id.required' => 'ID sách là bắt buộc.',
+            'book_id.exists' => 'Sách không tồn tại.',
+            'rating.required' => 'Đánh giá là bắt buộc.',
+            'rating.integer' => 'Đánh giá phải là số nguyên.',
+            'rating.min' => 'Đánh giá phải từ 1 đến 5 sao.',
+            'rating.max' => 'Đánh giá phải từ 1 đến 5 sao.',
+            'review.string' => 'Nội dung đánh giá phải là chuỗi ký tự.',
+            'review.max' => 'Nội dung đánh giá không được vượt quá 1000 ký tự.'
         ]);
 
         $user = Auth::user();

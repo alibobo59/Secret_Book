@@ -50,6 +50,12 @@ class PublisherController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Tên nhà xuất bản là bắt buộc.',
+            'name.string' => 'Tên nhà xuất bản phải là chuỗi ký tự.',
+            'name.max' => 'Tên nhà xuất bản không được vượt quá 255 ký tự.',
+            'address.string' => 'Địa chỉ phải là chuỗi ký tự.',
+            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -82,6 +88,12 @@ class PublisherController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Tên nhà xuất bản là bắt buộc.',
+            'name.string' => 'Tên nhà xuất bản phải là chuỗi ký tự.',
+            'name.max' => 'Tên nhà xuất bản không được vượt quá 255 ký tự.',
+            'address.string' => 'Địa chỉ phải là chuỗi ký tự.',
+            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.'
         ]);
 
         if ($validator->fails()) {

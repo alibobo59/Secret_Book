@@ -57,6 +57,12 @@ class CartController extends Controller
             $validator = Validator::make($request->all(), [
                 'book_id' => 'required|exists:books,id',
                 'quantity' => 'required|integer|min:1'
+            ], [
+                'book_id.required' => 'ID sách là bắt buộc.',
+                'book_id.exists' => 'Sách không tồn tại.',
+                'quantity.required' => 'Số lượng là bắt buộc.',
+                'quantity.integer' => 'Số lượng phải là số nguyên.',
+                'quantity.min' => 'Số lượng phải lớn hơn 0.'
             ]);
 
             if ($validator->fails()) {
@@ -109,6 +115,10 @@ class CartController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'quantity' => 'required|integer|min:1'
+            ], [
+                'quantity.required' => 'Số lượng là bắt buộc.',
+                'quantity.integer' => 'Số lượng phải là số nguyên.',
+                'quantity.min' => 'Số lượng phải lớn hơn 0.'
             ]);
 
             if ($validator->fails()) {
@@ -160,13 +170,13 @@ class CartController extends Controller
             $cart = $user->cart;
 
             if (!$cart) {
-                return response()->json(['message' => 'Cart not found'], 404);
+                return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
             $cartItem = $cart->items()->where('book_id', $bookId)->first();
 
             if (!$cartItem) {
-                return response()->json(['message' => 'Item not found in cart'], 404);
+                return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
             }
 
             $cartItem->delete();
@@ -210,7 +220,7 @@ class CartController extends Controller
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => 'Xác thực thất bại',
                     'errors' => $validator->errors()
                 ], 422);
             }

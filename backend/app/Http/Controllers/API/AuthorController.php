@@ -50,6 +50,11 @@ class AuthorController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
+        ], [
+            'name.required' => 'Tên tác giả là bắt buộc.',
+            'name.string' => 'Tên tác giả phải là chuỗi ký tự.',
+            'name.max' => 'Tên tác giả không được vượt quá 255 ký tự.',
+            'bio.string' => 'Tiểu sử phải là chuỗi ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -82,6 +87,11 @@ class AuthorController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
+        ], [
+            'name.required' => 'Tên tác giả là bắt buộc.',
+            'name.string' => 'Tên tác giả phải là chuỗi ký tự.',
+            'name.max' => 'Tên tác giả không được vượt quá 255 ký tự.',
+            'bio.string' => 'Tiểu sử phải là chuỗi ký tự.'
         ]);
 
         if ($validator->fails()) {

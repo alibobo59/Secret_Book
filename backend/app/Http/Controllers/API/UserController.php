@@ -75,6 +75,9 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'reason' => 'nullable|string|max:500'
+        ], [
+            'reason.string' => 'Lý do phải là chuỗi ký tự.',
+            'reason.max' => 'Lý do không được vượt quá 500 ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -137,6 +140,10 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'role' => 'sometimes|in:admin,mod,user'
+        ], [
+            'name.string' => 'Tên phải là chuỗi ký tự.',
+            'name.max' => 'Tên không được vượt quá 255 ký tự.',
+            'role.in' => 'Vai trò phải là admin, mod hoặc user.'
         ]);
 
         if ($validator->fails()) {

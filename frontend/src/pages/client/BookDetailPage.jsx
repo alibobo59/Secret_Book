@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 
 import { api, reviewAPI } from "../../services/api";
 import { Loading } from "../../components/common";
+import { getImageUrl, handleImageError } from "../../utils/imageUtils";
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -183,9 +184,10 @@ const BookDetailPage = () => {
           transition={{ duration: 0.5 }}>
           <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-lg">
             <img
-              src={`http://127.0.0.1:8000/storage/${book.image}`}
+              src={getImageUrl(book.image)}
               alt={book.title}
               className="absolute inset-0 w-full h-full object-cover"
+              onError={handleImageError}
             />
           </div>
         </motion.div>

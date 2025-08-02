@@ -4,39 +4,68 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-
 const LoginPage = () => {
+  // --- LOGGING ---
+  console.log("%cLoginPage is rendering...", "color: orange");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Clear errors only when form is submitted or manually triggered
-  const clearErrors = () => {
-    setError("");
-    setValidationErrors({});
-  };
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-
   const from = location.state?.from?.pathname || "/";
+
+  // --- LOGGING ---
+  // This is the MOST IMPORTANT log. It will tell us if the component is being reset.
+  useEffect(() => {
+    console.log("%cLoginPage MOUNTED", "color: green; font-weight: bold;");
+    return () => {
+      console.log("%cLoginPage UNMOUNTED", "color: red; font-weight: bold;");
+    };
+  }, []); // Empty dependency array means this runs only once on mount/unmount.
+
+  // --- LOGGING ---
+  // Log the state on every render to see how it changes.
+  console.log("%cCurrent State:", "color: orange", {
+    authLoading,
+    error,
+    user,
+  });
+
+  useEffect(() => {
+    // --- LOGGING ---
+    console.log("%cRedirect useEffect is checking...", "color: cyan", {
+      authLoading,
+      user,
+      error,
+    });
+    // Only redirect if user exists and is authenticated (don't check error state)
+    if (!authLoading && user) {
+      console.log(
+        "%c--> Redirecting because user exists!",
+        "color: cyan; font-weight: bold;"
+      );
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, from]);
 
   const validateForm = () => {
     const errors = {};
     
     // Email validation
     if (!email.trim()) {
-      errors.email = "Trường này là bắt buộc";
+      errors.email = "Email là bắt buộc";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = "Email không hợp lệ";
+      errors.email = "Vui lòng nhập địa chỉ email hợp lệ";
     }
     
     // Password validation
     if (!password.trim()) {
-      errors.password = "Trường này là bắt buộc";
+      errors.password = "Mật khẩu là bắt buộc";
     }
     
     setValidationErrors(errors);
@@ -45,57 +74,43 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("%c--- handleSubmit initiated ---", "font-weight: bold;");
+    setError("");
+    setValidationErrors({});
 
-    // Clear any previous errors
-    clearErrors();
-
-    // First layer: Frontend validation
     if (!validateForm()) {
       return;
     }
-    
-    setIsLoading(true);
 
     try {
+      console.log(
+        "%cLoginPage: Calling login() from context...",
+        "color: blue"
+      );
       await login(email, password);
-      navigate(from, { replace: true });
-    } catch (error) {
-      // Second layer: Backend validation error handling
-      if (error.response && error.response.status === 422) {
-        // Xử lý lỗi validation từ Laravel (theo từng trường)
-        const backendErrors = error.response.data.errors || {};
-        const newValidationErrors = {};
-
-        // Ánh xạ lỗi từ backend sang frontend
-        if (backendErrors.email) {
-          newValidationErrors.email = backendErrors.email[0];
-        }
-        if (backendErrors.password) {
-          newValidationErrors.password = backendErrors.password[0];
-        }
-        
-        setValidationErrors(newValidationErrors);
-        
-        // Nếu không có lỗi cụ thể theo trường, hiển thị thông báo chung
-        if (Object.keys(newValidationErrors).length === 0) {
-          setError(error.response.data.message || "Lỗi xác thực dữ liệu");
-        }
-      } else if (error.response && error.response.status === 401) {
-        // Xử lý lỗi xác thực (thông tin đăng nhập không hợp lệ)
-        const errorMessage = error.response.data.message || "Thông tin đăng nhập không hợp lệ";
-        setError(errorMessage);
-        // Don't clear form fields - let user correct their input
-      } else {
-        // Xử lý các loại lỗi khác (500, lỗi mạng, v.v.)
-        const errorMessage = error.response?.data?.message || error.message || "Lỗi đăng nhập";
-        setError(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
+      console.log(
+        "%cLoginPage: login() SUCCEEDED (this should not happen on failure)",
+        "color: green"
+      );
+    } catch (err) {
+      // --- LOGGING ---
+      console.log(
+        "%cLoginPage: CAUGHT error in handleSubmit",
+        "color: red; font-weight: bold;",
+        err
+      );
+      const errorMessage =
+        err.response?.data?.message || err.message || "Lỗi đăng nhập";
+      console.log(
+        `%cLoginPage: Setting error state to: "${errorMessage}"`,
+        "color: red"
+      );
+      setError(errorMessage);
     }
   };
 
   return (
+    // ... your JSX is fine, no changes needed ...
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -201,9 +216,9 @@ const LoginPage = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={authLoading}
             className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:bg-amber-400 disabled:cursor-not-allowed transition-colors">
-            {isLoading ? (
+            {authLoading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>

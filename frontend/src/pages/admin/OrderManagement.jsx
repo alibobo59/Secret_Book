@@ -286,7 +286,9 @@ const OrderManagement = () => {
         renderRow={(order) => (
           <tr
             key={order.id}
-            className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            className="hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200"
+            onClick={() => handleViewOrder(order)}
+          >
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
               {order.order_number || `#${order.id}`}
             </td>
@@ -323,7 +325,7 @@ const OrderManagement = () => {
                 {order.payment_method?.toUpperCase() || "COD"}
               </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleViewOrder(order)}

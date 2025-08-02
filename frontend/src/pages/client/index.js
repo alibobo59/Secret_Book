@@ -10,3 +10,4 @@ export { default as OrderManagement } from "./OrderManagement";
 export { default as OrderSuccessPage } from "./OrderSuccessPage";
 export { default as OrderFailedPage } from "./OrderFailedPage";
 export { default as OrderConfirmationPage } from "./OrderConfirmationPage";
+export { default as PaymentVNPayReturn } from "./PaymentVNPayReturn";

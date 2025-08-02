@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Header from "../components/client/Header";
 import Footer from "../components/client/Footer";
@@ -7,12 +7,16 @@ import Footer from "../components/client/Footer";
 const ClientLayout = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (authLoading) return;
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
+  // Don't show loading on auth pages to prevent LoginPage state reset
+  const isAuthPage = ["/login", "/register"].includes(location.pathname);
+
+  if (authLoading && !isAuthPage) {
     return (
       <div className="flex h-screen items-center justify-center bg-amber-50 dark:bg-gray-900">
         <div className="flex flex-col items-center">

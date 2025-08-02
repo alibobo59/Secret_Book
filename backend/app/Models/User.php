@@ -111,4 +111,15 @@ class User extends Authenticatable
             'updated_at'
         ];
     }
+
+    // Add this method to the User model
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    public function getOrCreateCart()
+    {
+        return $this->cart ?: $this->cart()->create();
+    }
 }

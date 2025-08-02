@@ -120,6 +120,7 @@ class PaymentController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Payment successful',
+                    'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'transaction_id' => $vnp_TransactionNo
                 ]);
@@ -138,6 +139,8 @@ class PaymentController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Payment failed',
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
                     'response_code' => $vnp_ResponseCode
                 ], 400);
             }
@@ -216,7 +219,8 @@ class PaymentController extends Controller
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'Payment creation failed');
+            // Dòng 222
+            return redirect()->back()->with('error', 'Tạo thanh toán thất bại');
         }
     }
 }

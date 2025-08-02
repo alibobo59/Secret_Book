@@ -25,8 +25,11 @@ export const AnalyticsProvider = ({ children }) => {
   // Removed mock data generation - using only backend data
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user && (user.role === 'admin' || user.role === 'mod')) {
+      console.log('User is admin/mod, loading dashboard stats...', user);
       loadDashboardStats();
+    } else {
+      console.log('User is not admin/mod or not logged in:', user);
     }
   }, [user]);
 
@@ -39,6 +42,7 @@ export const AnalyticsProvider = ({ children }) => {
       console.log('Raw API response:', response);
       console.log('Response type:', typeof response);
       console.log('Response keys:', Object.keys(response || {}));
+      console.log('Category Performance:', response?.sales?.categoryPerformance);
       setDashboardStats(response);
       // Map the response to the expected analytics structure
       setAnalytics({
@@ -69,7 +73,20 @@ export const AnalyticsProvider = ({ children }) => {
     setError(null);
     try {
       const response = await analyticsService.getDashboardStats(period);
+      console.log('Raw API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', Object.keys(response || {}));
       setDashboardStats(response);
+      // Map the response to the expected analytics structure
+      setAnalytics({
+        sales: response.sales || {},
+        users: response.users || {},
+        inventory: response.inventory || {},
+        performance: response.performance || {},
+        reviews: response.reviews || {},
+        promotions: response.promotions || {},
+        behavior: response.behavior || {}
+      });
       return response;
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê dashboard';

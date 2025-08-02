@@ -14,6 +14,51 @@ const api = axios.create({
   retryDelay: 1000,
 });
 
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request Config:', {
+      url: config.url,
+      method: config.method,
+      baseURL: config.baseURL,
+      headers: config.headers,
+      params: config.params,
+      data: config.data,
+    });
+    return config;
+  },
+  (error) => {
+    console.error('API Request Interceptor Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data,
+    });
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', {
+      message: error.message,
+      code: error.code,
+      response: error.response ? {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+      } : 'No response',
+      request: error.request ? 'Request was made but no response received' : 'No request',
+    });
+    return Promise.reject(error);
+  }
+);
+
 // Fetch CSRF token
 const fetchCsrfToken = async () => {
   try {
@@ -143,10 +188,10 @@ api.interceptors.response.use(
       return Promise.reject(new Error("CSRF token mismatch"));
     }
 
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.assign("/login");
+    if (error.response?.status === 401 && !config.url.includes("login")) {
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("user");
+      // window.location.assign("/login");
       return null;
     }
 

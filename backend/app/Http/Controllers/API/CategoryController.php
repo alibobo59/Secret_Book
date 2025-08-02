@@ -32,7 +32,8 @@ class CategoryController extends Controller
         $category = Category::find($id);
 
         if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+            // Dòng 35, 76, 105
+            return response()->json(['error' => 'Không tìm thấy danh mục'], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json(['data' => $category], Response::HTTP_OK);

@@ -73,10 +73,18 @@ const CheckoutPage = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Name and email are read-only and pre-filled from user profile, so no validation needed
+    // Add validation for name and email
+    if (!formData.name.trim()) newErrors.name = "Họ và tên là bắt buộc";
+    if (!formData.email.trim()) newErrors.email = "Email là bắt buộc";
     if (!formData.phone.trim()) newErrors.phone = "Số điện thoại là bắt buộc";
     if (!formData.city.trim()) newErrors.city = "Thành phố là bắt buộc";
     if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc";
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.email = "Vui lòng nhập email hợp lệ";
+    }
 
     // Phone validation (basic)
     const phoneRegex = /^[0-9]{10,11}$/;
@@ -90,13 +98,13 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!validateForm() || getSelectedItemsCount() === 0) {
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       // Create the order data with proper address structure
       const orderData = {
@@ -182,7 +190,6 @@ const CheckoutPage = () => {
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
           {/* Column 1: Shipping Information and Payment Method */}
           <div className="space-y-6">
             {/* Shipping Information */}
@@ -198,33 +205,48 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <User className="inline h-4 w-4 mr-1" />
-                    Họ và Tên *
+                    Họ và Tên
                   </label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
-                    readOnly
-                    className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-500 cursor-not-allowed"
-                    placeholder="Nhập họ và tên đầy đủ"
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                      errors.name ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Nhập họ và tên người nhận"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Trường này không thể thay đổi trong quá trình thanh toán</p>
+                  {errors.name && (
+                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Tên người nhận hàng (có thể khác với tên tài khoản)
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <Mail className="inline h-4 w-4 mr-1" />
-                    Email *
+                    Email * (Thông tin giao hàng)
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
-                    readOnly
-                    className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-500 cursor-not-allowed"
-                    placeholder="Nhập email của bạn"
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Nhập email người nhận"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This field cannot be changed during checkout</p>
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Email nhận thông báo đơn hàng (có thể khác với email tài
+                    khoản)
+                  </p>
                 </div>
 
                 <div>
@@ -386,10 +408,11 @@ const CheckoutPage = () => {
                           <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded">
                             <button
                               type="button"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity - 1)
+                              }
                               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                              disabled={item.quantity <= 1}
-                            >
+                              disabled={item.quantity <= 1}>
                               <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                             </button>
                             <span className="px-3 py-1 text-sm font-medium text-gray-900 dark:text-white min-w-[2rem] text-center">
@@ -397,9 +420,10 @@ const CheckoutPage = () => {
                             </span>
                             <button
                               type="button"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            >
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity + 1)
+                              }
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                               <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                             </button>
                           </div>
@@ -444,8 +468,8 @@ const CheckoutPage = () => {
                         {item.title}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                         SL: {item.quantity}
-                       </p>
+                        SL: {item.quantity}
+                      </p>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {(
@@ -468,7 +492,9 @@ const CheckoutPage = () => {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Tạm tính</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Tạm tính
+                    </span>
                     <span className="text-gray-900 dark:text-white">
                       {getSelectedTotal().toLocaleString("vi-VN")} ₫
                     </span>
@@ -480,9 +506,14 @@ const CheckoutPage = () => {
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-semibold border-t pt-2">
-                    <span className="text-gray-900 dark:text-white">Tổng Cộng</span>
                     <span className="text-gray-900 dark:text-white">
-                      {(getSelectedTotal() - discountAmount).toLocaleString("vi-VN")} ₫
+                      Tổng Cộng
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {(getSelectedTotal() - discountAmount).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      ₫
                     </span>
                   </div>
                 </div>

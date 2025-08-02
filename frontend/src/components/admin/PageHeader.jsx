@@ -18,7 +18,7 @@ const PageHeader = ({
 }) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold">{title}</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
       {!hideAddButton && onAddNew && (
         <button
           className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md flex items-center"

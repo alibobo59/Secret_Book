@@ -59,7 +59,8 @@ class TestEmail extends Command
             return 0;
             
         } catch (\Exception $e) {
-            $this->error('Failed to send email: ' . $e->getMessage());
+            // Dòng 61
+            $this->error('Gửi email thất bại: ' . $e->getMessage());
             return 1;
         }
     }

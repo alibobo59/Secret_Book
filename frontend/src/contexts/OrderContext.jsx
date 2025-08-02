@@ -85,7 +85,7 @@ export const OrderProvider = ({ children }) => {
 
     setLoading(true);
     setError(null);
-
+  
     try {
       const response = await api.post("/orders", {
         customer_name: user.name,
@@ -93,23 +93,22 @@ export const OrderProvider = ({ children }) => {
         ...orderData,
         payment_method: orderData.paymentMethod || "cod",
       });
-
+  
       const newOrder = response.data.data;
-
+  
       // Update local state
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
-
+  
       // Clear the cart after successful order creation
       clearCart();
-
+  
       // Send notifications
       notifyOrderPlaced(newOrder.id);
-
-      // Notify admin about new order
-      if (user.isAdmin !== true) {
-        notifyNewOrder(newOrder.id, newOrder.customer_name || user.name);
-      }
-
+  
+      // Notify admin about new order - FIXED CONDITION
+      // This should only notify admins, not regular users
+      // Remove this from here since it should be handled server-side or in admin context
+      
       return newOrder;
     } catch (error) {
       setError("Failed to create order");
@@ -122,37 +121,38 @@ export const OrderProvider = ({ children }) => {
   const updateOrderStatus = async (orderId, newStatus) => {
     setLoading(true);
     setError(null);
-
+  
     try {
       const response = await api.patch(`/admin/orders/${orderId}/status`, {
         status: newStatus,
       });
-
+  
       const updatedOrder = response.data.data;
-
+  
       // Update local state
       setOrders((prevOrders) =>
         prevOrders.map((order) => {
           if (order.id === orderId) {
-            // Send status update notifications to customer
-            switch (newStatus) {
-              case "processing":
-                notifyOrderConfirmed(orderId);
-                break;
-              case "shipped":
-                notifyOrderShipped(orderId);
-                break;
-              case "delivered":
-                notifyOrderDelivered(orderId);
-                break;
+            // Send status update notifications ONLY to customers, not admins
+            if (user?.role === 'user') {
+              switch (newStatus) {
+                case "processing":
+                  notifyOrderConfirmed(orderId);
+                  break;
+                case "shipped":
+                  notifyOrderShipped(orderId);
+                  break;
+                case "delivered":
+                  notifyOrderDelivered(orderId);
+                  break;
+              }
             }
-
             return updatedOrder;
           }
           return order;
         })
       );
-
+      
       return updatedOrder;
     } catch (error) {
       setError("Failed to update order status");
@@ -342,3 +342,7 @@ export const OrderProvider = ({ children }) => {
     <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
   );
 };
+// REMOVE OR COMMENT OUT these lines (105-107):
+// if (user.isAdmin !== true) {
+//   notifyNewOrder(newOrder.id, newOrder.customer_name || user.name);
+// }

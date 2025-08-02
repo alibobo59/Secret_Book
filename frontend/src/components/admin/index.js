@@ -9,3 +9,5 @@ export { default as StatCard } from "./StatCard";
 export { default as Table } from "./Table";
 export { default as AdminFooter } from "./AdminFooter";
 export { default as Loading } from "./Loading";
+// Export VariationManager from variations directory
+

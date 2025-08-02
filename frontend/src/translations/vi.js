@@ -117,6 +117,16 @@ export const viTranslations = {
   "footer.shipping": "Chính Sách Vận Chuyển",
   "footer.returns": "Chính Sách Đổi Trả",
 
+  // Login
+  "login.title": "Chào Mừng Trở Lại",
+  "login.subtitle": "Đăng nhập vào tài khoản của bạn",
+  "login.remember": "Ghi nhớ đăng nhập",
+  "login.forgot": "Quên mật khẩu?",
+  "login.submit": "Đăng Nhập",
+  "login.noAccount": "Chưa có tài khoản?",
+  "login.signUp": "Đăng ký",
+  "login.error.invalidCredentials": "Email hoặc mật khẩu không đúng. Vui lòng kiểm tra thông tin đăng nhập và thử lại.",
+
   // Messages
   "message.welcome": "Chào mừng đến với BookStore",
   "message.error": "Đã xảy ra lỗi",
@@ -126,6 +136,9 @@ export const viTranslations = {
   "message.itemAdded": "Sản phẩm đã được thêm vào giỏ hàng",
   "message.itemRemoved": "Sản phẩm đã được xóa khỏi giỏ hàng",
   "message.orderPlaced": "Đơn hàng của bạn đã được đặt thành công",
+  "message.error.login": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.",
+  "message.error.register": "Đăng ký thất bại. Vui lòng thử lại.",
+  "message.error.validation": "Vui lòng kiểm tra thông tin nhập và thử lại.",
 
   // Language Switcher
   "language.en": "Tiếng Anh",

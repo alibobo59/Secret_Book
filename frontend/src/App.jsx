@@ -33,6 +33,8 @@ import {
   AuthorManagement,
   PublisherManagement,
   UserManagement,
+  UserDetail,
+  UserEdit,
   OrderManagement,
   OrderDetail,
   PublisherCreate,
@@ -78,10 +80,7 @@ function App() {
                     <Route path="/books" element={<BrowseBooksPage />} />
                     <Route path="/books/:id" element={<BookDetailPage />} />
                     <Route path="/checkout" element={<CheckOutPage />} />
-                    <Route
-                      path="/profile/:username"
-                      element={<ProfilePage />}
-                    />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route
@@ -148,6 +147,8 @@ function App() {
                       element={<PublisherEdit />}
                     />
                     <Route path="users" element={<UserManagement />} />
+                    <Route path="users/:id" element={<UserDetail />} />
+                    <Route path="users/:id/edit" element={<UserEdit />} />
                     <Route path="orders" element={<OrderManagement />} />
                     <Route path="orders/:id" element={<OrderDetail />} />
                     <Route path="audit-logs" element={<LogManagement />} />

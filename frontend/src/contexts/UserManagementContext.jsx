@@ -114,26 +114,7 @@ export const UserManagementProvider = ({ children }) => {
     }
   };
 
-  // Delete user
-  const deleteUser = async (id) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await userService.deleteUser(id);
 
-      // Update local state
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
-
-      return response;
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Có lỗi xảy ra khi xóa người dùng";
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Update user role
   const updateUserRole = async (userId, role) => {
@@ -192,7 +173,6 @@ export const UserManagementProvider = ({ children }) => {
     getUserById,
     toggleUserStatus,
     updateUser,
-    deleteUser,
     updateUserRole,
     getUserStats,
     clearError,

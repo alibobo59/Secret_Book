@@ -246,8 +246,8 @@ const AdminProfile = () => {
                   label="Địa Chỉ Email"
                   type="email"
                   value={profileData.email}
-                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                  disabled={!isEditing}
+                  onChange={() => {}}
+                  disabled={true}
                   required
                 />
                 <FormField

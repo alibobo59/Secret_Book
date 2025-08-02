@@ -136,7 +136,6 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'role' => 'sometimes|in:admin,mod,user'
         ]);
 
@@ -147,7 +146,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->update($request->only(['name', 'email', 'role']));
+        $user->update($request->only(['name', 'role']));
 
         return response()->json([
             'message' => 'Thông tin người dùng đã được cập nhật',
@@ -155,22 +154,5 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Delete user (Admin only)
-     */
-    public function destroy(User $user)
-    {
-        // Prevent deleting admin users
-        if ($user->role === 'admin') {
-            return response()->json([
-                'message' => 'Không thể xóa tài khoản admin'
-            ], 403);
-        }
 
-        $user->delete();
-
-        return response()->json([
-            'message' => 'Người dùng đã được xóa'
-        ]);
-    }
 }

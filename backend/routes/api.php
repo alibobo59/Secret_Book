@@ -16,6 +16,7 @@ use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\SettingsController;
+use App\Http\Controllers\API\ProfileController;
 
 // Root route
 Route::get('/', function () {
@@ -95,7 +96,7 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
     Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
 
     // Review Management (Admin)
     Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
@@ -137,4 +138,10 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
+    
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
 });

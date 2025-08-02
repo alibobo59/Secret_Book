@@ -113,6 +113,9 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         try {
+            // Debug logging
+            Log::info('Forgot password request data: ' . json_encode($request->all()));
+            
             $request->validate([
                 'email' => 'required|email|exists:users,email'
             ], [

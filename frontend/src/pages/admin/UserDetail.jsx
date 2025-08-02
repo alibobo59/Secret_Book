@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Edit, Trash2, User, ShoppingCart, Calendar, Activity, Mail, Shield, MapPin } from "lucide-react";
+import { ArrowLeft, Edit, User, ShoppingCart, Calendar, Activity, Mail, Shield, MapPin } from "lucide-react";
 import { api } from "../../services/api";
 import Loading from "../../components/admin/Loading";
 import AuditLogTable from "../../components/admin/AuditLogTable";
@@ -11,8 +11,7 @@ const UserDetail = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+
   const [activeTab, setActiveTab] = useState('details');
 
   useEffect(() => {
@@ -32,21 +31,7 @@ const UserDetail = () => {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      setDeleting(true);
-      await api.delete(`/users/${id}`);
-      navigate('/admin/users', { 
-        state: { message: 'User deleted successfully' } 
-      });
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      alert('Failed to delete user');
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
+
 
   const getRoleBadgeColor = (role) => {
     switch (role?.toLowerCase()) {
@@ -96,13 +81,7 @@ const UserDetail = () => {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Link>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </button>
+
             </div>
           </div>
         </div>
@@ -330,35 +309,7 @@ const UserDetail = () => {
           />
         )}
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Confirm Delete
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete user "{user.name}"? This action cannot be undone and will also delete all associated data.
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-                  disabled={deleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                  disabled={deleting}
-                >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

@@ -356,8 +356,8 @@ const BookDetail = () => {
               {book.description && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Mô tả</h2>
-                  <div className="prose max-w-none">
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{book.description}</p>
+                  <div className="prose max-w-none text-gray-700 dark:text-gray-300 leading-relaxed" 
+                       dangerouslySetInnerHTML={{ __html: book.description }}>
                   </div>
                 </div>
               )}

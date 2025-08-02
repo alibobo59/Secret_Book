@@ -151,7 +151,7 @@ const ReviewManagement = () => {
 
   return (
     <div
-      className={`flex-1 transition-all duration-300 ${
+      className={`flex-1 transition-all duration-300 bg-gray-50 dark:bg-gray-900 min-h-screen ${
         sidebarOpen ? "ml-64" : "ml-20"
       }`}
     >
@@ -160,16 +160,16 @@ const ReviewManagement = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Quản lý Đánh giá
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
                 Quản lý và kiểm duyệt các đánh giá từ khách hàng
               </p>
             </div>
             <button
               onClick={() => setShowStats(!showStats)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
             >
               <BarChart3 className="w-5 h-5" />
               <span>{showStats ? "Ẩn thống kê" : "Xem thống kê"}</span>
@@ -187,68 +187,68 @@ const ReviewManagement = () => {
               className="mb-8"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Tổng đánh giá
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {stats.total_reviews}
                       </p>
                     </div>
-                    <MessageSquare className="w-8 h-8 text-blue-600" />
+                    <MessageSquare className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Đang hiển thị
                       </p>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {stats.visible_reviews}
                       </p>
                     </div>
-                    <CheckCircle className="w-8 h-8 text-green-600" />
+                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Đã ẩn
                       </p>
-                      <p className="text-2xl font-bold text-red-600">
+                      <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                         {stats.hidden_reviews}
                       </p>
                     </div>
-                    <XCircle className="w-8 h-8 text-red-600" />
+                    <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Điểm trung bình
                       </p>
-                      <p className="text-2xl font-bold text-yellow-600">
+                      <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                         {stats.average_rating
                           ? stats.average_rating.toFixed(1)
                           : "0.0"}
                       </p>
                     </div>
-                    <Star className="w-8 h-8 text-yellow-600" />
+                    <Star className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                   </div>
                 </div>
               </div>
 
               {/* Rating Distribution */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Phân bố đánh giá
                 </h3>
                 <div className="space-y-3">
@@ -261,16 +261,16 @@ const ReviewManagement = () => {
                     return (
                       <div key={rating} className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1 w-16">
-                          <span className="text-sm font-medium">{rating}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{rating}</span>
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         </div>
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div
-                            className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                            className="bg-yellow-400 dark:bg-yellow-500 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-600 w-12">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 w-12">
                           {count}
                         </span>
                       </div>
@@ -283,24 +283,24 @@ const ReviewManagement = () => {
         </AnimatePresence>
 
         {/* Search and Filters */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <form onSubmit={handleSearch} className="mb-4">
             <div className="flex space-x-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                   <input
                     type="text"
                     placeholder="Tìm kiếm theo nội dung, tên người dùng, email hoặc tên sách..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
               </div>
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
               >
                 Tìm kiếm
               </button>
@@ -309,8 +309,8 @@ const ReviewManagement = () => {
 
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">
+              <Filter className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Bộ lọc:
               </span>
             </div>
@@ -318,7 +318,7 @@ const ReviewManagement = () => {
             <select
               value={filters.is_hidden}
               onChange={(e) => handleFilterChange("is_hidden", e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="false">Đang hiển thị</option>
@@ -328,7 +328,7 @@ const ReviewManagement = () => {
             <select
               value={filters.rating}
               onChange={(e) => handleFilterChange("rating", e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tất cả đánh giá</option>
               <option value="5">5 sao</option>
@@ -341,60 +341,60 @@ const ReviewManagement = () => {
         </div>
 
         {/* Reviews Table */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : reviews.length === 0 ? (
             <div className="text-center py-12">
-              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Không có đánh giá nào</p>
+              <MessageSquare className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">Không có đánh giá nào</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px]">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">
                       Người dùng
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40">
                       Sách
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                       Đánh giá
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-60">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-60">
                       Nội dung
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                       Ngày tạo
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                       Trạng thái
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                       Thao tác
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {reviews.map((review) => (
                     <motion.tr
                       key={review.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-gray-50"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <td className="px-3 py-3">
                         <div className="flex items-center">
-                          <User className="w-6 h-6 text-gray-400 bg-gray-100 rounded-full p-1 flex-shrink-0" />
+                          <User className="w-6 h-6 text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-full p-1 flex-shrink-0" />
                           <div className="ml-2 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {review.user?.name || "N/A"}
                             </div>
-                            <div className="text-xs text-gray-500 truncate">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {review.user?.email || "N/A"}
                             </div>
                           </div>
@@ -402,9 +402,9 @@ const ReviewManagement = () => {
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center">
-                          <Book className="w-6 h-6 text-gray-400 bg-gray-100 rounded-full p-1 flex-shrink-0" />
+                          <Book className="w-6 h-6 text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-full p-1 flex-shrink-0" />
                           <div className="ml-2 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate" title={review.book?.title}>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={review.book?.title}>
                               {review.book?.title || "N/A"}
                             </div>
                           </div>
@@ -414,20 +414,20 @@ const ReviewManagement = () => {
                         {renderRating(review.rating)}
                       </td>
                       <td className="px-3 py-3">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-white">
                           {review.review ? (
                             <div className="truncate" title={review.review}>
                               {review.review.length > 50 ? review.review.substring(0, 50) + '...' : review.review}
                             </div>
                           ) : (
-                            <span className="text-gray-400 italic">
+                            <span className="text-gray-400 dark:text-gray-500 italic">
                               Không có nội dung
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(review.created_at).toLocaleDateString('vi-VN')}
                         </div>
                       </td>
@@ -435,8 +435,8 @@ const ReviewManagement = () => {
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             review.is_hidden
-                              ? "bg-red-100 text-red-800"
-                              : "bg-green-100 text-green-800"
+                              ? "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                              : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
                           }`}
                         >
                           {review.is_hidden ? (
@@ -458,8 +458,8 @@ const ReviewManagement = () => {
                             onClick={() => toggleVisibility(review.id)}
                             className={`p-1.5 rounded-lg transition-colors ${
                               review.is_hidden
-                                ? "text-green-600 hover:bg-green-50"
-                                : "text-yellow-600 hover:bg-yellow-50"
+                                ? "text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900"
+                                : "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900"
                             }`}
                             title={
                               review.is_hidden ? "Hiển thị" : "Ẩn đánh giá"
@@ -473,7 +473,7 @@ const ReviewManagement = () => {
                           </button>
                           <button
                             onClick={() => deleteReview(review.id)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
                             title="Xóa đánh giá"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -489,27 +489,27 @@ const ReviewManagement = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => fetchReviews(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Trước
                   </button>
                   <button
                     onClick={() => fetchReviews(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Sau
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       Trang <span className="font-medium">{currentPage}</span> /{" "}
                       <span className="font-medium">{totalPages}</span>
                     </p>
@@ -519,7 +519,7 @@ const ReviewManagement = () => {
                       <button
                         onClick={() => fetchReviews(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Trước
                       </button>
@@ -531,8 +531,8 @@ const ReviewManagement = () => {
                             onClick={() => fetchReviews(page)}
                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                               currentPage === page
-                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                ? "z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-300"
+                                : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                             }`}
                           >
                             {page}
@@ -542,7 +542,7 @@ const ReviewManagement = () => {
                       <button
                         onClick={() => fetchReviews(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Sau
                       </button>

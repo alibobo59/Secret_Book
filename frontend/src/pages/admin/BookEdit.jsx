@@ -3,7 +3,7 @@ import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBook } from "../../contexts/BookContext";
 import { api } from "../../services/api";
-import { Loading } from "../../components/admin";
+import { Loading, RichTextEditor } from "../../components/admin";
 
 const BookEdit = () => {
   const { loading, user, hasRole } = useOutletContext();
@@ -440,13 +440,12 @@ const BookEdit = () => {
                 <label className="text-gray-700 dark:text-gray-200">
                   Mô Tả
                 </label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
+                <RichTextEditor
+                  content={form.description}
+                  onChange={(content) =>
+                    setForm({ ...form, description: content })
                   }
-                  rows="4"
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  placeholder="Nhập mô tả chi tiết về sách (tùy chọn)"
                 />
                 {validationErrors.description && (
                   <p className="text-red-500 text-sm mt-1">

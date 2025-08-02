@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { api } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { formatCurrency } from "../../utils/formatCurrency";
 import Loading from "../../components/admin/Loading";
 import AuditLogTable from "../../components/admin/AuditLogTable";
 
@@ -65,11 +66,11 @@ const OrderDetail = () => {
       setDeleting(true);
       await api.delete(`/admin/orders/${id}`);
       navigate("/admin/orders", {
-        state: { message: "Order deleted successfully" },
+        state: { message: "Đơn hàng đã được xóa thành công" },
       });
     } catch (err) {
       console.error("Error deleting order:", err);
-      alert("Failed to delete order");
+      alert("Không thể xóa đơn hàng");
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
@@ -167,13 +168,6 @@ const OrderDetail = () => {
   const handleShowUpdateModal = () => {
     fetchAllowedStatuses();
     setShowUpdateStatusModal(true);
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
   };
 
   const handleBack = () => {
@@ -442,16 +436,16 @@ const OrderDetail = () => {
                 )}
               </div>
 
-              {/* Customer Information */}
+              {/* Account Information */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                   <User className="w-5 h-5 mr-2" />
-                  Customer Information
+                  Thông tin tài khoản đặt hàng
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Name
+                      Tên tài khoản
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                       {order.user ? (
@@ -461,35 +455,79 @@ const OrderDetail = () => {
                           {order.user.name}
                         </Link>
                       ) : (
-                        order.customer_name || "N/A"
+                        "Khách vãng lai"
                       )}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Mail className="w-4 h-4 mr-1" />
-                      Email
+                      Email tài khoản
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.user?.email || order.customer_email || "N/A"}
+                      {order.user?.email || "Không có"}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Phone className="w-4 h-4 mr-1" />
-                      Phone
+                      Số điện thoại tài khoản
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_phone || "N/A"}
+                      {order.user?.phone || "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      ID tài khoản
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.user?.id || "Không có"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Information */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  Thông tin người nhận hàng
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tên người nhận
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.customer_name || order.user?.name || "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                      <Mail className="w-4 h-4 mr-1" />
+                      Email người nhận
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.customer_email || order.user?.email || "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                      <Phone className="w-4 h-4 mr-1" />
+                      Số điện thoại người nhận
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.customer_phone || "Không có"}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <MapPin className="w-4 h-4 mr-1" />
-                      Shipping Address
+                      Địa chỉ giao hàng
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.shipping_address || "N/A"}
+                      {order.shipping_address || "Không có"}
                     </p>
                   </div>
                 </div>
@@ -499,46 +537,58 @@ const OrderDetail = () => {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                   <CreditCard className="w-5 h-5 mr-2" />
-                  Payment Information
+                  Thông tin thanh toán
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Payment Method
+                      Phương thức thanh toán
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.payment_method || "N/A"}
+                      {order.payment_method === "cod"
+                        ? "Thanh toán khi nhận hàng"
+                        : order.payment_method === "bank_transfer"
+                        ? "Chuyển khoản ngân hàng"
+                        : order.payment_method === "credit_card"
+                        ? "Thẻ tín dụng"
+                        : order.payment_method || "Không có"}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Payment Status
+                      Trạng thái thanh toán
                     </label>
                     <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentStatusColor(
                           order.payment_status
                         )}`}>
-                        {order.payment_status || "Pending"}
+                        {order.payment_status === "paid"
+                          ? "Đã thanh toán"
+                          : order.payment_status === "pending"
+                          ? "Chờ thanh toán"
+                          : order.payment_status === "failed"
+                          ? "Thanh toán thất bại"
+                          : order.payment_status || "Chờ thanh toán"}
                       </span>
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Transaction ID
+                      Mã giao dịch
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.transaction_id || "N/A"}
+                      {order.transaction_id || "Không có"}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Payment Date
+                      Ngày thanh toán
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                       {order.payment_date
-                        ? new Date(order.payment_date).toLocaleString()
-                        : "N/A"}
+                        ? new Date(order.payment_date).toLocaleString("vi-VN")
+                        : "Chưa thanh toán"}
                     </p>
                   </div>
                 </div>
@@ -643,7 +693,6 @@ const OrderDetail = () => {
               {/* Order Summary */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <DollarSign className="w-5 h-5 mr-2" />
                   Tóm tắt đơn hàng
                 </h3>
                 <div className="space-y-3">
@@ -694,61 +743,61 @@ const OrderDetail = () => {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   <Activity className="w-5 h-5 mr-2" />
-                  Thời gian đơn hàng
+                  Lịch sử đơn hàng
                 </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Trạng thái hiện tại
-                    </label>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          statusColors[order.status] ||
-                          "bg-gray-100 text-gray-800"
-                        }`}>
-                        {statusLabels[order.status] || order.status}
-                      </span>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        Đơn hàng được tạo
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {order.created_at
+                          ? new Date(order.created_at).toLocaleString("vi-VN")
+                          : "N/A"}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Ngày đặt hàng
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.created_at
-                        ? new Date(order.created_at).toLocaleString("vi-VN")
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Cập nhật lần cuối
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.updated_at
-                        ? new Date(order.updated_at).toLocaleString("vi-VN")
-                        : "N/A"}
-                    </p>
-                  </div>
+                  {order.updated_at !== order.created_at && (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Cập nhật lần cuối
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {order.updated_at
+                            ? new Date(order.updated_at).toLocaleString("vi-VN")
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {order.shipped_at && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Ngày gửi hàng
-                      </label>
-                      <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                        {new Date(order.shipped_at).toLocaleString("vi-VN")}
-                      </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Đã gửi hàng
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(order.shipped_at).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
                     </div>
                   )}
                   {order.delivered_at && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Ngày giao hàng
-                      </label>
-                      <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                        {new Date(order.delivered_at).toLocaleString("vi-VN")}
-                      </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Đã giao hàng
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(order.delivered_at).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

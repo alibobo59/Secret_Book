@@ -5,6 +5,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useBook } from "../../contexts/BookContext";
 import NotificationTestPanel from "../../components/admin/NotificationTestPanel";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 /**
  * Dashboard home component showing statistics and low stock books
@@ -112,7 +113,7 @@ const DashboardHome = () => {
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
           title="Tổng giá trị"
-          value={`$${totalValue.toFixed(2)}`}
+          value={formatCurrency(totalValue)}
         />
       </div>
 
@@ -149,7 +150,7 @@ const DashboardHome = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  ${(book.price || 0).toFixed(2)}
+                  {formatCurrency(book.price || 0)}
                 </td>
               </tr>
             )}

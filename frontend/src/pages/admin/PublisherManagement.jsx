@@ -26,12 +26,12 @@ const PublisherManagement = () => {
         ? response.data
         : [];
       if (!Array.isArray(data)) {
-        throw new Error("Invalid data format from API");
+        throw new Error("Định dạng dữ liệu không hợp lệ từ API");
       }
       setPublishers(data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch publishers: " + (err.message || err));
+      setError("Không thể tải danh sách nhà xuất bản: " + (err.message || err));
       console.error("Fetch error:", err);
       setPublishers([]);
     } finally {
@@ -40,14 +40,14 @@ const PublisherManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this publisher?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa nhà xuất bản này không?")) {
       setLocalLoading(true);
       try {
         await api.delete(`/publishers/${id}`);
         setPublishers(publishers.filter((pub) => pub.id !== id));
         setError(null);
       } catch (err) {
-        setError("Failed to delete publisher: " + (err.message || err));
+        setError("Không thể xóa nhà xuất bản: " + (err.message || err));
         console.error("Delete error:", err);
       } finally {
         setLocalLoading(false);
@@ -62,11 +62,11 @@ const PublisherManagement = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Publisher Management
+        Quản Lý Nhà Xuất Bản
       </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {!hasRole(["admin"]) && !error && (
-        <p className="text-red-500 mb-4">Only admins can manage publishers.</p>
+        <p className="text-red-500 mb-4">Chỉ quản trị viên mới có thể quản lý nhà xuất bản.</p>
       )}
       {(hasRole(["admin"]) || authLoading) && (
         <>
@@ -76,20 +76,20 @@ const PublisherManagement = () => {
               <button
                 onClick={() => navigate("/admin/publishers/create")}
                 className="mb-4 bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
-                Add New Publisher
+                Thêm Nhà Xuất Bản Mới
               </button>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-900">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                        Name
+                        Tên
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                        Address
+                        Địa Chỉ
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                        Actions
+                        Hành Động
                       </th>
                     </tr>
                   </thead>

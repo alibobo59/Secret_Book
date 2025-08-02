@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useBook } from "../../contexts/BookContext";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
-import { Loading } from "../../components/admin";
+import { Loading, RichTextEditor } from "../../components/admin";
 
 const BookCreate = () => {
   const { loading } = useOutletContext();
@@ -621,14 +621,12 @@ const BookCreate = () => {
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Mô Tả
                           </label>
-                          <textarea
-                            value={form.description}
-                            onChange={(e) =>
-                              setForm({ ...form, description: e.target.value })
+                          <RichTextEditor
+                            content={form.description}
+                            onChange={(content) =>
+                              setForm({ ...form, description: content })
                             }
                             placeholder="Nhập mô tả chi tiết về sách (tùy chọn)"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-200 transition-all duration-200 resize-none"
-                            rows="4"
                           />
                           {validationErrors.description && (
                             <p className="text-red-500 text-sm mt-2 flex items-center">

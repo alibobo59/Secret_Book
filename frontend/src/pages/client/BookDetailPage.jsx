@@ -244,9 +244,15 @@ const BookDetailPage = () => {
             </div>
           </div>
 
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {book.description || "Không có mô tả"}
-          </p>
+          {/* Book Description */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Mô Tả Sách
+            </h3>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed prose max-w-none"
+                 dangerouslySetInnerHTML={{ __html: book.description || "Không có mô tả" }}>
+            </div>
+          </div>
 
           {/* Price and Add to Cart */}
           <div className="space-y-4">

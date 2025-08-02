@@ -15,6 +15,7 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const OrderConfirmationPage = () => {
   const { orderId } = useParams();
@@ -175,7 +176,7 @@ const OrderConfirmationPage = () => {
                           Số lượng: {item.quantity}
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">
-                          ${(Number(item.price) * Number(item.quantity)).toFixed(2)}
+                          {formatCurrency(Number(item.price) * Number(item.quantity))}
                         </span>
                       </div>
                     </div>
@@ -245,24 +246,24 @@ const OrderConfirmationPage = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tạm tính</span>
-                  <span>${Number(order.subtotal || 0).toFixed(2)}</span>
+                  <span>{formatCurrency(Number(order.subtotal || 0))}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Thuế</span>
-                  <span>${Number(order.tax || 0).toFixed(2)}</span>
+                  <span>{formatCurrency(Number(order.tax || 0))}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Phí vận chuyển</span>
                   <span>
                     {Number(order.shipping) === 0
                       ? "Miễn phí"
-                      : `$${Number(order.shipping || 0).toFixed(2)}`}
+                      : formatCurrency(Number(order.shipping || 0))}
                   </span>
                 </div>
                 <hr className="border-gray-200 dark:border-gray-700" />
                 <div className="flex justify-between text-lg font-semibold text-gray-800 dark:text-white">
                   <span>Tổng cộng</span>
-                  <span>${Number(order.total || 0).toFixed(2)}</span>
+                  <span>{formatCurrency(Number(order.total || 0))}</span>
                 </div>
               </div>
 

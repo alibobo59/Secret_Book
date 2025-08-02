@@ -5,14 +5,19 @@ const ToastContext = createContext();
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
+<<<<<<< HEAD
     // Return null instead of throwing error to prevent crashes during initialization
     return null;
+=======
+    throw new Error('useToast must be used within a ToastProvider');
+>>>>>>> safety-checkpoint
   }
   return context;
 };
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+<<<<<<< HEAD
 
   const addToast = useCallback((toast) => {
     const id = Date.now() + Math.random();
@@ -37,19 +42,50 @@ export const ToastProvider = ({ children }) => {
         removeToast(id);
       }, newToast.duration);
     }
+=======
+  const MAX_TOASTS = 5;
+
+  const addToast = useCallback((toast) => {
+    const id = Date.now() + Math.random();
+    const newToast = {
+      id,
+      ...toast,
+      createdAt: Date.now(),
+    };
+
+    setToasts(prevToasts => {
+      const updatedToasts = [newToast, ...prevToasts];
+      // Keep only the latest MAX_TOASTS
+      return updatedToasts.slice(0, MAX_TOASTS);
+    });
+
+    // Auto-remove toast after duration
+    const duration = toast.duration || 5000;
+    setTimeout(() => {
+      removeToast(id);
+    }, duration);
+>>>>>>> safety-checkpoint
 
     return id;
   }, []);
 
   const removeToast = useCallback((id) => {
+<<<<<<< HEAD
     setToasts(prev => prev.filter(toast => toast.id !== id));
+=======
+    setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+>>>>>>> safety-checkpoint
   }, []);
 
   const clearAllToasts = useCallback(() => {
     setToasts([]);
   }, []);
 
+<<<<<<< HEAD
   // Predefined toast methods for common actions
+=======
+  // Predefined toast methods
+>>>>>>> safety-checkpoint
   const showSuccess = useCallback((title, message, options = {}) => {
     return addToast({
       type: 'success',
@@ -64,7 +100,11 @@ export const ToastProvider = ({ children }) => {
       type: 'error',
       title,
       message,
+<<<<<<< HEAD
       duration: 5000, // Longer duration for errors
+=======
+      duration: 7000, // Errors stay longer
+>>>>>>> safety-checkpoint
       ...options,
     });
   }, [addToast]);
@@ -87,6 +127,7 @@ export const ToastProvider = ({ children }) => {
     });
   }, [addToast]);
 
+<<<<<<< HEAD
   // User-specific toast methods
   const showLoginSuccess = useCallback((userName) => {
     return showSuccess(
@@ -160,6 +201,70 @@ export const ToastProvider = ({ children }) => {
         label: 'Manage Order',
         onClick: () => window.location.href = '/admin/orders',
       },
+=======
+  // Specialized toast methods for common actions
+  const showOrderCreated = useCallback((orderId) => {
+    return addToast({
+      type: 'success',
+      title: 'Order Created Successfully',
+      message: `Your order ${orderId} has been placed and is being processed.`,
+      actionText: 'View Order',
+      actionUrl: `/order-confirmation/${orderId}`,
+    });
+  }, [addToast]);
+
+  const showOrderCancelled = useCallback((orderId) => {
+    return addToast({
+      type: 'warning',
+      title: 'Order Cancelled',
+      message: `Order ${orderId} has been cancelled successfully.`,
+    });
+  }, [addToast]);
+
+  const showBookAdded = useCallback((bookTitle) => {
+    return addToast({
+      type: 'success',
+      title: 'Book Added to Cart',
+      message: `"${bookTitle}" has been added to your cart.`,
+      actionText: 'View Cart',
+      actionUrl: '/cart',
+    });
+  }, [addToast]);
+
+  const showBookRemoved = useCallback((bookTitle) => {
+    return addToast({
+      type: 'info',
+      title: 'Book Removed',
+      message: `"${bookTitle}" has been removed from your cart.`,
+    });
+  }, [addToast]);
+
+  const showLoginSuccess = useCallback((userName) => {
+    return addToast({
+      type: 'success',
+      title: 'Chào mừng trở lại!',
+      message: `Hello ${userName}, you've been logged in successfully.`,
+    });
+  }, [addToast]);
+
+  const showLogoutSuccess = useCallback(() => {
+    return addToast({
+      type: 'info',
+      title: 'Logged Out',
+      message: 'You have been logged out successfully.',
+    });
+  }, [addToast]);
+
+  // Admin-specific toasts
+  const showAdminNewOrder = useCallback((orderId, customerName, total) => {
+    return addToast({
+      type: 'info',
+      title: 'Đã nhận đơn hàng mới',
+      message: `Order ${orderId} from ${customerName} - $${total.toFixed(2)}`,
+      actionText: 'View Orders',
+      actionUrl: '/admin/orders',
+      duration: 8000,
+>>>>>>> safety-checkpoint
     });
   }, [addToast]);
 
@@ -167,6 +272,7 @@ export const ToastProvider = ({ children }) => {
     return addToast({
       type: 'warning',
       title: 'Low Stock Alert',
+<<<<<<< HEAD
       message: `"${bookTitle}" - Only ${stock} items remaining`,
       duration: 0, // Persistent until manually dismissed
       isAdmin: true,
@@ -197,6 +303,25 @@ export const ToastProvider = ({ children }) => {
       message: `${error}${details ? ` - ${details}` : ''}`,
       duration: 0, // Persistent for critical errors
       isAdmin: true,
+=======
+      message: `"${bookTitle}" is running low (${stock} remaining)`,
+      actionText: 'Manage Inventory',
+      actionUrl: '/admin/books',
+      duration: 10000,
+    });
+  }, [addToast]);
+
+  const showBulkOperationComplete = useCallback((operation, successCount, errorCount) => {
+    const type = errorCount > 0 ? 'warning' : 'success';
+    const title = errorCount > 0 ? 'Bulk Operation Completed with Errors' : 'Bulk Operation Successful';
+    const message = `${operation}: ${successCount} successful${errorCount > 0 ? `, ${errorCount} failed` : ''}`;
+    
+    return addToast({
+      type,
+      title,
+      message,
+      duration: 8000,
+>>>>>>> safety-checkpoint
     });
   }, [addToast]);
 
@@ -205,11 +330,16 @@ export const ToastProvider = ({ children }) => {
     addToast,
     removeToast,
     clearAllToasts,
+<<<<<<< HEAD
     // Generic methods
+=======
+    // Predefined methods
+>>>>>>> safety-checkpoint
     showSuccess,
     showError,
     showWarning,
     showInfo,
+<<<<<<< HEAD
     // User-specific methods
     showLoginSuccess,
     showLogoutSuccess,
@@ -222,6 +352,18 @@ export const ToastProvider = ({ children }) => {
     showAdminLowStock,
     showAdminUserRegistered,
     showAdminSystemError,
+=======
+    // Specialized methods
+    showOrderCreated,
+    showOrderCancelled,
+    showBookAdded,
+    showBookRemoved,
+    showLoginSuccess,
+    showLogoutSuccess,
+    showAdminNewOrder,
+    showAdminLowStock,
+    showBulkOperationComplete,
+>>>>>>> safety-checkpoint
   };
 
   return (

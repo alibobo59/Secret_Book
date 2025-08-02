@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts"; // Remove useBook import
 import { AdminHeader, AdminSidebar, AdminFooter } from "../components/admin";
@@ -68,7 +68,7 @@ const AdminLayout = () => {
 
         <AdminHeader isSidebarCollapsed={isSidebarCollapsed} />
 
-        <main className="p-6 mt-16 md:pt-16 flex-1 overflow-auto">
+        <main className="p-4 mt-12 md:pt-2 flex-1 overflow-auto">
           <Outlet
             context={{
               loading: isLoading, // Only authLoading

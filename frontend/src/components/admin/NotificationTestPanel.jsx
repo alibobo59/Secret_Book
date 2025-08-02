@@ -78,7 +78,6 @@ const NotificationTestPanel = () => {
     },
   ];
 
-  // Add admin-specific notifications
   if (user?.isAdmin) {
     testNotifications.splice(4, 0, {
       title: 'Test New Order (Admin)',

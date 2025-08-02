@@ -17,6 +17,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\ProfileController;
+use App\Http\Controllers\API\ImageUploadController;
 
 // Root route
 Route::get('/', function () {
@@ -45,6 +46,9 @@ Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('r
 
 // Admin/Mod routes (protected by auth:sanctum, check.user.status and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(function () {
+    // Image upload for RichText Editor
+    Route::post('/upload/editor-image', [ImageUploadController::class, 'uploadEditorImage'])->name('upload.editor-image');
+    Route::delete('/upload/editor-image', [ImageUploadController::class, 'deleteEditorImage'])->name('upload.delete-editor-image');
     // Categories
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
@@ -78,6 +82,8 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
 
     // Analytics
     Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboardStats'])->name('analytics.dashboard');
+    Route::get('/admin/analytics/order-stats', [AnalyticsController::class, 'getOrderStats'])->name('admin.analytics.order-stats');
+    Route::get('/admin/analytics/low-performing-books', [AnalyticsController::class, 'getLowPerformingBooks'])->name('admin.analytics.low-performing-books');
 
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

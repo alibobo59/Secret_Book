@@ -214,14 +214,28 @@ class OrderController extends Controller
                 'notes' => $request->notes,
             ]);
 
-            // Create order items
+            // Create order items and update stock
             foreach ($items as $item) {
+                // Check stock availability
+                $book = Book::find($item['book_id']);
+                if (!$book) {
+                    throw new \Exception("Sách với ID {$item['book_id']} không tồn tại");
+                }
+                
+                if ($book->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Sách '{$book->title}' không đủ số lượng trong kho. Còn lại: {$book->stock_quantity}, yêu cầu: {$item['quantity']}");
+                }
+                
+                // Create order item
                 OrderItem::create([
                     'order_id' => $order->id,
                     'book_id' => $item['book_id'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
+                
+                // Decrease stock quantity
+                $book->decrement('stock_quantity', $item['quantity']);
             }
 
             // Create address if provided
@@ -378,6 +392,17 @@ class OrderController extends Controller
                 'notes' => $request->notes ?? $order->notes,
             ]);
 
+            // Handle stock restoration when order is cancelled
+            if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    $book = Book::find($item->book_id);
+                    if ($book) {
+                        // Restore stock quantity
+                        $book->increment('stock_quantity', $item->quantity);
+                    }
+                }
+            }
+
             $order->load(['items.book.author', 'user', 'address']);
 
             // Send email notification if status changed and user has email
@@ -438,6 +463,14 @@ class OrderController extends Controller
                 'status' => 'cancelled',
                 'payment_status' => 'cancelled'
             ]);
+
+            // Restore stock quantity when order is cancelled
+            foreach ($order->items as $item) {
+                $book = Book::find($item->book_id);
+                if ($book) {
+                    $book->increment('stock_quantity', $item->quantity);
+                }
+            }
 
             $order->load(['items.book.author', 'user']);
 

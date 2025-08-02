@@ -9,7 +9,7 @@ class BookVariation extends Model
 
     protected $casts = ['attributes' => 'array'];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'stock'];
 
     public function book()
     {
@@ -19,5 +19,10 @@ class BookVariation extends Model
     public function getImageUrlAttribute()
     {
         return $this->image ? url('storage/' . $this->image) : $this->book->image_url;
+    }
+
+    public function getStockAttribute()
+    {
+        return $this->stock_quantity;
     }
 }

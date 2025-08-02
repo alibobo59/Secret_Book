@@ -78,17 +78,17 @@ PUT /api/orders/{id}/status
 - `pending` - Chờ xử lý
 - `confirmed` - Đã xác nhận
 - `processing` - Đang xử lý
-- `shipped` - Đã giao hàng
-- `delivered` - Đã giao thành công
+- `shipped` - Đã gửi
+- `delivered` - Đã giao
 - `cancelled` - Đã hủy
 
 ## Nội dung email theo trạng thái
 
-### Shipped (Đã giao hàng)
+### Shipped (Đã gửi)
 - Thông báo đơn hàng đã được giao cho đơn vị vận chuyển
 - Thời gian dự kiến nhận hàng: 2-3 ngày làm việc
 
-### Delivered (Đã giao thành công)
+### Delivered (Đã giao)
 - Cảm ơn khách hàng
 - Xác nhận đơn hàng đã được giao thành công
 

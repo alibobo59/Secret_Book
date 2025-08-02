@@ -334,4 +334,63 @@ class AnalyticsController extends Controller
             'paymentMethodStats' => $paymentMethodStats
         ];
     }
+
+    /**
+     * Get order statistics by status for a date range
+     */
+    public function getOrderStats(Request $request): JsonResponse
+    {
+        $startDate = $request->get('start_date', now()->subDays(30)->toDateString());
+        $endDate = $request->get('end_date', now()->toDateString());
+
+        $orderStats = Order::whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Ensure all statuses are represented
+        $allStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        $result = [];
+        foreach ($allStatuses as $status) {
+            $result[$status] = $orderStats[$status] ?? 0;
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get books with low performance (low sales/revenue)
+     */
+    public function getLowPerformingBooks(Request $request): JsonResponse
+    {
+        $startDate = $request->get('start_date', now()->subDays(30)->toDateString());
+        $endDate = $request->get('end_date', now()->toDateString());
+        $limit = $request->get('limit', 10);
+
+        $lowPerformingBooks = DB::table('books')
+            ->leftJoin('order_items', function($join) use ($startDate, $endDate) {
+                $join->on('books.id', '=', 'order_items.book_id')
+                     ->join('orders', function($orderJoin) use ($startDate, $endDate) {
+                         $orderJoin->on('orders.id', '=', 'order_items.order_id')
+                                  ->where('orders.status', 'delivered')
+                                  ->whereBetween('orders.created_at', [$startDate, $endDate]);
+                     });
+            })
+            ->select([
+                'books.id',
+                'books.title',
+                'books.price',
+                'books.stock_quantity',
+                DB::raw('COALESCE(SUM(order_items.quantity), 0) as sold_quantity'),
+                DB::raw('COALESCE(SUM(order_items.quantity * order_items.price), 0) as revenue')
+            ])
+            ->groupBy('books.id', 'books.title', 'books.price', 'books.stock_quantity')
+            ->orderBy('revenue', 'asc')
+            ->orderBy('sold_quantity', 'asc')
+            ->limit($limit)
+            ->get();
+
+        return response()->json($lowPerformingBooks);
+    }
 }

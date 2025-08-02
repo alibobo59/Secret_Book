@@ -33,5 +33,5 @@ class Cart extends Model
     public function getItemCountAttribute()
     {
         return $this->items->sum('quantity');
-    }
+   }
 }

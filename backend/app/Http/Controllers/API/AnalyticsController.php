@@ -360,6 +360,68 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Get featured books based on sales quantity in last 30 days
+     */
+    public function getFeaturedBooks(Request $request): JsonResponse
+    {
+        // Get last 30 days start date
+        $startDate = now()->subDays(30);
+        
+        // Get books with highest sales quantity in last 30 days
+        $featuredBooks = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('books', 'books.id', '=', 'order_items.book_id')
+            ->leftJoin('categories', 'categories.id', '=', 'books.category_id')
+            ->leftJoin('authors', 'authors.id', '=', 'books.author_id')
+            ->leftJoin('publishers', 'publishers.id', '=', 'books.publisher_id')
+            ->where('orders.status', 'delivered')
+            ->where('orders.created_at', '>=', $startDate)
+            ->groupBy('books.id', 'books.title', 'books.price', 'books.image', 'books.stock_quantity', 'categories.name', 'authors.name', 'publishers.name')
+            ->orderByRaw('SUM(order_items.quantity) DESC')
+            ->limit(5)
+            ->get([
+                'books.id',
+                'books.title',
+                'books.price',
+                'books.image',
+                'books.stock_quantity',
+                'categories.name as category_name',
+                'authors.name as author_name',
+                'publishers.name as publisher_name',
+                DB::raw('SUM(order_items.quantity * order_items.price) as monthly_revenue'),
+                DB::raw('SUM(order_items.quantity) as monthly_sales')
+            ]);
+
+        // If no books have sales in last 30 days, fallback to latest books
+        if ($featuredBooks->isEmpty()) {
+            $featuredBooks = Book::with(['category', 'author', 'publisher'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($book) {
+                    return [
+                        'id' => $book->id,
+                        'title' => $book->title,
+                        'price' => $book->price,
+                        'image' => $book->image,
+                        'stock_quantity' => $book->stock_quantity,
+                        'category_name' => $book->category->name ?? null,
+                        'author_name' => $book->author->name ?? null,
+                        'publisher_name' => $book->publisher->name ?? null,
+                        'monthly_revenue' => 0,
+                        'monthly_sales' => 0
+                    ];
+                });
+        }
+
+        return response()->json([
+            'message' => 'Sách nổi bật dựa trên số lượng bán cao nhất trong 30 ngày gần nhất',
+            'data' => $featuredBooks,
+            'period' => 'last-30-days'
+        ]);
+    }
+
+    /**
      * Get books with low performance (low sales/revenue)
      */
     public function getLowPerformingBooks(Request $request): JsonResponse

@@ -77,8 +77,8 @@ class Coupon extends Model
     {
         $now = Carbon::now();
         return $this->is_active 
-            && $this->start_date <= $now 
-            && $this->end_date >= $now;
+            && (!$this->start_date || $this->start_date <= $now)
+            && (!$this->end_date || $this->end_date >= $now);
     }
 
     public function isAvailable()
@@ -103,26 +103,33 @@ class Coupon extends Model
 
     public function calculateDiscount($orderAmount)
     {
+        // Kiểm tra tính khả dụng
         if (!$this->isAvailable()) {
             return 0;
         }
 
+        // Kiểm tra số tiền tối thiểu
         if ($this->minimum_amount && $orderAmount < $this->minimum_amount) {
             return 0;
         }
 
+        $discount = 0;
+
         if ($this->type === 'percentage') {
+            // Tính giảm giá theo phần trăm
             $discount = ($orderAmount * $this->value) / 100;
             
-            if ($this->maximum_discount) {
-                $discount = min($discount, $this->maximum_discount);
+            // Áp dụng giới hạn giảm giá tối đa nếu có
+            if ($this->maximum_discount && $discount > $this->maximum_discount) {
+                $discount = $this->maximum_discount;
             }
-            
-            return $discount;
+        } else {
+            // Giảm giá cố định
+            $discount = min($this->value, $orderAmount);
         }
 
-        // Fixed amount discount
-        return min($this->value, $orderAmount);
+        // Đảm bảo giảm giá không âm và không vượt quá số tiền đơn hàng
+        return max(0, min($discount, $orderAmount));
     }
 
     public function getStatusAttribute()
@@ -133,11 +140,11 @@ class Coupon extends Model
             return 'inactive';
         }
         
-        if ($this->start_date > $now) {
+        if ($this->start_date && $this->start_date > $now) {
             return 'upcoming';
         }
         
-        if ($this->end_date < $now) {
+        if ($this->end_date && $this->end_date < $now) {
             return 'expired';
         }
         

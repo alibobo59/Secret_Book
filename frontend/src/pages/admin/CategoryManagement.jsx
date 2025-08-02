@@ -82,8 +82,8 @@ const CategoryManagement = () => {
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
         Category Management
       </h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-500 mb-4">{success}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>}
+      {success && <p className="text-green-500 dark:text-green-400 mb-4">{success}</p>}
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="flex space-x-4">
           <input
@@ -91,19 +91,19 @@ const CategoryManagement = () => {
             value={form.name}
             onChange={(e) => setForm({ name: e.target.value })}
             placeholder="Tên Danh Mục"
-            className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
+            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
           />
           <button
             type="submit"
-            className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
+            className="bg-amber-600 dark:bg-amber-700 text-white px-4 py-2 rounded-md hover:bg-amber-700 dark:hover:bg-amber-800 flex items-center gap-2">
             {editingId ? "Update" : "Add"} Category
           </button>
         </div>
       </form>
       {loading ? (
-        <p>Loading categories...</p>
+        <p className="text-gray-600 dark:text-gray-400">Loading categories...</p>
       ) : categories.length === 0 ? (
-        <p>No categories found.</p>
+        <p className="text-gray-600 dark:text-gray-400">No categories found.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -129,12 +129,12 @@ const CategoryManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
                         onClick={() => handleEdit(category)}
-                        className="text-amber-600 hover:text-amber-800 mr-4">
+                        className="text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400 mr-4">
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-800">
+                        className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400">
                         <Trash2 size={18} />
                       </button>
                     </td>

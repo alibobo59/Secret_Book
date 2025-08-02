@@ -1,37 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCoupon } from '../contexts/CouponContext';
-import { Tag, Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { Tag, Check, X, Loader2, AlertCircle, Info } from 'lucide-react';
 
 const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved, appliedCoupon }) => {
   const { validateCoupon, loading } = useCoupon();
   const [couponCode, setCouponCode] = useState('');
   const [error, setError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
+    const trimmedCode = couponCode.trim();
+    
+    if (!trimmedCode) {
       setError('Vui lòng nhập mã khuyến mại');
+      return;
+    }
+
+    if (trimmedCode.length > 50) {
+      setError('Mã khuyến mại không được vượt quá 50 ký tự');
       return;
     }
 
     setIsValidating(true);
     setError('');
+    setSuccessMessage('');
 
     try {
-      const response = await validateCoupon(couponCode.trim().toUpperCase(), orderAmount);
+      const response = await validateCoupon(trimmedCode.toUpperCase(), orderAmount);
       
       if (response.success) {
-        onCouponApplied({
-          code: couponCode.trim().toUpperCase(),
+        const appliedData = {
+          code: trimmedCode.toUpperCase(),
           coupon: response.data.coupon,
           discountAmount: response.data.discount_amount,
           finalAmount: response.data.final_amount
-        });
+        };
+        
+        onCouponApplied(appliedData);
         setCouponCode('');
         setError('');
+        setSuccessMessage(`Áp dụng mã ${trimmedCode.toUpperCase()} thành công!`);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Có lỗi xảy ra khi kiểm tra mã khuyến mại');
     } finally {
       setIsValidating(false);
     }
@@ -41,13 +56,28 @@ const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved, appliedCou
     onCouponRemoved();
     setCouponCode('');
     setError('');
+    setSuccessMessage('');
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isValidating) {
+      e.preventDefault();
       handleApplyCoupon();
     }
   };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setCouponCode(value);
+    setError('');
+    setSuccessMessage('');
+  };
+
+  // Clear messages when order amount changes
+  useEffect(() => {
+    setError('');
+    setSuccessMessage('');
+  }, [orderAmount]);
 
   return (
     <div className="bg-gray-50 p-4 rounded-lg">
@@ -105,14 +135,15 @@ const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved, appliedCou
               <input
                 type="text"
                 value={couponCode}
-                onChange={(e) => {
-                  setCouponCode(e.target.value.toUpperCase());
-                  setError('');
-                }}
-                onKeyPress={handleKeyPress}
-                placeholder="Nhập mã khuyến mại"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={handleInputChange}
+                onKeyDown={handleKeyPress}
+                placeholder="Nhập mã khuyến mại (VD: SALE20)"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 disabled={isValidating}
+                maxLength={50}
+                autoComplete="off"
               />
             </div>
             <button
@@ -138,8 +169,19 @@ const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved, appliedCou
             </div>
           )}
 
-          <div className="text-xs text-gray-500">
-            Nhập mã khuyến mại để được giảm giá cho đơn hàng của bạn
+          {successMessage && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <span className="text-sm text-green-700">{successMessage}</span>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2 text-xs text-gray-500">
+            <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+            <div>
+              <div>Nhập mã khuyến mại để được giảm giá cho đơn hàng của bạn</div>
+              <div className="mt-1">Giá trị đơn hàng hiện tại: <span className="font-medium">{orderAmount?.toLocaleString() || 0}đ</span></div>
+            </div>
           </div>
         </div>
       )}

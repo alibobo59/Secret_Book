@@ -7,6 +7,7 @@ use App\Models\Coupon;
 use App\Models\CouponUsage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -244,8 +245,14 @@ class CouponController extends Controller
     public function validate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'code' => 'required|string',
+            'code' => 'required|string|max:50',
             'order_amount' => 'required|numeric|min:0'
+        ], [
+            'code.required' => 'Mã khuyến mại là bắt buộc',
+            'code.max' => 'Mã khuyến mại không được vượt quá 50 ký tự',
+            'order_amount.required' => 'Số tiền đơn hàng là bắt buộc',
+            'order_amount.numeric' => 'Số tiền đơn hàng phải là số',
+            'order_amount.min' => 'Số tiền đơn hàng phải lớn hơn hoặc bằng 0'
         ]);
 
         if ($validator->fails()) {
@@ -256,7 +263,8 @@ class CouponController extends Controller
             ], 422);
         }
 
-        $coupon = Coupon::where('code', $request->code)->first();
+        // Tìm coupon với code (case-insensitive)
+        $coupon = Coupon::whereRaw('UPPER(code) = ?', [strtoupper($request->code)])->first();
 
         if (!$coupon) {
             return response()->json([
@@ -265,31 +273,11 @@ class CouponController extends Controller
             ], 404);
         }
 
-        $userId = auth()->id();
+        $userId = Auth::check() ? Auth::id() : null;
         
+        // Kiểm tra điều kiện sử dụng
         if (!$coupon->canBeUsedByUser($userId)) {
-            $reasons = [];
-            
-            if (!$coupon->isValid()) {
-                if (!$coupon->is_active) {
-                    $reasons[] = 'Mã khuyến mại đã bị vô hiệu hóa';
-                } elseif ($coupon->start_date > now()) {
-                    $reasons[] = 'Mã khuyến mại chưa có hiệu lực';
-                } elseif ($coupon->end_date < now()) {
-                    $reasons[] = 'Mã khuyến mại đã hết hạn';
-                }
-            }
-            
-            if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
-                $reasons[] = 'Mã khuyến mại đã hết lượt sử dụng';
-            }
-            
-            if ($coupon->usage_limit_per_user) {
-                $userUsageCount = $coupon->usages()->where('user_id', $userId)->count();
-                if ($userUsageCount >= $coupon->usage_limit_per_user) {
-                    $reasons[] = 'Bạn đã sử dụng hết lượt cho mã khuyến mại này';
-                }
-            }
+            $reasons = $this->getCouponInvalidReasons($coupon, $userId);
 
             return response()->json([
                 'success' => false,
@@ -297,12 +285,18 @@ class CouponController extends Controller
             ], 422);
         }
 
+        // Tính toán giảm giá
         $discountAmount = $coupon->calculateDiscount($request->order_amount);
 
         if ($discountAmount <= 0) {
+            $message = 'Đơn hàng không đủ điều kiện áp dụng mã khuyến mại này';
+            if ($coupon->minimum_amount && $request->order_amount < $coupon->minimum_amount) {
+                $message = 'Đơn hàng phải có giá trị tối thiểu ' . number_format($coupon->minimum_amount, 0, ',', '.') . ' VND để sử dụng mã này';
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Đơn hàng không đủ điều kiện áp dụng mã khuyến mại này'
+                'message' => $message
             ], 422);
         }
 
@@ -311,10 +305,41 @@ class CouponController extends Controller
             'message' => 'Mã khuyến mại hợp lệ',
             'data' => [
                 'coupon' => $coupon,
-                'discount_amount' => $discountAmount,
-                'final_amount' => $request->order_amount - $discountAmount
+                'discount_amount' => round($discountAmount, 2),
+                'final_amount' => round($request->order_amount - $discountAmount, 2)
             ]
         ]);
+    }
+
+    /**
+     * Lấy danh sách lý do mã khuyến mại không hợp lệ
+     */
+    private function getCouponInvalidReasons($coupon, $userId)
+    {
+        $reasons = [];
+        
+        if (!$coupon->isValid()) {
+            if (!$coupon->is_active) {
+                $reasons[] = 'Mã khuyến mại đã bị vô hiệu hóa';
+            } elseif ($coupon->start_date > now()) {
+                $reasons[] = 'Mã khuyến mại chưa có hiệu lực (bắt đầu từ ' . $coupon->start_date->format('d/m/Y H:i') . ')';
+            } elseif ($coupon->end_date < now()) {
+                $reasons[] = 'Mã khuyến mại đã hết hạn (hết hạn lúc ' . $coupon->end_date->format('d/m/Y H:i') . ')';
+            }
+        }
+        
+        if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+            $reasons[] = 'Mã khuyến mại đã hết lượt sử dụng (' . $coupon->used_count . '/' . $coupon->usage_limit . ')';
+        }
+        
+        if ($coupon->usage_limit_per_user && $userId) {
+            $userUsageCount = $coupon->usages()->where('user_id', $userId)->count();
+            if ($userUsageCount >= $coupon->usage_limit_per_user) {
+                $reasons[] = 'Bạn đã sử dụng hết lượt cho mã khuyến mại này (' . $userUsageCount . '/' . $coupon->usage_limit_per_user . ')';
+            }
+        }
+
+        return $reasons;
     }
 
     /**

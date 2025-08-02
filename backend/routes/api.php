@@ -44,6 +44,9 @@ Route::get('/publishers/{publisher}', [PublisherController::class, 'show'])->nam
 // Public review routes
 Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
+// Public analytics routes
+Route::get('/featured-books', [AnalyticsController::class, 'getFeaturedBooks'])->name('featured-books');
+
 // Admin/Mod routes (protected by auth:sanctum, check.user.status and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(function () {
     // Image upload for RichText Editor

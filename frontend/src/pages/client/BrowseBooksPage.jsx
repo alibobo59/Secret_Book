@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useBook } from '../../contexts/BookContext';
 
 import BookCard from '../../components/client/BookCard';
@@ -8,6 +9,7 @@ import SearchAndSort from '../../components/books/SearchAndSort';
 
 const BrowseBooksPage = () => {
   const { books, loading, fetchBooks } = useBook();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   
   // Filter and search state
@@ -24,7 +26,13 @@ const BrowseBooksPage = () => {
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+    
+    // Get search parameter from URL
+    const searchFromUrl = searchParams.get('search');
+    if (searchFromUrl) {
+      setSearchTerm(searchFromUrl);
+    }
+  }, [searchParams]);
 
   // Calculate unique values for filters
   const { uniqueCategories, uniqueAuthors, priceRange } = useMemo(() => {

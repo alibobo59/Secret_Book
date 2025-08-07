@@ -43,36 +43,36 @@ const OrderFailedPage = () => {
               Thanh Toán Thất Bại
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              We're sorry, but your payment could not be processed. Please try again.
+              Rất tiếc, thanh toán của bạn không thể được xử lý. Vui lòng thử lại.
             </p>
           </div>
 
           {orderDetails && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Order Details
+                Chi Tiết Đơn Hàng
               </h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Order Number:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Mã Đơn Hàng:</span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {orderDetails.orderNumber}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Tổng Tiền:</span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {orderDetails.total.toLocaleString('vi-VN')} ₫
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Payment Method:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Phương Thức Thanh Toán:</span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     VNPay
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Trạng Thái:</span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                     Thất Bại
                   </span>
@@ -84,30 +84,30 @@ const OrderFailedPage = () => {
           <div className="space-y-4">
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-                Common reasons for payment failure:
+                Các nguyên nhân thường gặp khi thanh toán thất bại:
               </h3>
               <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                <li>• Insufficient funds in your account</li>
-                <li>• Incorrect payment information</li>
-                <li>• Network connection issues</li>
-                <li>• Bank security restrictions</li>
+                <li>• Số dư tài khoản không đủ</li>
+                <li>• Thông tin thanh toán không chính xác</li>
+                <li>• Sự cố kết nối mạng</li>
+                <li>• Hạn chế bảo mật từ ngân hàng</li>
               </ul>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/checkout')}
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Try Again
+                Thử Lại
               </button>
               <button
                 onClick={() => navigate('/')}
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800 dark:focus:ring-gray-400"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay về trang chủ
+                Về Trang Chủ
               </button>
             </div>
           </div>

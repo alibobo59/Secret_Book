@@ -68,11 +68,11 @@ export const AnalyticsProvider = ({ children }) => {
   };
 
   // Get dashboard statistics
-  const getDashboardStats = async (period = '30d') => {
+  const getDashboardStats = async (period = '30d', startDate = null, endDate = null) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await analyticsService.getDashboardStats(period);
+      const response = await analyticsService.getDashboardStats(period, startDate, endDate);
       console.log('Raw API response:', response);
       console.log('Response type:', typeof response);
       console.log('Response keys:', Object.keys(response || {}));

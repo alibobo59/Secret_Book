@@ -27,7 +27,7 @@ const CategoryManagement = () => {
       setCategories(categoriesData);
     } catch (err) {
       console.error("Fetch error:", err.message);
-      setError("Failed to fetch categories.");
+      setError("Không thể tải danh sách danh mục.");
     } finally {
       setLoading(false);
     }
@@ -43,16 +43,16 @@ const CategoryManagement = () => {
         setCategories(
           categories.map((cat) => (cat.id === editingId ? response.data : cat))
         );
-        setSuccess("Category updated successfully.");
+        setSuccess("Cập nhật danh mục thành công.");
         setEditingId(null);
       } else {
         const response = await api.post("/categories", form);
         setCategories([...categories, response.data]);
-        setSuccess("Category added successfully.");
+        setSuccess("Thêm danh mục thành công.");
       }
       setForm({ name: "" });
     } catch (err) {
-      setError("Failed to save category.");
+      setError("Không thể lưu danh mục.");
     }
   };
 
@@ -64,15 +64,15 @@ const CategoryManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa danh mục này không?")) {
       setError(null);
       setSuccess(null);
       try {
         await api.delete(`/categories/${id}`);
         setCategories(categories.filter((cat) => cat.id !== id));
-        setSuccess("Category deleted successfully.");
+        setSuccess("Xóa danh mục thành công.");
       } catch (err) {
-        setError("Failed to delete category.");
+        setError("Không thể xóa danh mục.");
       }
     }
   };
@@ -80,7 +80,7 @@ const CategoryManagement = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Category Management
+        Quản Lý Danh Mục
       </h2>
       {error && <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>}
       {success && <p className="text-green-500 dark:text-green-400 mb-4">{success}</p>}
@@ -96,24 +96,24 @@ const CategoryManagement = () => {
           <button
             type="submit"
             className="bg-amber-600 dark:bg-amber-700 text-white px-4 py-2 rounded-md hover:bg-amber-700 dark:hover:bg-amber-800 flex items-center gap-2">
-            {editingId ? "Update" : "Add"} Category
+            {editingId ? "Cập Nhật" : "Thêm"} Danh Mục
           </button>
         </div>
       </form>
       {loading ? (
-        <p className="text-gray-600 dark:text-gray-400">Loading categories...</p>
+        <p className="text-gray-600 dark:text-gray-400">Đang tải danh mục...</p>
       ) : categories.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">No categories found.</p>
+        <p className="text-gray-600 dark:text-gray-400">Không tìm thấy danh mục nào.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Name
+                  Tên Danh Mục
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Actions
+                  Hành Động
                 </th>
               </tr>
             </thead>

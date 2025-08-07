@@ -146,6 +146,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add-item');
     Route::put('/cart/items/{bookId}', [CartController::class, 'updateItem'])->name('cart.update-item');
     Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
+    Route::post('/cart/items/remove-multiple', [CartController::class, 'removeItems'])->name('cart.remove-items');
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
     

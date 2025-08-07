@@ -19,16 +19,26 @@ class AnalyticsController extends Controller
     public function getDashboardStats(Request $request): JsonResponse
     {
         $period = $request->get('period', '30d');
-        $startDate = $this->getStartDate($period);
+        $requestStartDate = $request->get('startDate');
+        $requestEndDate = $request->get('endDate');
+        
+        // Use custom date range if provided, otherwise use period
+        if ($requestStartDate && $requestEndDate) {
+            $startDate = Carbon::parse($requestStartDate);
+            $endDate = Carbon::parse($requestEndDate);
+        } else {
+            $startDate = $this->getStartDate($period);
+            $endDate = now();
+        }
 
         $stats = [
-            'sales' => $this->getSalesStats($startDate),
-            'users' => $this->getUserStats($startDate),
+            'sales' => $this->getSalesStats($startDate, $endDate),
+            'users' => $this->getUserStats($startDate, $endDate),
             'inventory' => $this->getInventoryStats(),
-            'performance' => $this->getPerformanceStats($startDate),
-            'reviews' => $this->getReviewStats($startDate),
-            'promotions' => $this->getPromotionStats($startDate),
-            'behavior' => $this->getBehaviorStats($startDate)
+            'performance' => $this->getPerformanceStats($startDate, $endDate),
+            'reviews' => $this->getReviewStats($startDate, $endDate),
+            'promotions' => $this->getPromotionStats($startDate, $endDate),
+            'behavior' => $this->getBehaviorStats($startDate, $endDate)
         ];
 
         return response()->json($stats);
@@ -45,10 +55,11 @@ class AnalyticsController extends Controller
         };
     }
 
-    private function getSalesStats(Carbon $startDate): array
+    private function getSalesStats(Carbon $startDate, Carbon $endDate): array
     {
         $completedOrders = Order::where('status', 'delivered')
-            ->where('created_at', '>=', $startDate);
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate);
 
         $totalRevenue = $completedOrders->sum('total');
         $totalOrders = $completedOrders->count();
@@ -107,14 +118,16 @@ class AnalyticsController extends Controller
         ];
     }
 
-    private function getUserStats(Carbon $startDate): array
+    private function getUserStats(Carbon $startDate, Carbon $endDate): array
     {
         $totalUsers = User::count();
         
         $userSegments = [
-            'New Users' => User::where('created_at', '>=', $startDate)->count(),
+            'New Users' => User::where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)->count(),
             'Returning Users' => DB::table('orders')
                 ->where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)
                 ->whereIn('status', ['delivered', 'processing'])
                 ->distinct('user_id')
                 ->count(),
@@ -122,6 +135,7 @@ class AnalyticsController extends Controller
                 SELECT user_id, SUM(total) as total_spent
                 FROM orders 
                 WHERE created_at >= "' . $startDate . '" 
+                AND created_at <= "' . $endDate . '"
                 AND status IN ("delivered", "processing")
                 GROUP BY user_id
                 HAVING SUM(total) >= 1000
@@ -156,7 +170,7 @@ class AnalyticsController extends Controller
         ];
     }
 
-    private function getPerformanceStats(Carbon $startDate): array
+    private function getPerformanceStats(Carbon $startDate, Carbon $endDate): array
     {
         // In a real application, these metrics would come from analytics tracking
         // For now, we'll return mock data
@@ -190,10 +204,11 @@ class AnalyticsController extends Controller
             : 0;
     }
 
-    private function getReviewStats(Carbon $startDate): array
+    private function getReviewStats(Carbon $startDate, Carbon $endDate): array
     {
         $totalReviews = Review::where('is_hidden', false)->count();
-        $newReviews = Review::where('created_at', '>=', $startDate)->count();
+        $newReviews = Review::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)->count();
         $averageRating = Review::where('is_hidden', false)->avg('rating');
         $hiddenReviews = Review::where('is_hidden', true)->count();
 
@@ -234,7 +249,7 @@ class AnalyticsController extends Controller
         ];
     }
 
-    private function getPromotionStats(Carbon $startDate): array
+    private function getPromotionStats(Carbon $startDate, Carbon $endDate): array
     {
         $totalCoupons = Coupon::count();
         $activeCoupons = Coupon::where('is_active', true)
@@ -242,12 +257,15 @@ class AnalyticsController extends Controller
             ->where('end_date', '>=', now())
             ->count();
         $expiredCoupons = Coupon::where('end_date', '<', now())->count();
-        $totalUsages = CouponUsage::where('created_at', '>=', $startDate)->count();
-        $totalDiscount = CouponUsage::where('created_at', '>=', $startDate)->sum('discount_amount');
+        $totalUsages = CouponUsage::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)->count();
+        $totalDiscount = CouponUsage::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)->sum('discount_amount');
 
         $topCoupons = DB::table('coupon_usages')
             ->join('coupons', 'coupons.id', '=', 'coupon_usages.coupon_id')
             ->where('coupon_usages.created_at', '>=', $startDate)
+            ->where('coupon_usages.created_at', '<=', $endDate)
             ->groupBy('coupons.id', 'coupons.code', 'coupons.name')
             ->orderByRaw('COUNT(coupon_usages.id) DESC')
             ->limit(5)
@@ -274,13 +292,14 @@ class AnalyticsController extends Controller
         ];
     }
 
-    private function getBehaviorStats(Carbon $startDate): array
+    private function getBehaviorStats(Carbon $startDate, Carbon $endDate): array
     {
         // Customer behavior analysis
         $repeatCustomers = DB::table(DB::raw('(
             SELECT user_id, COUNT(*) as order_count
             FROM orders 
             WHERE created_at >= "' . $startDate . '" 
+            AND created_at <= "' . $endDate . '"
             AND status IN ("delivered", "processing")
             GROUP BY user_id
             HAVING COUNT(*) > 1
@@ -288,6 +307,7 @@ class AnalyticsController extends Controller
 
         $averageOrderValue = Order::where('status', 'delivered')
             ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->avg('total');
 
         $customerLifetimeValue = DB::table('orders')
@@ -305,6 +325,7 @@ class AnalyticsController extends Controller
             ->join('users', 'users.id', '=', 'orders.user_id')
             ->where('orders.status', 'delivered')
             ->where('orders.created_at', '>=', $startDate)
+            ->where('orders.created_at', '<=', $endDate)
             ->groupBy('users.id', 'users.name', 'users.email')
             ->orderByRaw('SUM(orders.total) DESC')
             ->limit(10)
@@ -316,6 +337,7 @@ class AnalyticsController extends Controller
             ]);
 
         $orderStatusDistribution = Order::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get();

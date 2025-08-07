@@ -24,12 +24,16 @@ export const CartProvider = ({ children }) => {
         if (user) {
           // Load from server for authenticated users
           const serverCart = await cartService.getCart();
-          setCartItems(serverCart.items || []);
+          const items = serverCart.items || [];
+          setCartItems(items);
+          setSelectedItems(new Set(items.map(item => item.id)));
         } else {
           // Load from localStorage for guests
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
-            setCartItems(JSON.parse(storedCart));
+            const items = JSON.parse(storedCart);
+            setCartItems(items);
+            setSelectedItems(new Set(items.map(item => item.id)));
           }
         }
       } catch (error) {
@@ -160,6 +164,40 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const removeItemsFromCart = async (itemIds) => {
+    console.log('🔍 removeItemsFromCart called with itemIds:', itemIds);
+    console.log('🛒 Current cart items before removal:', cartItems.map(item => ({ id: item.id, title: item.title })));
+    console.log('✅ Current selected items:', Array.from(selectedItems));
+    
+    try {
+      if (user) {
+        console.log('👤 User authenticated, calling cartService.removeItems with:', itemIds);
+        await cartService.removeItems(itemIds);
+        // Reload cart from server to ensure consistency
+        const serverCart = await cartService.getCart();
+        console.log('📦 Server cart after removal:', serverCart.items?.map(item => ({ id: item.id, title: item.title })));
+        setCartItems(serverCart.items || []);
+      } else {
+        console.log('👤 Guest user, filtering local cart');
+        // For guests, filter items from local state
+        setCartItems((prevItems) =>
+          prevItems.filter((item) => !itemIds.includes(item.id))
+        );
+      }
+
+      // Update selected items
+      setSelectedItems((prev) => {
+        const newSet = new Set(prev);
+        itemIds.forEach((id) => newSet.delete(id));
+        console.log('✅ Updated selected items after removal:', Array.from(newSet));
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Failed to remove items from cart:", error);
+      throw error;
+    }
+  };
+
   const clearCart = async () => {
     try {
       if (user) {
@@ -262,8 +300,9 @@ export const CartProvider = ({ children }) => {
         addToCart,
         updateQuantity,
         removeFromCart,
-        clearCart,
-        getCartTotal,
+        removeItemsFromCart, // Use this instead of clearCart for specific items
+    clearCart, // Keep for clearing the whole cart if needed
+    getCartTotal,
         getItemCount,
         toggleItemSelection,
         selectAllItems,

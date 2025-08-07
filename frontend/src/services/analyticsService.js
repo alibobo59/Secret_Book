@@ -2,10 +2,18 @@ import { api } from './api.js';
 
 const analyticsService = {
   // Get dashboard statistics (Admin only)
-  getDashboardStats: async (period = '30d') => {
+  getDashboardStats: async (period = '30d', startDate = null, endDate = null) => {
     try {
+      const params = {};
+      if (startDate && endDate) {
+        params.start_date = startDate;
+        params.end_date = endDate;
+      } else {
+        params.period = period;
+      }
+      
       const response = await api.get('/analytics/dashboard', {
-        params: { period }
+        params
       });
       return response.data;
     } catch (error) {

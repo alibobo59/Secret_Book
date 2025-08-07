@@ -376,11 +376,15 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
             'notes' => 'nullable|string|max:1000',
+            'cancellation_reason' => 'required_if:status,cancelled|string|max:500',
         ], [
             'status.required' => 'Trạng thái đơn hàng là bắt buộc.',
             'status.in' => 'Trạng thái đơn hàng không hợp lệ. Chỉ chấp nhận: pending, processing, shipped, delivered, cancelled.',
             'notes.string' => 'Ghi chú phải là chuỗi ký tự.',
-            'notes.max' => 'Ghi chú không được vượt quá 1000 ký tự.'
+            'notes.max' => 'Ghi chú không được vượt quá 1000 ký tự.',
+            'cancellation_reason.required_if' => 'Lý do hủy đơn hàng là bắt buộc khi trạng thái là cancelled.',
+            'cancellation_reason.string' => 'Lý do hủy phải là chuỗi ký tự.',
+            'cancellation_reason.max' => 'Lý do hủy không được vượt quá 500 ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -448,7 +452,7 @@ class OrderController extends Controller
                 try {
                     // Send order cancelled by admin email if status changed to cancelled
                     if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
-                        $reason = $request->notes ?? 'Không có lý do cụ thể';
+                        $reason = $request->cancellation_reason ?? 'Không có lý do cụ thể';
                         Mail::to($order->user->email)->send(
                             new OrderCancelledByAdmin($order, $reason)
                         );

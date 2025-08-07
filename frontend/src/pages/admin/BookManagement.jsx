@@ -538,7 +538,17 @@ const BookManagement = () => {
                              alt={book.title}
                              className="h-12 w-12 object-cover rounded-md"
                              onError={(e) => {
-                               e.target.src = '/placeholder-book.png';
+                               // Prevent infinite loop by checking if we're already showing placeholder
+                               if (!e.target.dataset.fallback) {
+                                 e.target.dataset.fallback = 'true';
+                                 e.target.src = '/placeholder-book.svg';
+                               } else {
+                                 // If placeholder also fails, replace with div
+                                 const placeholder = document.createElement('div');
+                                 placeholder.className = 'h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center';
+                                 placeholder.innerHTML = '<span class="text-xs text-gray-500 dark:text-gray-400">Không có ảnh</span>';
+                                 e.target.parentElement.replaceChild(placeholder, e.target);
+                               }
                              }}
                            />
                          ) : (
@@ -560,7 +570,7 @@ const BookManagement = () => {
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
-                        ${book.price || "0.00"}
+                        {(book.price || 0).toLocaleString('vi-VN')} VND
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"

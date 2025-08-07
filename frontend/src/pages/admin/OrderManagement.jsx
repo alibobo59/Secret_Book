@@ -44,6 +44,7 @@ const OrderManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
 
   // Debounce search term
   useEffect(() => {
@@ -82,20 +83,35 @@ const OrderManagement = () => {
     navigate(`/admin/orders/${order.id}`);
   };
 
+  // Hàm xác định trạng thái được phép dựa trên logic nghiệp vụ
+  const getValidNextStatuses = (currentStatus) => {
+    const statusFlow = {
+      'pending': ['processing', 'cancelled'],
+      'processing': ['shipped', 'cancelled'], 
+      'shipped': ['delivered'],
+      'delivered': [], // Không thể thay đổi từ delivered
+      'cancelled': [] // Không thể thay đổi từ cancelled
+    };
+    
+    return statusFlow[currentStatus] || [];
+  };
+
   const handleUpdateStatus = async (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
     setIsStatusModalOpen(true);
 
-    // Fetch allowed statuses for this order
+    // Sử dụng logic nghiệp vụ thay vì gọi API
     try {
       setLoadingAllowedStatuses(true);
-      const allowedStatusesData = await getAllowedStatuses(order.id);
-      setAllowedStatuses(allowedStatusesData.allowed_next_statuses || []);
+      const allowedNextStatuses = getValidNextStatuses(order.status);
+      setAllowedStatuses(allowedNextStatuses.map(status => ({
+        value: status,
+        label: statusOptions.find(opt => opt.value === status)?.label || status
+      })));
     } catch (error) {
-      console.error("Failed to fetch allowed statuses:", error);
-      // Fallback to all statuses if API fails
-      setAllowedStatuses(statusOptions);
+      console.error("Failed to set allowed statuses:", error);
+      setAllowedStatuses([]);
     } finally {
       setLoadingAllowedStatuses(false);
     }
@@ -104,9 +120,21 @@ const OrderManagement = () => {
   const handleStatusUpdate = async () => {
     if (!selectedOrder || !newStatus) return;
 
+    // Kiểm tra nếu trạng thái mới là 'cancelled' và chưa có lý do
+    if (newStatus === 'cancelled' && !cancellationReason.trim()) {
+      alert('Vui lòng nhập lý do hủy đơn hàng.');
+      return;
+    }
+
     try {
       setStatusLoading(true);
-      await updateOrderStatus(selectedOrder.id, newStatus);
+      
+      // Nếu là hủy đơn hàng, gửi kèm lý do
+      if (newStatus === 'cancelled') {
+        await updateOrderStatus(selectedOrder.id, newStatus, cancellationReason);
+      } else {
+        await updateOrderStatus(selectedOrder.id, newStatus);
+      }
 
       // Refresh orders after successful update with current filters
       const filters = {};
@@ -117,6 +145,7 @@ const OrderManagement = () => {
       setIsStatusModalOpen(false);
       setSelectedOrder(null);
       setNewStatus("");
+      setCancellationReason("");
       setAllowedStatuses([]);
     } catch (error) {
       console.error("Failed to update order status:", error);
@@ -614,6 +643,7 @@ const OrderManagement = () => {
           setIsStatusModalOpen(false);
           setAllowedStatuses([]);
           setNewStatus("");
+          setCancellationReason("");
         }}
         title="Cập Nhật Trạng Thái Đơn Hàng"
         footer={
@@ -624,6 +654,7 @@ const OrderManagement = () => {
                 setIsStatusModalOpen(false);
                 setAllowedStatuses([]);
                 setNewStatus("");
+                setCancellationReason("");
               }}>
               Hủy
             </button>
@@ -633,7 +664,8 @@ const OrderManagement = () => {
               disabled={
                 statusLoading ||
                 loadingAllowedStatuses ||
-                allowedStatuses.length === 0
+                allowedStatuses.length === 0 ||
+                (newStatus === 'cancelled' && !cancellationReason.trim())
               }>
               {statusLoading
                 ? "Đang Cập Nhật..."
@@ -709,6 +741,29 @@ const OrderManagement = () => {
                 </p>
               )}
             </div>
+            
+            {/* Textarea cho lý do hủy khi chọn trạng thái cancelled */}
+            {newStatus === 'cancelled' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Lý do hủy đơn hàng <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Nhập lý do hủy đơn hàng..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+                {!cancellationReason.trim() && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                    Vui lòng nhập lý do hủy đơn hàng.
+                  </p>
+                )}
+              </div>
+            )}
+            
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <AlertCircle className="h-4 w-4" />

@@ -46,7 +46,8 @@ const CheckoutPage = () => {
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    city: "",
+    province_id: "",
+    ward_id: "",
     address: "",
     notes: "",
   });
@@ -56,6 +57,9 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [provinces, setProvinces] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,6 +75,46 @@ const CheckoutPage = () => {
         [name]: "",
       }));
     }
+
+    // If province changes, reset ward and load new wards
+    if (name === "province_id" && value) {
+      setFormData((prev) => ({ ...prev, ward_id: "" }));
+      loadWards(value);
+    }
+  };
+
+  // Load provinces on component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const response = await api.get("/provinces");
+        setProvinces(response.data.data || []);
+      } catch (error) {
+        console.error("Error loading provinces:", error);
+        showError("Lỗi", "Không thể tải danh sách tỉnh/thành phố");
+      }
+    };
+    loadProvinces();
+  }, []);
+
+  // Load wards when province is selected
+  const loadWards = async (provinceId) => {
+    if (!provinceId) {
+      setWards([]);
+      return;
+    }
+
+    setLoadingWards(true);
+    try {
+      const response = await api.get(`/provinces/${provinceId}/wards`);
+      setWards(response.data.data || []);
+    } catch (error) {
+      console.error("Error loading wards:", error);
+      showError("Lỗi", "Không thể tải danh sách phường/xã");
+      setWards([]);
+    } finally {
+      setLoadingWards(false);
+    }
   };
 
   const validateForm = () => {
@@ -80,7 +124,8 @@ const CheckoutPage = () => {
     if (!formData.name.trim()) newErrors.name = "Họ và tên là bắt buộc";
     if (!formData.email.trim()) newErrors.email = "Email là bắt buộc";
     if (!formData.phone.trim()) newErrors.phone = "Số điện thoại là bắt buộc";
-    if (!formData.city.trim()) newErrors.city = "Thành phố là bắt buộc";
+    if (!formData.province_id) newErrors.province_id = "Tỉnh/Thành phố là bắt buộc";
+    if (!formData.ward_id) newErrors.ward_id = "Phường/Xã là bắt buộc";
     if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc";
 
     // Email validation
@@ -120,7 +165,8 @@ const CheckoutPage = () => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          city: formData.city,
+          province_id: formData.province_id,
+          ward_id: formData.ward_id,
           address: formData.address,
         },
         shipping: 0, // Add shipping calculation if needed
@@ -275,22 +321,55 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1" />
-                    Thành Phố *
+                    Tỉnh/Thành Phố *
                   </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
+                  <select
+                    name="province_id"
+                    value={formData.province_id}
                     onChange={handleInputChange}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                      errors.city ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Nhập thành phố"
-                  />
-                  {errors.city && (
-                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                      errors.province_id ? "border-red-500" : "border-gray-300"
+                    }`}>
+                    <option value="">Chọn tỉnh/thành phố</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.id}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.province_id && (
+                    <p className="text-red-500 text-sm mt-1">{errors.province_id}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <MapPin className="inline h-4 w-4 mr-1" />
+                    Phường/Xã *
+                  </label>
+                  <select
+                    name="ward_id"
+                    value={formData.ward_id}
+                    onChange={handleInputChange}
+                    disabled={!formData.province_id || loadingWards}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                      errors.ward_id ? "border-red-500" : "border-gray-300"
+                    }`}>
+                    <option value="">
+                      {loadingWards ? "Đang tải..." : "Chọn phường/xã"}
+                    </option>
+                    {wards.map((ward) => (
+                      <option key={ward.id} value={ward.id}>
+                        {ward.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.ward_id && (
+                    <p className="text-red-500 text-sm mt-1">{errors.ward_id}</p>
+                  )}
+                </div>
+
+
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

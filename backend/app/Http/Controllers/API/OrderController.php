@@ -29,7 +29,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $query = Order::with(['items.book.author', 'user', 'address'])
+        $query = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -56,7 +56,7 @@ class OrderController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Order::with(['items.book.author', 'user', 'address'])
+        $query = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status if provided
@@ -120,7 +120,8 @@ class OrderController extends Controller
             // Add address validation
             'address.name' => 'required|string|max:255',
             'address.address' => 'required|string|max:500',
-            'address.city' => 'required|string|max:100',
+            'address.province_id' => 'required|exists:provinces,id',
+            'address.ward_id' => 'required|exists:wards,id',
             'address.phone' => 'required|string|max:20',
             'address.email' => 'required|email|max:255',
         ], [
@@ -147,9 +148,10 @@ class OrderController extends Controller
             'address.address.required' => 'Địa chỉ là bắt buộc.',
             'address.address.string' => 'Địa chỉ phải là chuỗi ký tự.',
             'address.address.max' => 'Địa chỉ không được vượt quá 500 ký tự.',
-            'address.city.required' => 'Thành phố là bắt buộc.',
-            'address.city.string' => 'Thành phố phải là chuỗi ký tự.',
-            'address.city.max' => 'Thành phố không được vượt quá 100 ký tự.',
+            'address.province_id.required' => 'Tỉnh/Thành phố là bắt buộc.',
+            'address.province_id.exists' => 'Tỉnh/Thành phố không tồn tại.',
+            'address.ward_id.required' => 'Phường/Xã là bắt buộc.',
+            'address.ward_id.exists' => 'Phường/Xã không tồn tại.',
             'address.phone.required' => 'Số điện thoại là bắt buộc.',
             'address.phone.string' => 'Số điện thoại phải là chuỗi ký tự.',
             'address.phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
@@ -249,8 +251,8 @@ class OrderController extends Controller
 
             // Create order items and update stock
             foreach ($items as $item) {
-                // Check stock availability
-                $book = Book::find($item['book_id']);
+                // Check stock availability and load relationships
+                $book = Book::with(['author', 'publisher', 'category'])->find($item['book_id']);
                 if (!$book) {
                     throw new \Exception("Sách với ID {$item['book_id']} không tồn tại");
                 }
@@ -259,12 +261,19 @@ class OrderController extends Controller
                     throw new \Exception("Sách '{$book->title}' không đủ số lượng trong kho. Còn lại: {$book->stock_quantity}, yêu cầu: {$item['quantity']}");
                 }
                 
-                // Create order item
+                // Create order item with book snapshot
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'book_id' => $item['book_id'],
+                    'book_id' => $item['book_id'], // Keep for reference, but nullable
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
+                    'book_title' => $book->title,
+                    'book_sku' => $book->sku,
+                    'book_description' => $book->description,
+                    'book_image' => $book->image,
+                    'author_name' => $book->author->name ?? null,
+                    'publisher_name' => $book->publisher->name ?? null,
+                    'category_name' => $book->category->name ?? null,
                 ]);
                 
                 // Decrease stock quantity
@@ -277,7 +286,8 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'name' => $request->address['name'],
                     'address' => $request->address['address'],
-                    'city' => $request->address['city'],
+                    'province_id' => $request->address['province_id'],
+                    'ward_id' => $request->address['ward_id'],
                     'phone' => $request->address['phone'],
                     'email' => $request->address['email'],
                 ]);
@@ -297,7 +307,7 @@ class OrderController extends Controller
             }
 
             // Load relationships for response
-            $order->load(['items.book.author', 'user', 'address']);
+            $order->load(['items', 'user', 'address.province', 'address.wardModel']);
 
             // Send order placed email notification
             if ($order->user && $order->user->email) {
@@ -330,7 +340,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $order = Order::with(['items.book.author', 'user', 'address'])
+        $order = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->first();
@@ -353,7 +363,7 @@ class OrderController extends Controller
      */
     public function adminShow($id)
     {
-        $order = Order::with(['items.book.author', 'user', 'address'])->find($id);
+        $order = Order::with(['items', 'user', 'address.province', 'address.wardModel'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -445,7 +455,7 @@ class OrderController extends Controller
                 }
             }
 
-            $order->load(['items.book.author', 'user', 'address']);
+            $order->load(['items', 'user', 'address']);
 
             // Send email notification if status changed and user has email
             if ($oldStatus !== $request->status && $order->user && $order->user->email) {
@@ -514,7 +524,7 @@ class OrderController extends Controller
                 }
             }
 
-            $order->load(['items.book.author', 'user']);
+            $order->load(['items', 'user']);
 
             return response()->json([
                 'success' => true,
@@ -581,7 +591,7 @@ class OrderController extends Controller
         }
 
         try {
-            $order = Order::with(['items.book.author', 'user', 'address'])->findOrFail($id);
+            $order = Order::with(['items', 'user', 'address'])->findOrFail($id);
             $oldPaymentStatus = $order->payment_status;
             
             $order->update([

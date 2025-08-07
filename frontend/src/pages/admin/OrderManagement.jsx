@@ -284,7 +284,7 @@ const OrderManagement = () => {
             </div>
             <button
               onClick={() => getAllOrders()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
               Thử Lại
             </button>
           </div>
@@ -394,7 +394,7 @@ const OrderManagement = () => {
                 setStatusFilter("");
                 setCurrentPage(1);
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
               Xóa bộ lọc
             </button>
           )}
@@ -579,7 +579,8 @@ const OrderManagement = () => {
                 <div className="text-gray-700 dark:text-gray-300">
                   <p>{selectedOrder.address?.name || "N/A"}</p>
                   <p>{selectedOrder.address?.address || "N/A"}</p>
-                  <p>{selectedOrder.address?.city || "N/A"}</p>
+                  <p>Tỉnh/Thành Phố: {selectedOrder.address?.province?.name || "Chưa có thông tin"}</p>
+                  <p>Phường/Xã: {selectedOrder.address?.ward_model?.name || "Chưa có thông tin"}</p>
                 </div>
               </div>
             </div>
@@ -593,19 +594,19 @@ const OrderManagement = () => {
                 {selectedOrder.items?.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded">
+                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800">
                     <img
-                      src={item.book?.image_url || "/placeholder-book.jpg"}
-                      alt={item.book?.title || "Book"}
+                      src={item.book_image || item.book?.image_url || "/placeholder-book.jpg"}
+                      alt={item.book_title || item.book?.title || "Book"}
                       className="w-12 h-16 object-cover rounded"
                     />
                     <div className="flex-grow">
                       <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.book?.title || "Unknown Title"}
+                        {item.book_title || item.book?.title || "Unknown Title"}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         bởi{" "}
-                        {item.book?.author?.name || "Tác giả không xác định"}
+                        {item.author_name || item.book?.author?.name || "Tác giả không xác định"}
                       </p>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -627,7 +628,7 @@ const OrderManagement = () => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
                   Ghi Chú Đơn Hàng
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
                   {selectedOrder.notes}
                 </p>
               </div>
@@ -649,7 +650,7 @@ const OrderManagement = () => {
         footer={
           <div className="flex justify-end space-x-3">
             <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => {
                 setIsStatusModalOpen(false);
                 setAllowedStatuses([]);
@@ -659,7 +660,7 @@ const OrderManagement = () => {
               Hủy
             </button>
             <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
               onClick={handleStatusUpdate}
               disabled={
                 statusLoading ||
@@ -692,7 +693,7 @@ const OrderManagement = () => {
                 Trạng Thái Mới
               </label>
               {loadingAllowedStatuses ? (
-                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                   Đang tải trạng thái được phép...
                 </div>
               ) : (
@@ -707,7 +708,7 @@ const OrderManagement = () => {
                       setNewStatus(e.target.value);
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400 focus:border-transparent">
                   <option value="">-- Chọn trạng thái mới --</option>
                   {statusOptions.map((status) => {
                     const isAllowed = allowedStatuses.some(
@@ -723,7 +724,7 @@ const OrderManagement = () => {
                         disabled={!isAllowed || isCurrentStatus}
                         className={`${
                           !isAllowed || isCurrentStatus
-                            ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-600"
+                            ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-700"
                             : "text-gray-800 dark:text-gray-200"
                         }`}>
                         {status.label} {isCurrentStatus ? "(Hiện tại)" : ""}{" "}

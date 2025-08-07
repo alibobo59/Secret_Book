@@ -156,3 +156,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
 });
+
+// Location routes (public)
+Route::get('/provinces', [App\Http\Controllers\Api\LocationController::class, 'getProvinces'])->name('provinces.index');
+Route::get('/provinces/{provinceId}/wards', [App\Http\Controllers\Api\LocationController::class, 'getWards'])->name('wards.index');

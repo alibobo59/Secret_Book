@@ -306,15 +306,15 @@ const OrderDetail = () => {
 
         {/* Tab Content */}
         {activeTab === "details" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-6">
               {/* Order Information */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                   Thông tin đơn hàng
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Hash className="w-4 h-4 mr-2" />
@@ -348,15 +348,7 @@ const OrderDetail = () => {
                       {formatCurrency(order.total_amount || order.total)}
                     </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Phương thức thanh toán
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.payment_method || "N/A"}
-                    </p>
-                  </div>
+
                 </div>
               </div>
 
@@ -389,32 +381,30 @@ const OrderDetail = () => {
                           <tr key={index}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                {item.book &&
-                                  (item.book.cover_image ||
-                                    item.book.image) && (
-                                    <img
-                                      className="h-10 w-10 rounded-lg object-cover mr-4"
-                                      src={
-                                        item.book.cover_image || item.book.image
-                                      }
-                                      alt={item.book.title}
-                                    />
-                                  )}
+                                {(item.book_image || (item.book && (item.book.cover_image || item.book.image))) && (
+                                  <img
+                                    className="h-10 w-10 rounded-lg object-cover mr-4"
+                                    src={
+                                      item.book_image || item.book?.cover_image || item.book?.image
+                                    }
+                                    alt={item.book_title || item.book?.title}
+                                  />
+                                )}
                                 <div>
                                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {item.book ? (
+                                    {item.book_id ? (
                                       <Link
-                                        to={`/admin/books/${item.book.id}`}
+                                        to={`/admin/books/${item.book_id}`}
                                         className="hover:text-blue-600 dark:hover:text-blue-400">
-                                        {item.book.title}
+                                        {item.book_title || item.book?.title || "N/A"}
                                       </Link>
                                     ) : (
-                                      item.product_name || "N/A"
+                                      item.book_title || item.product_name || "N/A"
                                     )}
                                   </div>
-                                  {item.book && item.book.author && (
+                                  {(item.author_name || (item.book && item.book.author)) && (
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                      {item.book.author.name}
+                                      {item.author_name || item.book?.author?.name}
                                     </div>
                                   )}
                                 </div>
@@ -523,7 +513,7 @@ const OrderDetail = () => {
                       Số điện thoại người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_phone || "Không có"}
+                      {order.customer_phone || order.phone || order.user?.phone || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -532,7 +522,23 @@ const OrderDetail = () => {
                       Địa chỉ giao hàng
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.shipping_address || "Không có"}
+                      {order.shipping_address || order.address?.address || order.address?.street || "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tỉnh/Thành Phố
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.address?.province?.name || "Chưa có thông tin"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phường/Xã
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.address?.ward_model?.name || "Chưa có thông tin"}
                     </p>
                   </div>
                 </div>
@@ -602,106 +608,13 @@ const OrderDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Customer Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Thông tin khách hàng
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Tên khách hàng
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.name || order.customer_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Email
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.email || order.customer_email || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Số điện thoại
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.phone || order.customer_phone || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Địa chỉ giao hàng
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.shipping_address || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2" />
-                  Thông tin thanh toán
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Phương thức thanh toán
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.payment_method || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Trạng thái thanh toán
-                    </label>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          order.payment_status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : order.payment_status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}>
-                        {order.payment_status === "paid"
-                          ? "Đã thanh toán"
-                          : order.payment_status === "pending"
-                          ? "Chờ thanh toán"
-                          : order.payment_status === "failed"
-                          ? "Thanh toán thất bại"
-                          : order.payment_status || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                  {order.transaction_id && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Mã giao dịch
-                      </label>
-                      <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-sm">
-                        {order.transaction_id}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Order Summary */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   Tóm tắt đơn hàng
                 </h3>
                 <div className="space-y-3">
-                  {order.subtotal && (
+                  {(order.subtotal !== undefined && order.subtotal !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Tạm tính
@@ -711,7 +624,7 @@ const OrderDetail = () => {
                       </span>
                     </div>
                   )}
-                  {order.tax && (
+                  {(order.tax !== undefined && order.tax !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Thuế
@@ -721,7 +634,7 @@ const OrderDetail = () => {
                       </span>
                     </div>
                   )}
-                  {order.shipping && (
+                  {(order.shipping !== undefined && order.shipping !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Phí vận chuyển

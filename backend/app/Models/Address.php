@@ -12,7 +12,8 @@ class Address extends Model
         'order_id',
         'name',
         'address',
-        'city',
+        'province_id',
+        'ward_id',
         'phone',
         'email',
     ];
@@ -20,5 +21,15 @@ class Address extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+    
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id');
+    }
+    
+    public function wardModel()
+    {
+        return $this->belongsTo(Ward::class, 'ward_id');
     }
 }

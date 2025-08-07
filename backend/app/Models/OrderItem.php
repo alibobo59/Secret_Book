@@ -13,6 +13,13 @@ class OrderItem extends Model
         'book_id',
         'quantity',
         'price',
+        'book_title',
+        'book_sku',
+        'book_description',
+        'book_image',
+        'author_name',
+        'publisher_name',
+        'category_name',
     ];
 
     protected $casts = [

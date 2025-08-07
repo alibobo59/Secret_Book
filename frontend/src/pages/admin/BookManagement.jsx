@@ -157,11 +157,8 @@ const BookManagement = () => {
           headers: { Authorization: `Bearer ${token}` },
         };
         await api.delete(`/books/${id}`, config);
-        // Refetch will be triggered by useEffect if we modify a dependency,
-        // but in this case, we want to force a refetch of the current page.
-        // A simple way is to have a 'refetch' state.
-        // For now, let's just filter locally for responsiveness, though refetching is more robust.
-        setBooks((prev) => prev.filter((book) => book.id !== id));
+        // Refetch data from server to ensure synchronization
+        await fetchBooks();
         setError(null);
       } catch (err) {
         const message = err.response?.data?.error || "Không thể xóa sách";
@@ -227,7 +224,7 @@ const BookManagement = () => {
       const response = await api.post(
         "/books/bulk-delete",
         {
-          book_ids: selectedBooks,
+          ids: selectedBooks,
         },
         {
           headers: {
@@ -237,18 +234,29 @@ const BookManagement = () => {
         }
       );
 
-      if (response.data.success) {
-        // Remove deleted books from local state
-        setBooks((prev) =>
-          prev.filter((book) => !selectedBooks.includes(book.id))
-        );
+      // Check if deletion was successful (either success flag or deleted_count)
+      if (response.data.success || response.data.deleted_count > 0) {
+        // Refetch data from server to ensure synchronization
+        await fetchBooks();
         setSelectedBooks([]);
         setShowBulkActions(false);
         setError("");
+        
+        // Show success message
+        if (response.data.deleted_count) {
+          console.log(`Đã xóa thành công ${response.data.deleted_count} sách`);
+        }
       }
     } catch (err) {
       console.error("Bulk delete error:", err);
-      setError(err.response?.data?.message || "Đã xảy ra lỗi khi xóa sách.");
+      if (err.response?.data?.error) {
+        // Handle validation errors
+        const errors = err.response.data.error;
+        const errorMessages = Object.values(errors).flat();
+        setError(errorMessages.join(', '));
+      } else {
+        setError(err.response?.data?.message || "Đã xảy ra lỗi khi xóa sách.");
+      }
     } finally {
       setBulkLoading(false);
     }

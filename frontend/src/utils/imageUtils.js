@@ -27,5 +27,9 @@ export const getFullUrl = (path) => {
 
 // Function to handle image loading errors
 export const handleImageError = (event) => {
+  // Prevent infinite loop by checking if we're already showing the placeholder
+  if (event.target.src.includes('placeholder-book.png')) {
+    return; // Don't try to load placeholder again if it's already failed
+  }
   event.target.src = DEFAULT_BOOK_IMAGE;
 };

@@ -32,7 +32,7 @@ const ProfilePage = () => {
   const { username } = useParams();
   const { user } = useAuth();
   const { getUserOrders } = useOrder();
-  const { t } = useLanguage();
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({

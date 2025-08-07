@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Loading } from "../../components/admin";
 import { api } from "../../services/api";
-import { getImageUrl } from "../../utils/imageUtils";
+import { getImageUrl, handleImageError } from "../../utils/imageUtils";
 import axios from "axios";
 
 const BookManagement = () => {
@@ -102,6 +102,7 @@ const BookManagement = () => {
     }
   }, [queryFilters, getToken]);
 
+  // Separate useEffect for initial load and user/role changes
   useEffect(() => {
     // Check if user has admin or mod role
     const isAdminOrMod = hasRole(["admin", "mod"]);
@@ -115,7 +116,16 @@ const BookManagement = () => {
     }
 
     fetchBooks();
-  }, [fetchBooks, hasRole, user]);
+  }, [user, hasRole]); // Removed fetchBooks from dependencies to prevent loop
+
+  // Separate useEffect for filter changes
+  useEffect(() => {
+    const isAdminOrMod = hasRole(["admin", "mod"]);
+    
+    if (user && isAdminOrMod) {
+      fetchBooks();
+    }
+  }, [queryFilters]); // Only trigger when filters change
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -537,9 +547,7 @@ const BookManagement = () => {
                              src={getImageUrl(book.image)}
                              alt={book.title}
                              className="h-12 w-12 object-cover rounded-md"
-                             onError={(e) => {
-                               e.target.src = '/placeholder-book.png';
-                             }}
+                             onError={handleImageError}
                            />
                          ) : (
                            <div className="h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center">

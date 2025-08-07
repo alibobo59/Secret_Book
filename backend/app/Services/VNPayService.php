@@ -51,7 +51,7 @@ class VNPayService
             "vnp_OrderInfo" => "Thanh toan don hang " . $order->order_number,
             "vnp_OrderType" => "billpayment",
             "vnp_ReturnUrl" => $this->vnp_ReturnUrl,
-            "vnp_TxnRef" => $order->order_number,
+            "vnp_TxnRef" => $order->order_number . '-' . time() . '-' . rand(1000, 9999),
             // Thêm các tham số bắt buộc khác
             "vnp_ExpireDate" => date('YmdHis', strtotime('+15 minutes')),
         ];

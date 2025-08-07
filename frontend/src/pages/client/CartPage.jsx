@@ -229,7 +229,7 @@ const CartPage = () => {
                           </span>
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            disabled={item.quantity >= item.stock}
+                            disabled={item.quantity >= (item.stock_quantity || item.stock)}
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             <Plus className="h-4 w-4" />
@@ -248,9 +248,9 @@ const CartPage = () => {
                     </div>
 
                     {/* Stock Warning */}
-                    {item.stock < 5 && (
+                    {(item.stock_quantity || item.stock) < 5 && (
                       <div className="mt-3 text-sm text-amber-600 dark:text-amber-400">
-                        Chỉ còn {item.stock} sản phẩm trong kho
+                        Chỉ còn {item.stock_quantity || item.stock} sản phẩm trong kho
                       </div>
                     )}
                   </motion.div>

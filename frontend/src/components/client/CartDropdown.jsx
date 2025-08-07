@@ -1,6 +1,14 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, X, Plus, Minus, Trash2, CheckSquare, Square } from "lucide-react";
+import {
+  ShoppingCart,
+  X,
+  Plus,
+  Minus,
+  Trash2,
+  CheckSquare,
+  Square,
+} from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 
 import { useNavigate, Link } from "react-router-dom";
@@ -24,7 +32,7 @@ const CartDropdown = ({ className = "" }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [dropdownPosition, setDropdownPosition] = useState('bottom');
+  const [dropdownPosition, setDropdownPosition] = useState("bottom");
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     productId: null,
@@ -78,12 +86,12 @@ const CartDropdown = ({ className = "" }) => {
       const rect = dropdownRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      
+
       // If there's not enough space below (less than 400px) and more space above, show dropdown above
       if (spaceBelow < 400 && spaceAbove > spaceBelow) {
-        setDropdownPosition('top');
+        setDropdownPosition("top");
       } else {
-        setDropdownPosition('bottom');
+        setDropdownPosition("bottom");
       }
     }
     setIsOpen(!isOpen);
@@ -119,7 +127,7 @@ const CartDropdown = ({ className = "" }) => {
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={`absolute right-0 w-80 h-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col ${
-              dropdownPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+              dropdownPosition === "top" ? "bottom-full mb-2" : "top-full mt-2"
             }`}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -145,7 +153,9 @@ const CartDropdown = ({ className = "" }) => {
                       }
                     }}
                     className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                    {selectedItems.size === cartItems.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    {selectedItems.size === cartItems.length
+                      ? "Bỏ chọn tất cả"
+                      : "Chọn tất cả"}
                   </button>
                 )}
                 <button
@@ -188,15 +198,19 @@ const CartDropdown = ({ className = "" }) => {
                           )}
                         </button>
                       </div>
-                      
+
                       {/* Book Image */}
                       <div className="shrink-0">
                         <img
-                          src={item.image ? `http://127.0.0.1:8000/storage/${item.image}` : '/placeholder-book.svg'}
+                          src={
+                            item.image
+                              ? `http://127.0.0.1:8000/storage/${item.image}`
+                              : "/placeholder-book.svg"
+                          }
                           alt={item.title}
                           className="w-12 h-16 object-cover rounded"
                           onError={(e) => {
-                            e.target.src = '/placeholder-book.svg';
+                            e.target.src = "/placeholder-book.svg";
                           }}
                         />
                       </div>
@@ -212,7 +226,8 @@ const CartDropdown = ({ className = "" }) => {
                             : item.author}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(parseInt(item.price) || 0).toLocaleString('vi-VN')} ₫ each
+                          {(parseInt(item.price) || 0).toLocaleString("vi-VN")}{" "}
+                          ₫
                         </p>
 
                         {/* Quantity Controls */}
@@ -240,7 +255,10 @@ const CartDropdown = ({ className = "" }) => {
                           {/* Price and Remove */}
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              {((parseInt(item.price) || 0) * item.quantity).toLocaleString('vi-VN')} ₫
+                              {(
+                                (parseInt(item.price) || 0) * item.quantity
+                              ).toLocaleString("vi-VN")}{" "}
+                              ₫
                             </span>
                             <button
                               onClick={() => handleRemoveItem(item.id)}
@@ -265,7 +283,7 @@ const CartDropdown = ({ className = "" }) => {
                     Đã chọn ({getSelectedItemsCount()}):
                   </span>
                   <span className="font-bold text-lg text-gray-800 dark:text-white">
-                    {getSelectedTotal().toLocaleString('vi-VN')} ₫
+                    {getSelectedTotal().toLocaleString("vi-VN")} ₫
                   </span>
                 </div>
                 <div className="flex justify-between items-center mb-3">
@@ -273,7 +291,7 @@ const CartDropdown = ({ className = "" }) => {
                     Tổng cộng:
                   </span>
                   <span className="font-bold text-lg text-gray-800 dark:text-white">
-                    {getCartTotal().toLocaleString('vi-VN')} ₫
+                    {getCartTotal().toLocaleString("vi-VN")} ₫
                   </span>
                 </div>
                 <Link

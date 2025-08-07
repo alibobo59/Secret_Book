@@ -29,7 +29,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $query = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
+        $query = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -56,7 +56,7 @@ class OrderController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
+        $query = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status if provided
@@ -340,7 +340,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $order = Order::with(['items', 'user', 'address.province', 'address.wardModel'])
+        $order = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->first();
@@ -363,7 +363,7 @@ class OrderController extends Controller
      */
     public function adminShow($id)
     {
-        $order = Order::with(['items', 'user', 'address.province', 'address.wardModel'])->find($id);
+        $order = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -492,7 +492,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Cancel an order (user can only cancel their own pending orders)
+     * Cancel an order (user can only cancel their own pending or processing orders)
      */
     public function cancel($id)
     {
@@ -500,7 +500,7 @@ class OrderController extends Controller
 
         $order = Order::where('id', $id)
             ->where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'processing'])
             ->first();
 
         if (!$order) {

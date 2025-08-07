@@ -73,16 +73,16 @@ const BookCard = ({ book }) => {
             </span>
             <span
               className={`text-xs px-2 py-1 rounded ${
-                book.stock > 10
+                (book.stock_quantity || book.stock) > 10
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : book.stock > 0
+                  : (book.stock_quantity || book.stock) > 0
                   ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                   : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}>
-              {book.stock > 10
+              {(book.stock_quantity || book.stock) > 10
                 ? "Còn hàng"
-                : book.stock > 0
-                ? `Chỉ còn ${book.stock} cuốn`
+                : (book.stock_quantity || book.stock) > 0
+                ? `Chỉ còn ${book.stock_quantity || book.stock} cuốn`
                 : "Hết hàng"}
             </span>
           </div>

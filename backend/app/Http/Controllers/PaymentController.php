@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Services\VNPayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class PaymentController extends Controller
@@ -92,8 +93,9 @@ class PaymentController extends Controller
             $vnp_TransactionNo = $inputData['vnp_TransactionNo'] ?? null;
             $vnp_Amount = $inputData['vnp_Amount'] / 100; // Convert back from VNPay format
 
-            // Find order by order number
-            $order = Order::where('order_number', $vnp_TxnRef)->first();
+            // Find order by order number (extract from vnp_TxnRef which may have timestamp suffix)
+            $orderNumber = explode('-', $vnp_TxnRef)[0] . '-' . explode('-', $vnp_TxnRef)[1]; // Get ORD-XXXXXXXX part
+            $order = Order::where('order_number', $orderNumber)->first();
 
             if (!$order) {
                 return response()->json([
@@ -115,7 +117,7 @@ class PaymentController extends Controller
                 ]);
 
                 Log::info('VNPay payment successful', [
-                    'order_number' => $vnp_TxnRef,
+                    'order_number' => $orderNumber,
                     'transaction_id' => $vnp_TransactionNo,
                     'amount' => $vnp_Amount
                 ]);
@@ -135,7 +137,7 @@ class PaymentController extends Controller
                 ]);
 
                 Log::warning('VNPay payment failed', [
-                    'order_number' => $vnp_TxnRef,
+                    'order_number' => $orderNumber,
                     'response_code' => $vnp_ResponseCode
                 ]);
 
@@ -183,6 +185,180 @@ class PaymentController extends Controller
                 'message' => 'Payment verification failed'
             ], 500);
         }
+    }
+
+    public function retryVNPayPayment(Request $request, $orderId)
+    {
+        try {
+            // Validate order exists and belongs to authenticated user
+            $order = Order::where('id', $orderId)
+                         ->where('user_id', auth()->user()->id)
+                         ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn.'
+                ], 404);
+            }
+
+            // Check if order can be retried
+            if (!$this->canRetryPayment($order)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đơn hàng này không thể thanh toán lại.'
+                ], 400);
+            }
+
+            // Update payment method and status for retry (keep order status unchanged)
+            $order->update([
+                'payment_method' => 'vnpay',
+                'payment_status' => 'processing'
+            ]);
+
+            // Get client IP
+            $ipAddr = $request->ip();
+            if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $ipAddr = '127.0.0.1';
+            }
+
+            // Create new VNPay payment URL
+            $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
+
+            Log::info('VNPay payment retry initiated', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'user_id' => auth()->user()->id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payment_url' => $paymentUrl,
+                'order_number' => $order->order_number,
+                'message' => 'Đã tạo liên kết thanh toán mới.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('VNPay payment retry failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể tạo thanh toán mới: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function changePaymentMethod(Request $request, $orderId)
+    {
+        try {
+            $request->validate([
+                'payment_method' => 'required|in:cod,vnpay'
+            ]);
+
+            $order = Order::where('id', $orderId)
+                         ->where('user_id', auth()->user()->id)
+                         ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn.'
+                ], 404);
+            }
+
+            // Check if order can be retried
+            if (!$this->canRetryPayment($order)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đơn hàng này không thể thay đổi phương thức thanh toán.'
+                ], 400);
+            }
+
+            $paymentMethod = $request->payment_method;
+            
+            // Update order with new payment method
+            $updateData = [
+                'payment_method' => $paymentMethod
+                // Status will be set based on payment method below
+            ];
+
+            if ($paymentMethod === 'cod') {
+                // For COD, mark as pending and waiting for delivery
+                $updateData['payment_status'] = 'pending';
+                // Keep order status as pending for COD - don't auto-change to processing
+                
+                $order->update($updateData);
+
+                Log::info('Payment method changed to COD', [
+                    'order_id' => $orderId,
+                    'user_id' => auth()->user()->id,
+                    'new_method' => $paymentMethod
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã chuyển sang thanh toán khi nhận hàng (COD)',
+                    'order_number' => $order->order_number,
+                    'payment_method' => $paymentMethod
+                ]);
+            } else if ($paymentMethod === 'vnpay') {
+                // For VNPay, generate new payment URL
+                $updateData['payment_status'] = 'processing';
+                $updateData['status'] = 'processing'; // VNPay requires immediate processing
+                $order->update($updateData);
+
+                // Get client IP
+                $ipAddr = $request->ip();
+                if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                    $ipAddr = '127.0.0.1';
+                }
+
+                $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
+
+                Log::info('Payment method changed to VNPay', [
+                    'order_id' => $orderId,
+                    'user_id' => auth()->user()->id,
+                    'new_method' => $paymentMethod
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'payment_url' => $paymentUrl,
+                    'message' => 'Đã chuyển sang thanh toán VNPay',
+                    'order_number' => $order->order_number,
+                    'payment_method' => $paymentMethod
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Change payment method failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể thay đổi phương thức thanh toán: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function canRetryPayment($order)
+    {
+        // Check if payment status is failed, pending, or processing (for VNPay timeout/error cases)
+        if (!in_array($order->payment_status, ['failed', 'pending', 'processing'])) {
+            return false;
+        }
+
+        // Check if order is not too old (24 hours)
+        $orderAge = Carbon::now()->diffInHours($order->created_at);
+        if ($orderAge > 24) {
+            return false;
+        }
+
+        // Check if order items are still available (optional - can be implemented later)
+        // foreach ($order->orderItems as $item) {
+        //     if ($item->product->stock < $item->quantity) {
+        //         return false;
+        //     }
+        // }
+
+        return true;
     }
 
     public function createVNPayPaymentUrl(Request $request)

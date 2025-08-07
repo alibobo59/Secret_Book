@@ -131,6 +131,8 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
     Route::post('/payment/vnpay/verify', [PaymentController::class, 'verifyVNPayPayment']);
     Route::post('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);
+    Route::post('/payment/vnpay/retry/{orderId}', [PaymentController::class, 'retryVNPayPayment']);
+    Route::post('/payment/change-method/{orderId}', [PaymentController::class, 'changePaymentMethod']);
     // Review routes for authenticated users
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');

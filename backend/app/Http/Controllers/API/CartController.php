@@ -18,7 +18,7 @@ class CartController extends Controller
     {
         try {
             $user = Auth::user();
-            $cart = $user->cart ? $user->cart->load(['items.book']) : null;
+            $cart = $user->cart ? $user->cart->load(['items.book.author']) : null;
 
             if (!$cart) {
                 return response()->json([
@@ -38,7 +38,9 @@ class CartController extends Controller
                         'price' => $item->book->price,
                         'image' => $item->book->image,
                         'quantity' => $item->quantity,
-                        'subtotal' => $item->subtotal
+                        'subtotal' => $item->subtotal,
+                        'stock_quantity' => $item->book->stock_quantity,
+                        'author' => $item->book->author
                     ];
                 }),
                 'total' => $cart->total,
@@ -94,7 +96,7 @@ class CartController extends Controller
                 ]);
             }
 
-            $cartItem->load('book');
+            $cartItem->load('book.author');
 
             return response()->json([
                 'message' => 'Thêm sản phẩm vào giỏ hàng thành công',
@@ -104,7 +106,9 @@ class CartController extends Controller
                     'price' => $cartItem->book->price,
                     'image' => $cartItem->book->image,
                     'quantity' => $cartItem->quantity,
-                    'subtotal' => $cartItem->subtotal
+                    'subtotal' => $cartItem->subtotal,
+                    'stock_quantity' => $cartItem->book->stock_quantity,
+                    'author' => $cartItem->book->author
                 ]
             ]);
         } catch (\Exception $e) {
@@ -147,7 +151,7 @@ class CartController extends Controller
             }
 
             $cartItem->update(['quantity' => $request->quantity]);
-            $cartItem->load('book');
+            $cartItem->load('book.author');
 
             return response()->json([
                 'message' => 'Cập nhật sản phẩm thành công',
@@ -157,7 +161,9 @@ class CartController extends Controller
                     'price' => $cartItem->book->price,
                     'image' => $cartItem->book->image,
                     'quantity' => $cartItem->quantity,
-                    'subtotal' => $cartItem->subtotal
+                    'subtotal' => $cartItem->subtotal,
+                    'stock_quantity' => $cartItem->book->stock_quantity,
+                    'author' => $cartItem->book->author
                 ]
             ]);
         } catch (\Exception $e) {
@@ -306,7 +312,7 @@ class CartController extends Controller
             });
 
             // Return updated cart
-            $cart->load(['items.book']);
+            $cart->load(['items.book.author']);
 
             return response()->json([
                 'message' => 'Hợp nhất giỏ hàng thành công',
@@ -318,7 +324,9 @@ class CartController extends Controller
                             'price' => $item->book->price,
                             'image' => $item->book->image,
                             'quantity' => $item->quantity,
-                            'subtotal' => $item->subtotal
+                            'subtotal' => $item->subtotal,
+                            'stock_quantity' => $item->book->stock_quantity,
+                            'author' => $item->book->author
                         ];
                     }),
                     'total' => $cart->total,

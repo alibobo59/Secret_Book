@@ -112,6 +112,30 @@ const CheckoutPage = () => {
     }
   };
 
+  // Check stock validation when selected items change
+  useEffect(() => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length > 0) {
+      const outOfStockItems = selectedItems.filter(item => {
+        const stock = item.stock_quantity || item.stock || 0;
+        return stock === 0 || item.quantity > stock;
+      });
+      
+      if (outOfStockItems.length > 0) {
+        const itemNames = outOfStockItems.map(item => item.title).join(", ");
+        setErrors(prev => ({
+          ...prev,
+          stock: `Sản phẩm sau đã hết hàng hoặc không đủ số lượng: ${itemNames}`
+        }));
+      } else {
+        setErrors(prev => {
+          const { stock, ...rest } = prev;
+          return rest;
+        });
+      }
+    }
+  }, [getSelectedItems]);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -134,6 +158,18 @@ const CheckoutPage = () => {
     const phoneRegex = /^[0-9]{10,11}$/;
     if (formData.phone && !phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
       newErrors.phone = "Vui lòng nhập số điện thoại hợp lệ";
+    }
+
+    // Stock validation
+    const selectedItems = getSelectedItems();
+    const outOfStockItems = selectedItems.filter(item => {
+      const stock = item.stock_quantity || item.stock || 0;
+      return stock === 0 || item.quantity > stock;
+    });
+    
+    if (outOfStockItems.length > 0) {
+      const itemNames = outOfStockItems.map(item => item.title).join(", ");
+      newErrors.stock = `Sản phẩm sau đã hết hàng hoặc không đủ số lượng: ${itemNames}`;
     }
 
     setErrors(newErrors);
@@ -470,45 +506,69 @@ const CheckoutPage = () => {
                 </div>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {getSelectedItems().map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <img
-                        src={
-                          item.image
-                            ? `http://127.0.0.1:8000/storage/${item.image}`
-                            : "/placeholder-book.svg"
-                        }
-                        alt={item.title}
-                        className="w-16 h-20 object-cover rounded"
-                        onError={(e) => {
-                          e.target.src = "/placeholder-book.svg";
-                        }}
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
-                          {item.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          bởi {item.author?.name || "Tác giả không xác định"}
-                        </p>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              Số lượng: {item.quantity}
+                  {getSelectedItems().map((item) => {
+                    const stock = item.stock_quantity || item.stock || 0;
+                    const isOutOfStock = stock === 0;
+                    const isInsufficientStock = item.quantity > stock;
+                    const hasStockIssue = isOutOfStock || isInsufficientStock;
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-center space-x-4 p-4 border rounded-lg ${
+                          hasStockIssue 
+                            ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20" 
+                            : "border-gray-200 dark:border-gray-700"
+                        }`}>
+                        <img
+                          src={
+                            item.image
+                              ? `http://127.0.0.1:8000/storage/${item.image}`
+                              : "/placeholder-book.svg"
+                          }
+                          alt={item.title}
+                          className="w-16 h-20 object-cover rounded"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-book.svg";
+                          }}
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {item.title}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            bởi {item.author?.name || "Tác giả không xác định"}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Số lượng: {item.quantity}
+                              </span>
+                              {hasStockIssue && (
+                                <span className="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">
+                                  {isOutOfStock ? "Hết hàng" : `Chỉ còn ${stock} cuốn`}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {(item.price * item.quantity).toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              VND
                             </span>
                           </div>
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {(item.price * item.quantity).toLocaleString(
-                              "vi-VN"
-                            )}{" "}
-                            VND
-                          </span>
+                          {hasStockIssue && (
+                            <div className="mt-2 text-sm text-red-600 dark:text-red-400">
+                              {isOutOfStock 
+                                ? "Sản phẩm này đã hết hàng" 
+                                : `Chỉ còn ${stock} sản phẩm trong kho, vui lòng giảm số lượng`
+                              }
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -603,10 +663,20 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
+              {/* Stock Error Display */}
+              {errors.stock && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm font-medium">{errors.stock}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    Vui lòng quay lại giỏ hàng để cập nhật số lượng hoặc xóa sản phẩm hết hàng.
+                  </p>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={
-                  isSubmitting || loading || getSelectedItemsCount() === 0
+                  isSubmitting || loading || getSelectedItemsCount() === 0 || errors.stock
                 }
                 className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
                 {isSubmitting || loading ? (
@@ -619,6 +689,8 @@ const CheckoutPage = () => {
                     <CreditCard className="h-4 w-4" />
                     {getSelectedItemsCount() === 0
                       ? "Chọn Sản Phẩm Để Tiếp Tục"
+                      : errors.stock
+                      ? "Không thể đặt hàng - Sản phẩm hết hàng"
                       : "Đặt hàng"}
                   </>
                 )}

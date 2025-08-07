@@ -263,16 +263,16 @@ const BookDetailPage = () => {
               </span>
               <span
                 className={`ml-4 px-3 py-1 rounded-full text-sm ${
-                  parseInt(book.stock) > 10
+                  parseInt(book.stock_quantity || book.stock) > 10
                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : parseInt(book.stock) > 0
+                    : parseInt(book.stock_quantity || book.stock) > 0
                     ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
-                {parseInt(book.stock) > 10
+                {parseInt(book.stock_quantity || book.stock) > 10
                   ? "Còn hàng"
-                  : parseInt(book.stock) > 0
-                  ? `Chỉ còn ${parseInt(book.stock)} cuốn`
+                  : parseInt(book.stock_quantity || book.stock) > 0
+                  ? `Chỉ còn ${parseInt(book.stock_quantity || book.stock)} cuốn`
                   : "Hết hàng"}
               </span>
             </div>
@@ -286,7 +286,7 @@ const BookDetailPage = () => {
                   type="number"
                   id="quantity"
                   min="1"
-                  max={parseInt(book.stock) || 1}
+                  max={parseInt(book.stock_quantity || book.stock) || 1}
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -294,7 +294,7 @@ const BookDetailPage = () => {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={parseInt(book.stock) === 0}
+                disabled={parseInt(book.stock_quantity || book.stock) === 0}
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Thêm Vào Giỏ

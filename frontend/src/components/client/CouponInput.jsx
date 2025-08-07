@@ -36,7 +36,17 @@ const CouponInput = ({ orderAmount, onCouponApplied, onCouponRemoved }) => {
       }
     } catch (error) {
       console.error("Coupon validation error:", error);
-      setValidationError(error.response?.data?.message || "Có lỗi xảy ra khi kiểm tra mã khuyến mại");
+      let errorMessage = error.message || error.response?.data?.message || "Có lỗi xảy ra khi kiểm tra mã khuyến mại";
+      
+      // Handle specific error cases
+      if (errorMessage.includes("giá trị tối thiểu") || errorMessage.includes("minimum") || errorMessage.includes("9.999")) {
+        // Extract minimum amount from error message if possible
+        const match = errorMessage.match(/([0-9,\.]+)\s*VND/);
+        const minAmount = match ? match[1] : "9.999";
+        errorMessage = `Mã khuyến mại này yêu cầu đơn hàng tối thiểu ${minAmount} VND. Đơn hàng hiện tại: ${orderAmount.toLocaleString("vi-VN")} VND`;
+      }
+      
+      setValidationError(errorMessage);
     } finally {
       setIsValidating(false);
     }

@@ -31,12 +31,31 @@ const CouponSelector = ({ orderAmount, onCouponSelected, selectedCoupon }) => {
       return;
     }
 
+    // Check if coupon is eligible before trying to validate
+    if (!isEligible(coupon)) {
+      const minAmount = coupon.minimum_amount?.toLocaleString("vi-VN") || "9.999";
+      showError(
+        "Mã khuyến mại không đủ điều kiện", 
+        `Mã khuyến mại này yêu cầu đơn hàng tối thiểu ${minAmount} VND. Đơn hàng hiện tại: ${orderAmount.toLocaleString("vi-VN")} VND`
+      );
+      return;
+    }
+
     setValidatingCoupon(coupon.id);
     try {
       const response = await validateCoupon(coupon.code, orderAmount);
       onCouponSelected(response.data.coupon, response.data.discount_amount);
     } catch (error) {
-      showError("Mã khuyến mại không hợp lệ", error.message);
+      let errorMessage = error.message || "Mã khuyến mại không hợp lệ";
+      
+      // Handle specific error cases
+      if (errorMessage.includes("giá trị tối thiểu") || errorMessage.includes("minimum") || errorMessage.includes("9.999")) {
+        const match = errorMessage.match(/([0-9,\.]+)\s*VND/);
+        const minAmount = match ? match[1] : coupon.minimum_amount?.toLocaleString("vi-VN") || "9.999";
+        errorMessage = `Mã khuyến mại này yêu cầu đơn hàng tối thiểu ${minAmount} VND. Đơn hàng hiện tại: ${orderAmount.toLocaleString("vi-VN")} VND`;
+      }
+      
+      showError("Mã khuyến mại không hợp lệ", errorMessage);
     } finally {
       setValidatingCoupon(null);
     }
@@ -51,7 +70,7 @@ const CouponSelector = ({ orderAmount, onCouponSelected, selectedCoupon }) => {
   };
 
   const isEligible = (coupon) => {
-    return !coupon.min_order_amount || orderAmount >= coupon.min_order_amount;
+    return !coupon.minimum_amount || orderAmount >= coupon.minimum_amount;
   };
 
   if (loading) {
@@ -112,22 +131,38 @@ const CouponSelector = ({ orderAmount, onCouponSelected, selectedCoupon }) => {
             return (
               <div
                 key={coupon.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 transition-all ${
                   isSelected
-                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 cursor-pointer"
                     : eligible
-                    ? "border-gray-200 dark:border-gray-700 hover:border-amber-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    : "border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed"
+                    ? "border-gray-200 dark:border-gray-700 hover:border-amber-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    : "border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-60 cursor-not-allowed pointer-events-none"
                 }`}
-                onClick={() => eligible && !isValidating && handleCouponSelect(coupon)}
+                {...(eligible ? {
+                  onClick: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isValidating) {
+                      handleCouponSelect(coupon);
+                    }
+                  }
+                } : {})}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-mono text-sm font-bold text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded">
+                      <span className={`font-mono text-sm font-bold px-2 py-1 rounded ${
+                        eligible 
+                          ? "text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30"
+                          : "text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600"
+                      }`}>
                         {coupon.code}
                       </span>
-                      <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <div className={`flex items-center gap-1 ${
+                        eligible 
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}>
                         {coupon.type === "percentage" ? (
                           <Percent className="h-4 w-4" />
                         ) : (
@@ -137,25 +172,33 @@ const CouponSelector = ({ orderAmount, onCouponSelected, selectedCoupon }) => {
                       </div>
                     </div>
                     
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                    <h4 className={`font-medium mb-1 ${
+                      eligible 
+                        ? "text-gray-900 dark:text-white"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}>
                       {coupon.name}
                     </h4>
                     
                     {coupon.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className={`text-sm mb-2 ${
+                        eligible 
+                          ? "text-gray-600 dark:text-gray-400"
+                          : "text-gray-500 dark:text-gray-500"
+                      }`}>
                         {coupon.description}
                       </p>
                     )}
                     
                     <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      {coupon.min_order_amount && (
+                      {coupon.minimum_amount && (
                         <span>
-                          Đơn tối thiểu: {coupon.min_order_amount.toLocaleString("vi-VN")} ₫
+                          Đơn tối thiểu: {coupon.minimum_amount.toLocaleString("vi-VN")} ₫
                         </span>
                       )}
-                      {coupon.max_discount_amount && (
+                      {coupon.maximum_discount && (
                         <span>
-                          Giảm tối đa: {coupon.max_discount_amount.toLocaleString("vi-VN")} ₫
+                          Giảm tối đa: {coupon.maximum_discount.toLocaleString("vi-VN")} ₫
                         </span>
                       )}
                       <div className="flex items-center gap-1">
@@ -168,7 +211,7 @@ const CouponSelector = ({ orderAmount, onCouponSelected, selectedCoupon }) => {
                     
                     {!eligible && (
                       <p className="text-xs text-red-500 mt-2">
-                        Đơn hàng chưa đủ điều kiện (tối thiểu {coupon.min_order_amount?.toLocaleString("vi-VN")} ₫)
+                        Đơn hàng chưa đủ điều kiện (tối thiểu {coupon.minimum_amount?.toLocaleString("vi-VN")} ₫)
                       </p>
                     )}
                   </div>

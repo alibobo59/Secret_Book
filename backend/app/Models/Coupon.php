@@ -28,9 +28,9 @@ class Coupon extends Model
     ];
 
     protected $casts = [
-        'value' => 'decimal:2',
-        'minimum_amount' => 'decimal:2',
-        'maximum_discount' => 'decimal:2',
+        'value' => 'integer',
+        'minimum_amount' => 'integer',
+        'maximum_discount' => 'integer',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'is_active' => 'boolean',

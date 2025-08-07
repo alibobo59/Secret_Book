@@ -495,7 +495,7 @@ const OrderDetail = () => {
                       Tên người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_name || order.user?.name || "Không có"}
+                      {order.address?.name || order.customer_name || order.user?.name || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -504,7 +504,7 @@ const OrderDetail = () => {
                       Email người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_email || order.user?.email || "Không có"}
+                      {order.address?.email || order.customer_email || order.user?.email || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -513,7 +513,7 @@ const OrderDetail = () => {
                       Số điện thoại người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_phone || order.phone || order.user?.phone || "Không có"}
+                      {order.address?.phone || order.customer_phone || order.phone || order.user?.phone || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -522,7 +522,7 @@ const OrderDetail = () => {
                       Địa chỉ giao hàng
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.shipping_address || order.address?.address || order.address?.street || "Không có"}
+                      {order.address?.address || order.address?.street || order.shipping_address || "Không có"}
                     </p>
                   </div>
                   <div>

@@ -21,8 +21,6 @@ import {
   Phone,
   MapPin,
   FileText,
-  Plus,
-  Minus,
 } from "lucide-react";
 
 const CheckoutPage = () => {
@@ -32,9 +30,6 @@ const CheckoutPage = () => {
     getSelectedItems,
     getSelectedTotal,
     getSelectedItemsCount,
-    toggleItemSelection,
-    selectedItems: selectedItemIds,
-    updateQuantity,
   } = useCart();
   const { user } = useAuth();
   const { createOrder, loading } = useOrder();
@@ -124,7 +119,8 @@ const CheckoutPage = () => {
     if (!formData.name.trim()) newErrors.name = "Họ và tên là bắt buộc";
     if (!formData.email.trim()) newErrors.email = "Email là bắt buộc";
     if (!formData.phone.trim()) newErrors.phone = "Số điện thoại là bắt buộc";
-    if (!formData.province_id) newErrors.province_id = "Tỉnh/Thành phố là bắt buộc";
+    if (!formData.province_id)
+      newErrors.province_id = "Tỉnh/Thành phố là bắt buộc";
     if (!formData.ward_id) newErrors.ward_id = "Phường/Xã là bắt buộc";
     if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc";
 
@@ -195,7 +191,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Check if cart is empty
+  // Check if no items are selected for checkout
   const selectedItems = getSelectedItems();
   if (!cartItems || cartItems.length === 0) {
     return (
@@ -338,7 +334,9 @@ const CheckoutPage = () => {
                     ))}
                   </select>
                   {errors.province_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.province_id}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.province_id}
+                    </p>
                   )}
                 </div>
 
@@ -365,11 +363,11 @@ const CheckoutPage = () => {
                     ))}
                   </select>
                   {errors.ward_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.ward_id}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.ward_id}
+                    </p>
                   )}
                 </div>
-
-
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -452,73 +450,67 @@ const CheckoutPage = () => {
 
           {/* Column 2: Cart Items with Checkboxes and Quantity Controls */}
           <div className="space-y-6">
-            {/* Cart Items */}
+            {/* Selected Items for Checkout */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Sản phẩm trong giỏ ({cartItems.length})
+                Sản phẩm đã chọn ({getSelectedItemsCount()})
               </h3>
 
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <input
-                      type="checkbox"
-                      checked={selectedItemIds.has(item.id)}
-                      onChange={() => toggleItemSelection(item.id)}
-                      className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 dark:focus:ring-amber-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                    <img
-                      src={item.image || "/placeholder-book.jpg"}
-                      alt={item.title}
-                      className="w-16 h-20 object-cover rounded"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        bởi {item.author?.name || "Tác giả không xác định"}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        {/* Quantity Controls */}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Số lượng:
-                          </span>
-                          <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity - 1)
-                              }
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                              disabled={item.quantity <= 1}>
-                              <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            </button>
-                            <span className="px-3 py-1 text-sm font-medium text-gray-900 dark:text-white min-w-[2rem] text-center">
-                              {item.quantity}
+              {getSelectedItemsCount() === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Chưa có sản phẩm nào được chọn để thanh toán.
+                  </p>
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className="mt-4 text-amber-600 hover:text-amber-700 font-medium">
+                    Quay lại giỏ hàng để chọn sản phẩm
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {getSelectedItems().map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <img
+                        src={
+                          item.image
+                            ? `http://127.0.0.1:8000/storage/${item.image}`
+                            : "/placeholder-book.svg"
+                        }
+                        alt={item.title}
+                        className="w-16 h-20 object-cover rounded"
+                        onError={(e) => {
+                          e.target.src = "/placeholder-book.svg";
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-white">
+                          {item.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          bởi {item.author?.name || "Tác giả không xác định"}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Số lượng: {item.quantity}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity + 1)
-                              }
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            </button>
                           </div>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {(item.price * item.quantity).toLocaleString(
+                              "vi-VN"
+                            )}{" "}
+                            VND
+                          </span>
                         </div>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
-                          VND
-                        </span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Coupon Selector */}
@@ -532,7 +524,7 @@ const CheckoutPage = () => {
             />
 
             {/* Manual Coupon Input */}
-            <CouponInput
+            {/* <CouponInput
               orderAmount={getSelectedTotal()}
               onCouponApplied={(coupon, discount) => {
                 setAppliedCoupon(coupon);
@@ -542,7 +534,7 @@ const CheckoutPage = () => {
                 setAppliedCoupon(null);
                 setDiscountAmount(0);
               }}
-            />
+            /> */}
 
             {/* Order Total and Place Order Button */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">

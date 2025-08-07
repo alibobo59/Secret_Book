@@ -192,9 +192,12 @@ const CartDropdown = ({ className = "" }) => {
                       {/* Book Image */}
                       <div className="shrink-0">
                         <img
-                          src={item.image}
+                          src={item.image ? `http://127.0.0.1:8000/storage/${item.image}` : '/placeholder-book.svg'}
                           alt={item.title}
                           className="w-12 h-16 object-cover rounded"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-book.svg';
+                          }}
                         />
                       </div>
 

@@ -1,16 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
-import { useCart } from "../../contexts/CartContext";
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
-  const { clearCart } = useCart();
 
-  // Clear cart when payment is successful
-  useEffect(() => {
-    clearCart();
-  }, [clearCart]);
+  // Cart is already cleared in OrderContext.createOrder()
+  // No need to clear again here to avoid duplicate API calls
 
   return (
     <div className="container mx-auto px-4 py-8 text-center">

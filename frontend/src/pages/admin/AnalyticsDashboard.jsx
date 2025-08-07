@@ -43,7 +43,6 @@ const AnalyticsDashboard = () => {
     clearError,
   } = useAnalytics();
 
-  const [selectedPeriod, setSelectedPeriod] = useState("30_days");
   const [selectedChart, setSelectedChart] = useState("revenue");
   const [localLoading, setLocalLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -60,25 +59,15 @@ const AnalyticsDashboard = () => {
     }
 
     loadAnalyticsData();
-  }, [user, selectedPeriod]);
+  }, [user]);
 
-  // Convert frontend period format to backend format
-  const convertPeriodFormat = (period) => {
-    const periodMap = {
-      "7_days": "7d",
-      "30_days": "30d",
-      "90_days": "90d",
-      "1_year": "1y",
-    };
-    return periodMap[period] || "30d";
-  };
+
 
   const loadAnalyticsData = async () => {
     try {
       setLocalLoading(true);
       clearError();
-      const backendPeriod = convertPeriodFormat(selectedPeriod);
-      const data = await getDashboardStats(backendPeriod);
+      const data = await getDashboardStats("30d", dateRange.startDate, dateRange.endDate);
       console.log("Analytics data:", data);
       
       // Load additional statistics
@@ -137,6 +126,7 @@ const AnalyticsDashboard = () => {
   };
 
   const applyDateFilter = () => {
+    loadAnalyticsData();
     loadOrderStatistics();
     loadLowPerformingBooks();
   };
@@ -297,19 +287,6 @@ const AnalyticsDashboard = () => {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <select
-                value={selectedPeriod}
-                onChange={(e) => handlePeriodChange(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                disabled={isLoading}>
-                <option value="7_days">7 ngày qua</option>
-                <option value="30_days">30 ngày qua</option>
-                <option value="90_days">90 ngày qua</option>
-                <option value="1_year">1 năm qua</option>
-              </select>
-            </div>
             {lastUpdated && (
               <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                 <Clock className="h-4 w-4" />
@@ -338,35 +315,7 @@ const AnalyticsDashboard = () => {
           </div>
         </div>
 
-        {/* Date Range Filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Bộ lọc theo khoảng thời gian</h4>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Từ ngày:</label>
-              <input
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Đến ngày:</label>
-              <input
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              />
-            </div>
-            <button
-              onClick={applyDateFilter}
-              className="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm">
-              Áp dụng
-            </button>
-          </div>
-        </div>
+
        </div>
 
       {/* Key Metrics */}

@@ -1,15 +1,20 @@
 // src/pages/client/HomePage.jsx
 
-import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
 import { motion } from "framer-motion";
 import { Search, ChevronRight } from "lucide-react";
 import BookCard from "../../components/client/BookCard";
+import { api } from "../../services/api";
 
 const HomePage = () => {
   const { books, categories, loading, error } = useBook();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState(null);
 
   useEffect(() => {
     console.log(
@@ -24,11 +29,44 @@ const HomePage = () => {
     );
   }, [books, categories, loading, error]);
 
-  const featuredBooks = React.useMemo(() => {
-    console.log("Computing featuredBooks, books length:", books?.length);
-    if (!books) return [];
-    return [...books].slice(0, 5);
-  }, [books]);
+  // Fetch featured books based on monthly revenue
+  useEffect(() => {
+    const fetchFeaturedBooks = async () => {
+      try {
+        setFeaturedLoading(true);
+        setFeaturedError(null);
+        const response = await api.get('/featured-books');
+        console.log('Featured books response:', response.data);
+        
+        // Transform the data to match the expected format
+        const transformedBooks = response.data.data.map(book => ({
+          id: book.id,
+          title: book.title,
+          price: book.price,
+          image: book.image,
+          stock_quantity: book.stock_quantity,
+          category: { name: book.category_name },
+          author: { name: book.author_name },
+          publisher: { name: book.publisher_name },
+          monthly_revenue: book.monthly_revenue,
+          monthly_sales: book.monthly_sales
+        }));
+        
+        setFeaturedBooks(transformedBooks);
+      } catch (err) {
+        console.error('Error fetching featured books:', err);
+        setFeaturedError('Không thể tải sách nổi bật');
+        // Fallback to first 5 books from context if API fails
+        if (books && books.length > 0) {
+          setFeaturedBooks([...books].slice(0, 5));
+        }
+      } finally {
+        setFeaturedLoading(false);
+      }
+    };
+
+    fetchFeaturedBooks();
+  }, [books]); // Re-fetch when books change as fallback
 
   const newReleases = React.useMemo(() => {
     console.log("Computing newReleases, books length:", books?.length);
@@ -39,7 +77,7 @@ const HomePage = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/books?search=${encodeURIComponent(searchQuery)}`;
+      navigate(`/books?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -118,7 +156,7 @@ const HomePage = () => {
             </Link>
           </div>
 
-          {loading ? (
+          {featuredLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
               {[...Array(5)].map((_, index) => (
                 <div
@@ -132,9 +170,13 @@ const HomePage = () => {
                 </div>
               ))}
             </div>
+          ) : featuredError ? (
+            <p className="text-red-600 dark:text-red-400 text-center">
+              {featuredError}
+            </p>
           ) : featuredBooks.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              Không có sách nào (Debug: books length: {books.length})
+              Không có sách nổi bật nào trong tháng này
             </p>
           ) : (
             <motion.div

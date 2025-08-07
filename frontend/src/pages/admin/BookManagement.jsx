@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Loading } from "../../components/admin";
 import { api } from "../../services/api";
-import { getImageUrl, handleImageError } from "../../utils/imageUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 import axios from "axios";
 
 const BookManagement = () => {
@@ -102,7 +102,6 @@ const BookManagement = () => {
     }
   }, [queryFilters, getToken]);
 
-  // Separate useEffect for initial load and user/role changes
   useEffect(() => {
     // Check if user has admin or mod role
     const isAdminOrMod = hasRole(["admin", "mod"]);
@@ -116,16 +115,7 @@ const BookManagement = () => {
     }
 
     fetchBooks();
-  }, [user, hasRole]); // Removed fetchBooks from dependencies to prevent loop
-
-  // Separate useEffect for filter changes
-  useEffect(() => {
-    const isAdminOrMod = hasRole(["admin", "mod"]);
-    
-    if (user && isAdminOrMod) {
-      fetchBooks();
-    }
-  }, [queryFilters]); // Only trigger when filters change
+  }, [fetchBooks, hasRole, user]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -167,11 +157,8 @@ const BookManagement = () => {
           headers: { Authorization: `Bearer ${token}` },
         };
         await api.delete(`/books/${id}`, config);
-        // Refetch will be triggered by useEffect if we modify a dependency,
-        // but in this case, we want to force a refetch of the current page.
-        // A simple way is to have a 'refetch' state.
-        // For now, let's just filter locally for responsiveness, though refetching is more robust.
-        setBooks((prev) => prev.filter((book) => book.id !== id));
+        // Refetch data from server to ensure synchronization
+        await fetchBooks();
         setError(null);
       } catch (err) {
         const message = err.response?.data?.error || "Không thể xóa sách";
@@ -237,7 +224,7 @@ const BookManagement = () => {
       const response = await api.post(
         "/books/bulk-delete",
         {
-          book_ids: selectedBooks,
+          ids: selectedBooks,
         },
         {
           headers: {
@@ -247,18 +234,29 @@ const BookManagement = () => {
         }
       );
 
-      if (response.data.success) {
-        // Remove deleted books from local state
-        setBooks((prev) =>
-          prev.filter((book) => !selectedBooks.includes(book.id))
-        );
+      // Check if deletion was successful (either success flag or deleted_count)
+      if (response.data.success || response.data.deleted_count > 0) {
+        // Refetch data from server to ensure synchronization
+        await fetchBooks();
         setSelectedBooks([]);
         setShowBulkActions(false);
         setError("");
+        
+        // Show success message
+        if (response.data.deleted_count) {
+          console.log(`Đã xóa thành công ${response.data.deleted_count} sách`);
+        }
       }
     } catch (err) {
       console.error("Bulk delete error:", err);
-      setError(err.response?.data?.message || "Đã xảy ra lỗi khi xóa sách.");
+      if (err.response?.data?.error) {
+        // Handle validation errors
+        const errors = err.response.data.error;
+        const errorMessages = Object.values(errors).flat();
+        setError(errorMessages.join(', '));
+      } else {
+        setError(err.response?.data?.message || "Đã xảy ra lỗi khi xóa sách.");
+      }
     } finally {
       setBulkLoading(false);
     }
@@ -547,7 +545,19 @@ const BookManagement = () => {
                              src={getImageUrl(book.image)}
                              alt={book.title}
                              className="h-12 w-12 object-cover rounded-md"
-                             onError={handleImageError}
+                             onError={(e) => {
+                               // Prevent infinite loop by checking if we're already showing placeholder
+                               if (!e.target.dataset.fallback) {
+                                 e.target.dataset.fallback = 'true';
+                                 e.target.src = '/placeholder-book.svg';
+                               } else {
+                                 // If placeholder also fails, replace with div
+                                 const placeholder = document.createElement('div');
+                                 placeholder.className = 'h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center';
+                                 placeholder.innerHTML = '<span class="text-xs text-gray-500 dark:text-gray-400">Không có ảnh</span>';
+                                 e.target.parentElement.replaceChild(placeholder, e.target);
+                               }
+                             }}
                            />
                          ) : (
                            <div className="h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center">
@@ -568,7 +578,7 @@ const BookManagement = () => {
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
-                        ${book.price || "0.00"}
+                        {(book.price || 0).toLocaleString('vi-VN')} VND
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"

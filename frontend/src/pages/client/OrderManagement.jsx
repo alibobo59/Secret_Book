@@ -455,19 +455,20 @@ const OrderManagementPage = () => {
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <img
                           src={
+                            item.book_image ||
                             item.book?.image_url ||
                             item.coverImage ||
                             "/placeholder-book.jpg"
                           }
-                          alt={item.book?.title || item.title}
+                          alt={item.book_title || item.book?.title || item.title}
                           className="w-12 h-16 object-cover rounded"
                         />
                         <div className="flex-grow min-w-0">
                           <h4 className="font-medium text-gray-800 dark:text-white text-sm truncate">
-                            {item.book?.title || item.title}
+                            {item.book_title || item.book?.title || item.title}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                            của {item.book?.author?.name || item.author}
+                            của {item.author_name || item.book?.author?.name || item.author}
                           </p>
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -611,11 +612,23 @@ const OrderManagementPage = () => {
 
                       <div>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Thành Phố
+                          Tỉnh/Thành Phố
                         </p>
                         <p className="text-gray-800 dark:text-white">
-                          {selectedOrder.address?.city ||
-                            selectedOrder.shippingAddress?.city}
+                          {selectedOrder.address?.province?.name ||
+                            selectedOrder.shippingAddress?.province?.name ||
+                            'Chưa có thông tin'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Phường/Xã
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.ward_model?.name ||
+                            selectedOrder.shippingAddress?.ward_model?.name ||
+                            'Chưa có thông tin'}
                         </p>
                       </div>
 
@@ -627,34 +640,36 @@ const OrderManagementPage = () => {
                           {selectedOrder.address?.address ||
                             selectedOrder.shippingAddress?.address}
                         </p>
-
                       </div>
 
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Số Điện Thoại
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
+                          {selectedOrder.address?.phone ||
+                            selectedOrder.contactInfo?.phone ||
+                            selectedOrder.customer_phone ||
+                            selectedOrder.phone ||
+                            selectedOrder.user?.phone ||
+                            'Chưa có thông tin'}
+                        </p>
+                      </div>
 
-                    </div>
-                  </div>
-
-                  {/* Thông Tin Liên Hệ */}
-                  <div>
-                    <h3 className="font-medium text-gray-800 dark:text-white mb-3">
-                      Thông Tin Liên Hệ
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600 dark:text-gray-400">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Email
+                        </p>
+                        <p className="text-gray-800 dark:text-white">
                           {selectedOrder.address?.email ||
                             selectedOrder.user?.email ||
-                            selectedOrder.contactInfo?.email}
-                        </span>
+                            selectedOrder.contactInfo?.email ||
+                            selectedOrder.customer_email ||
+                            selectedOrder.email ||
+                            'Chưa có thông tin'}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600 dark:text-gray-400">
-                          {selectedOrder.address?.phone ||
-                            selectedOrder.contactInfo?.phone}
-                        </span>
-                      </div>
+
                     </div>
                   </div>
 
@@ -670,19 +685,20 @@ const OrderManagementPage = () => {
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
                             src={
+                              item.book_image ||
                               item.book?.image_url ||
                               item.coverImage ||
                               "/placeholder-book.jpg"
                             }
-                            alt={item.book?.title || item.title}
+                            alt={item.book_title || item.book?.title || item.title}
                             className="w-16 h-20 object-cover rounded"
                           />
                           <div className="flex-grow">
                             <h4 className="font-medium text-gray-800 dark:text-white">
-                              {item.book?.title || item.title}
+                              {item.book_title || item.book?.title || item.title}
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              của {item.book?.author?.name || item.author}
+                              của {item.author_name || item.book?.author?.name || item.author}
                             </p>
                             <div className="flex justify-between items-center mt-2">
                               <span className="text-sm text-gray-600 dark:text-gray-400">

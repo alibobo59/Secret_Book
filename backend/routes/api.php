@@ -44,6 +44,9 @@ Route::get('/publishers/{publisher}', [PublisherController::class, 'show'])->nam
 // Public review routes
 Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
+// Public analytics routes
+Route::get('/featured-books', [AnalyticsController::class, 'getFeaturedBooks'])->name('featured-books');
+
 // Admin/Mod routes (protected by auth:sanctum, check.user.status and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(function () {
     // Image upload for RichText Editor
@@ -92,9 +95,9 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
     Route::get('/audit-logs/{modelType}/{modelId}', [AuditLogController::class, 'getModelAuditLogs'])->name('audit-logs.model');
 
     // Coupons (Admin)
-    Route::apiResource('coupons', CouponController::class);
     Route::post('/coupons/generate-code', [CouponController::class, 'generateCode'])->name('coupons.generate-code');
     Route::get('/coupons/{coupon}/stats', [CouponController::class, 'stats'])->name('coupons.stats');
+    Route::apiResource('coupons', CouponController::class);
 
     // User Management (Admin)
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
@@ -134,7 +137,8 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
 
-    // Coupon validation for authenticated users
+    // Coupon routes for authenticated users
+    Route::get('/active-coupons', [CouponController::class, 'getActiveCoupons'])->name('coupons.active');
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
     
     // Cart routes
@@ -142,6 +146,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add-item');
     Route::put('/cart/items/{bookId}', [CartController::class, 'updateItem'])->name('cart.update-item');
     Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
+    Route::post('/cart/items/remove-multiple', [CartController::class, 'removeItems'])->name('cart.remove-items');
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
     
@@ -151,3 +156,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
 });
+
+// Location routes (public)
+Route::get('/provinces', [App\Http\Controllers\Api\LocationController::class, 'getProvinces'])->name('provinces.index');
+Route::get('/provinces/{provinceId}/wards', [App\Http\Controllers\Api\LocationController::class, 'getWards'])->name('wards.index');

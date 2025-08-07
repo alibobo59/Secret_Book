@@ -29,11 +29,83 @@ const CouponCreate = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Validate form data
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Code validation
+    if (!formData.code.trim()) {
+      newErrors.code = 'Mã khuyến mại là bắt buộc';
+    } else if (formData.code.length > 50) {
+      newErrors.code = 'Mã khuyến mại không được vượt quá 50 ký tự';
+    } else if (!/^[A-Z0-9]+$/.test(formData.code)) {
+      newErrors.code = 'Mã khuyến mại chỉ được chứa chữ cái in hoa và số';
+    }
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Tên khuyến mại là bắt buộc';
+    } else if (formData.name.length > 255) {
+      newErrors.name = 'Tên khuyến mại không được vượt quá 255 ký tự';
+    }
+    
+    // Value validation
+    if (!formData.value || formData.value <= 0) {
+      newErrors.value = 'Giá trị phải lớn hơn 0';
+    } else if (formData.type === 'percentage' && formData.value > 100) {
+      newErrors.value = 'Giá trị phần trăm không được vượt quá 100%';
+    }
+    
+    // Date validation
+    if (!formData.start_date) {
+      newErrors.start_date = 'Ngày bắt đầu là bắt buộc';
+    }
+    
+    if (!formData.end_date) {
+      newErrors.end_date = 'Ngày kết thúc là bắt buộc';
+    }
+    
+    if (formData.start_date && formData.end_date && new Date(formData.start_date) >= new Date(formData.end_date)) {
+      newErrors.end_date = 'Ngày kết thúc phải sau ngày bắt đầu';
+    }
+    
+    // Minimum amount validation
+    if (formData.minimum_amount && formData.minimum_amount < 0) {
+      newErrors.minimum_amount = 'Đơn hàng tối thiểu không được âm';
+    }
+    
+    // Maximum discount validation
+    if (formData.maximum_discount && formData.maximum_discount < 0) {
+      newErrors.maximum_discount = 'Giảm tối đa không được âm';
+    }
+    
+    // Usage limit validation
+    if (formData.usage_limit && formData.usage_limit < 1) {
+      newErrors.usage_limit = 'Giới hạn sử dụng phải lớn hơn 0';
+    }
+    
+    // Usage limit per user validation
+    if (formData.usage_limit_per_user && formData.usage_limit_per_user < 1) {
+      newErrors.usage_limit_per_user = 'Giới hạn mỗi người phải lớn hơn 0';
+    }
+    
+    return newErrors;
+  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setValidationErrors({});
+    
+    // Client-side validation
+    const clientErrors = validateForm();
+    if (Object.keys(clientErrors).length > 0) {
+      setValidationErrors(clientErrors);
+      return;
+    }
     
     try {
       await createCoupon(formData);
@@ -65,9 +137,12 @@ const CouponCreate = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
+    }
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
@@ -108,10 +183,9 @@ const CouponCreate = () => {
                   }
                 })}
                 className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                  errors.code ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.code || validationErrors.code) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: SUMMER2024"
-                required
               />
               <button
                 type="button"
@@ -123,8 +197,10 @@ const CouponCreate = () => {
                 Tạo mã
               </button>
             </div>
-            {errors.code && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.code[0]}</p>
+            {(errors.code || validationErrors.code) && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {errors.code ? errors.code[0] : validationErrors.code}
+              </p>
             )}
           </div>
 
@@ -139,13 +215,14 @@ const CouponCreate = () => {
               value={formData.name}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                errors.name ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                (errors.name || validationErrors.name) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="VD: Khuyến mại mùa hè"
-              required
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name[0]}</p>
+            {(errors.name || validationErrors.name) && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {errors.name ? errors.name[0] : validationErrors.name}
+              </p>
             )}
           </div>
 
@@ -180,9 +257,8 @@ const CouponCreate = () => {
                 value={formData.type}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                  errors.type ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.type || validationErrors.type) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                required
               >
                 <option value="percentage">Phần trăm (%)</option>
                 <option value="fixed">Số tiền cố định (đ)</option>
@@ -202,12 +278,9 @@ const CouponCreate = () => {
                   value={formData.value}
                   onChange={handleChange}
                   className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                    errors.value ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                    (errors.value || validationErrors.value) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder={formData.type === 'percentage' ? 'VD: 10' : 'VD: 50000'}
-                  min="0"
-                  max={formData.type === 'percentage' ? '100' : undefined}
-                  required
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                   {formData.type === 'percentage' ? (
@@ -217,8 +290,10 @@ const CouponCreate = () => {
                   )}
                 </div>
               </div>
-              {errors.value && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.value[0]}</p>
+              {(errors.value || validationErrors.value) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.value ? errors.value[0] : validationErrors.value}
+                </p>
               )}
             </div>
           </div>
@@ -235,17 +310,18 @@ const CouponCreate = () => {
                 value={formData.minimum_amount}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                  errors.minimum_amount ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.minimum_amount || validationErrors.minimum_amount) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: 100000"
-                min="0"
               />
-              {errors.minimum_amount && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.minimum_amount[0]}</p>
+              {(errors.minimum_amount || validationErrors.minimum_amount) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.minimum_amount ? errors.minimum_amount[0] : validationErrors.minimum_amount}
+                </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Giảm tối đa (đ)
               </label>
               <input
@@ -253,14 +329,15 @@ const CouponCreate = () => {
                 name="maximum_discount"
                 value={formData.maximum_discount}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.maximum_discount ? 'border-red-300' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
+                  (errors.maximum_discount || validationErrors.maximum_discount) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: 200000"
-                min="0"
               />
-              {errors.maximum_discount && (
-                <p className="mt-1 text-sm text-red-600">{errors.maximum_discount[0]}</p>
+              {(errors.maximum_discount || validationErrors.maximum_discount) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.maximum_discount ? errors.maximum_discount[0] : validationErrors.maximum_discount}
+                </p>
               )}
             </div>
           </div>
@@ -277,13 +354,14 @@ const CouponCreate = () => {
                 value={formData.usage_limit}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                  errors.usage_limit ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.usage_limit || validationErrors.usage_limit) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: 100"
-                min="1"
               />
-              {errors.usage_limit && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.usage_limit[0]}</p>
+              {(errors.usage_limit || validationErrors.usage_limit) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.usage_limit ? errors.usage_limit[0] : validationErrors.usage_limit}
+                </p>
               )}
             </div>
             <div>
@@ -296,13 +374,14 @@ const CouponCreate = () => {
                 value={formData.usage_limit_per_user}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
-                  errors.usage_limit_per_user ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.usage_limit_per_user || validationErrors.usage_limit_per_user) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="VD: 1"
-                min="1"
               />
-              {errors.usage_limit_per_user && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.usage_limit_per_user[0]}</p>
+              {(errors.usage_limit_per_user || validationErrors.usage_limit_per_user) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.usage_limit_per_user ? errors.usage_limit_per_user[0] : validationErrors.usage_limit_per_user}
+                </p>
               )}
             </div>
           </div>
@@ -319,12 +398,13 @@ const CouponCreate = () => {
                 value={formData.start_date}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                  errors.start_date ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.start_date || validationErrors.start_date) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                required
               />
-              {errors.start_date && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.start_date[0]}</p>
+              {(errors.start_date || validationErrors.start_date) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.start_date ? errors.start_date[0] : validationErrors.start_date}
+                </p>
               )}
             </div>
             <div>
@@ -337,12 +417,13 @@ const CouponCreate = () => {
                 value={formData.end_date}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                  errors.end_date ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                  (errors.end_date || validationErrors.end_date) ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                required
               />
-              {errors.end_date && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.end_date[0]}</p>
+              {(errors.end_date || validationErrors.end_date) && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.end_date ? errors.end_date[0] : validationErrors.end_date}
+                </p>
               )}
             </div>
           </div>

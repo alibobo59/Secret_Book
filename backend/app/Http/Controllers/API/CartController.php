@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
@@ -17,7 +18,7 @@ class CartController extends Controller
     {
         try {
             $user = Auth::user();
-            $cart = $user->cart()->with(['items.book'])->first();
+            $cart = $user->cart ? $user->cart->load(['items.book']) : null;
 
             if (!$cart) {
                 return response()->json([
@@ -73,7 +74,11 @@ class CartController extends Controller
             }
 
             $user = Auth::user();
-            $cart = $user->getOrCreateCart();
+            $cart = $user->cart;
+            
+            if (!$cart) {
+                $cart = Cart::create(['user_id' => $user->id]);
+            }
 
             $existingItem = $cart->items()->where('book_id', $request->book_id)->first();
 
@@ -190,6 +195,53 @@ class CartController extends Controller
         }
     }
 
+    public function removeItems(Request $request)
+    {
+        Log::info('🔍 CartController::removeItems called with request data:', $request->all());
+        
+        $validator = Validator::make($request->all(), [
+            'book_ids' => 'required|array',
+            'book_ids.*' => 'integer|exists:books,id',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('❌ Validation failed:', $validator->errors()->toArray());
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $user = Auth::user();
+            $cart = $user->cart;
+            
+            Log::info('👤 User ID: ' . $user->id . ', Cart ID: ' . ($cart ? $cart->id : 'null'));
+            Log::info('🔢 Book IDs to remove:', $request->book_ids);
+
+            if ($cart) {
+                $itemsBeforeDelete = $cart->items()->pluck('book_id')->toArray();
+                Log::info('📦 Cart items before deletion:', $itemsBeforeDelete);
+                
+                $deletedCount = $cart->items()->whereIn('book_id', $request->book_ids)->delete();
+                Log::info('🗑️ Number of items deleted: ' . $deletedCount);
+                
+                $itemsAfterDelete = $cart->items()->pluck('book_id')->toArray();
+                Log::info('📦 Cart items after deletion:', $itemsAfterDelete);
+            } else {
+                Log::warning('⚠️ No cart found for user');
+            }
+
+            return response()->json(['message' => 'Các sản phẩm đã chọn đã được xóa khỏi giỏ hàng']);
+        } catch (\Exception $e) {
+            Log::error('❌ Exception in removeItems:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Xóa sản phẩm thất bại',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function clear()
     {
         try {
@@ -200,7 +252,7 @@ class CartController extends Controller
                 $cart->items()->delete();
             }
 
-            return response()->json(['message' => 'Xóa giỏ hàng thành công']);
+            return response()->json(['message' => 'Giỏ hàng đã được xóa']);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Xóa giỏ hàng thất bại',
@@ -226,7 +278,12 @@ class CartController extends Controller
             }
 
             $user = Auth::user();
-            $cart = $user->getOrCreateCart();
+            $cart = $user->cart;
+            
+            if (!$cart) {
+                $cart = Cart::create(['user_id' => $user->id]);
+            }
+            
             $guestCart = $request->guest_cart;
 
             DB::transaction(function () use ($cart, $guestCart) {

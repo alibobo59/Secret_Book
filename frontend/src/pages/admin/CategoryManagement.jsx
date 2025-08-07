@@ -27,7 +27,7 @@ const CategoryManagement = () => {
       setCategories(categoriesData);
     } catch (err) {
       console.error("Fetch error:", err.message);
-      setError("Failed to fetch categories.");
+      setError("Không thể tải danh sách danh mục.");
     } finally {
       setLoading(false);
     }
@@ -43,16 +43,16 @@ const CategoryManagement = () => {
         setCategories(
           categories.map((cat) => (cat.id === editingId ? response.data : cat))
         );
-        setSuccess("Category updated successfully.");
+        setSuccess("Cập nhật danh mục thành công.");
         setEditingId(null);
       } else {
         const response = await api.post("/categories", form);
         setCategories([...categories, response.data]);
-        setSuccess("Category added successfully.");
+        setSuccess("Thêm danh mục thành công.");
       }
       setForm({ name: "" });
     } catch (err) {
-      setError("Failed to save category.");
+      setError("Không thể lưu danh mục.");
     }
   };
 
@@ -64,15 +64,15 @@ const CategoryManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa danh mục này không?")) {
       setError(null);
       setSuccess(null);
       try {
         await api.delete(`/categories/${id}`);
         setCategories(categories.filter((cat) => cat.id !== id));
-        setSuccess("Category deleted successfully.");
+        setSuccess("Xóa danh mục thành công.");
       } catch (err) {
-        setError("Failed to delete category.");
+        setError("Không thể xóa danh mục.");
       }
     }
   };
@@ -80,10 +80,10 @@ const CategoryManagement = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Category Management
+        Quản Lý Danh Mục
       </h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-500 mb-4">{success}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>}
+      {success && <p className="text-green-500 dark:text-green-400 mb-4">{success}</p>}
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="flex space-x-4">
           <input
@@ -91,29 +91,29 @@ const CategoryManagement = () => {
             value={form.name}
             onChange={(e) => setForm({ name: e.target.value })}
             placeholder="Tên Danh Mục"
-            className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
+            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
           />
           <button
             type="submit"
-            className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">
-            {editingId ? "Update" : "Add"} Category
+            className="bg-amber-600 dark:bg-amber-700 text-white px-4 py-2 rounded-md hover:bg-amber-700 dark:hover:bg-amber-800 flex items-center gap-2">
+            {editingId ? "Cập Nhật" : "Thêm"} Danh Mục
           </button>
         </div>
       </form>
       {loading ? (
-        <p>Loading categories...</p>
+        <p className="text-gray-600 dark:text-gray-400">Đang tải danh mục...</p>
       ) : categories.length === 0 ? (
-        <p>No categories found.</p>
+        <p className="text-gray-600 dark:text-gray-400">Không tìm thấy danh mục nào.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Name
+                  Tên Danh Mục
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Actions
+                  Hành Động
                 </th>
               </tr>
             </thead>
@@ -129,12 +129,12 @@ const CategoryManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <button
                         onClick={() => handleEdit(category)}
-                        className="text-amber-600 hover:text-amber-800 mr-4">
+                        className="text-amber-600 dark:text-amber-500 hover:text-amber-800 dark:hover:text-amber-400 mr-4">
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-800">
+                        className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400">
                         <Trash2 size={18} />
                       </button>
                     </td>

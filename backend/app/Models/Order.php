@@ -68,12 +68,12 @@ class Order extends Model
     /**
      * Định nghĩa trình tự trạng thái hợp lệ
      * Trình tự bắt buộc: pending -> processing -> shipped -> delivered
-     * Chỉ có trạng thái cancelled có thể nhảy cóc từ bất kỳ trạng thái nào
+     * Chỉ cho phép hủy từ trạng thái pending và processing
      */
     const STATUS_TRANSITIONS = [
         'pending' => ['processing', 'cancelled'],
         'processing' => ['shipped', 'cancelled'],
-        'shipped' => ['delivered', 'cancelled'],
+        'shipped' => ['delivered'], // Không cho phép hủy từ trạng thái shipped
         'delivered' => [], // Trạng thái cuối, không thể chuyển
         'cancelled' => [] // Trạng thái cuối, không thể chuyển
     ];

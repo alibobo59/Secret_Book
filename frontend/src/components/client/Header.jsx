@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Search,
   ShoppingCart,
   User,
   Menu,
@@ -34,7 +33,7 @@ const Header = () => {
     }
     return false;
   });
-  const [searchQuery, setSearchQuery] = useState("");
+
 
   const { user, logout, isAdmin } = useAuth();
   const {
@@ -88,10 +87,7 @@ const Header = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
-  };
+
 
   return (
     <>
@@ -143,18 +139,8 @@ const Header = () => {
               </Link>
             </nav>
 
-            {/* Search, Cart, User Section */}
+            {/* Cart, User Section */}
             <div className="hidden md:flex items-center space-x-6">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sách, tác giả..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200 w-40 focus:w-60 text-sm"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </form>
 
 
 
@@ -207,18 +193,7 @@ const Header = () => {
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
                 className="md:hidden mt-4 py-4 border-t border-gray-200 dark:border-gray-700">
-                <form onSubmit={handleSearch} className="mb-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm sách, tác giả..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full py-2 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                  </div>
-                </form>
+
 
 
 

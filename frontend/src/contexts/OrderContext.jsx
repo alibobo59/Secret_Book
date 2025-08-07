@@ -24,7 +24,7 @@ export const useOrder = () => {
 
 export const OrderProvider = ({ children }) => {
   const { user } = useAuth();
-  const { clearCart } = useCart();
+  const { removeItemsFromCart } = useCart();
   const {
     notifyOrderPlaced,
     notifyOrderConfirmed,
@@ -99,8 +99,14 @@ export const OrderProvider = ({ children }) => {
       // Update local state
       setOrders((prevOrders) => [newOrder, ...prevOrders]);
   
-      // Clear the cart after successful order creation
-      clearCart();
+      // Get the IDs of the items that were ordered
+      const orderedItemIds = orderData.items.map((item) => item.book_id);
+      console.log('🛍️ Order created successfully. OrderData.items:', orderData.items);
+      console.log('🔢 Extracted orderedItemIds:', orderedItemIds);
+
+      // Remove only the purchased items from the cart
+      console.log('🗑️ Calling removeItemsFromCart with orderedItemIds:', orderedItemIds);
+      removeItemsFromCart(orderedItemIds);
   
       // Send notifications
       notifyOrderPlaced(newOrder.id);
@@ -118,14 +124,17 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, cancellationReason = null) => {
     setLoading(true);
     setError(null);
   
     try {
-      const response = await api.patch(`/admin/orders/${orderId}/status`, {
-        status: newStatus,
-      });
+      const requestData = { status: newStatus };
+      if (newStatus === 'cancelled' && cancellationReason) {
+        requestData.cancellation_reason = cancellationReason;
+      }
+      
+      const response = await api.patch(`/admin/orders/${orderId}/status`, requestData);
   
       const updatedOrder = response.data.data;
   

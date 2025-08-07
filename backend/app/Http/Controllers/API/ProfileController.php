@@ -45,7 +45,16 @@ class ProfileController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        return $request->all();
+
+        // Debug: Log request data
+        \Illuminate\Support\Facades\Log::info('Profile update request data:', [
+            'all' => $request->all(),
+            'headers' => $request->headers->all(),
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method(),
+            'has_file' => $request->hasFile('avatar') ? 'Yes' : 'No'
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -66,6 +75,7 @@ class ProfileController extends Controller
             'avatar.mimes' => 'Avatar phải có định dạng jpeg, png, jpg hoặc gif',
             'avatar.max' => 'Avatar không được vượt quá 2MB'
         ]);
+
 
         if ($validator->fails()) {
             return response()->json([

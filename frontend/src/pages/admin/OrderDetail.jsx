@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   Edit,
-  Trash2,
   Package,
   User,
   CreditCard,
@@ -29,13 +28,14 @@ const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+
   const [activeTab, setActiveTab] = useState("details");
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [allowedStatuses, setAllowedStatuses] = useState([]);
   const [newStatus, setNewStatus] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   useEffect(() => {
     fetchOrder();
@@ -61,21 +61,7 @@ const OrderDetail = () => {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      setDeleting(true);
-      await api.delete(`/admin/orders/${id}`);
-      navigate("/admin/orders", {
-        state: { message: "Đơn hàng đã được xóa thành công" },
-      });
-    } catch (err) {
-      console.error("Error deleting order:", err);
-      alert("Không thể xóa đơn hàng");
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
+
 
   const statusColors = {
     pending:
@@ -113,26 +99,45 @@ const OrderDetail = () => {
     }
   };
 
+  // Hàm xác định trạng thái được phép dựa trên logic nghiệp vụ
+  const getValidNextStatuses = (currentStatus) => {
+    const statusFlow = {
+      'pending': ['processing', 'cancelled'],
+      'processing': ['shipped', 'cancelled'], 
+      'shipped': ['delivered'],
+      'delivered': [], // Không thể thay đổi từ delivered
+      'cancelled': [] // Không thể thay đổi từ cancelled
+    };
+    
+    return statusFlow[currentStatus] || [];
+  };
+
   const fetchAllowedStatuses = async () => {
     try {
-      const token = getToken();
-      const config = {
-        headers: { Authorization: `Bearer ${token}` },
-      };
-      const response = await api.get(
-        `/admin/orders/${id}/allowed-statuses`,
-        config
-      );
-      setAllowedStatuses(response.data.allowed_statuses || []);
+      setLoadingStatuses(true);
+      
+      // Sử dụng logic nghiệp vụ thay vì gọi API
+      const allowedNextStatuses = getValidNextStatuses(order.status);
+      setAllowedStatuses(allowedNextStatuses);
+      
     } catch (err) {
-      console.error("Error fetching allowed statuses:", err);
-      setError("Không thể tải danh sách trạng thái được phép");
+      console.error("Error setting allowed statuses:", err);
+      setAllowedStatuses([]);
+      setError("Không thể xác định trạng thái được phép");
+    } finally {
+      setLoadingStatuses(false);
     }
   };
 
   const handleUpdateStatus = async () => {
     if (!newStatus) {
       setError("Vui lòng chọn trạng thái mới");
+      return;
+    }
+
+    // Kiểm tra nếu trạng thái mới là 'cancelled' và chưa có lý do
+    if (newStatus === 'cancelled' && !cancellationReason.trim()) {
+      setError('Vui lòng nhập lý do hủy đơn hàng.');
       return;
     }
 
@@ -143,9 +148,14 @@ const OrderDetail = () => {
         headers: { Authorization: `Bearer ${token}` },
       };
 
+      // Nếu là hủy đơn hàng, gửi kèm lý do
+      const requestData = newStatus === 'cancelled' 
+        ? { status: newStatus, cancellation_reason: cancellationReason }
+        : { status: newStatus };
+
       await api.patch(
         `/admin/orders/${id}/status`,
-        { status: newStatus },
+        requestData,
         config
       );
 
@@ -154,6 +164,7 @@ const OrderDetail = () => {
 
       setShowUpdateStatusModal(false);
       setNewStatus("");
+      setCancellationReason("");
       setError(null);
     } catch (err) {
       console.error("Error updating order status:", err);
@@ -254,12 +265,6 @@ const OrderDetail = () => {
                   <Edit className="w-4 h-4 mr-2" />
                   Cập nhật trạng thái
                 </button>
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Xóa
-                </button>
               </div>
             )}
           </div>
@@ -301,15 +306,15 @@ const OrderDetail = () => {
 
         {/* Tab Content */}
         {activeTab === "details" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-6">
               {/* Order Information */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                   Thông tin đơn hàng
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Hash className="w-4 h-4 mr-2" />
@@ -343,15 +348,7 @@ const OrderDetail = () => {
                       {formatCurrency(order.total_amount || order.total)}
                     </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Phương thức thanh toán
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.payment_method || "N/A"}
-                    </p>
-                  </div>
+
                 </div>
               </div>
 
@@ -384,32 +381,30 @@ const OrderDetail = () => {
                           <tr key={index}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                {item.book &&
-                                  (item.book.cover_image ||
-                                    item.book.image) && (
-                                    <img
-                                      className="h-10 w-10 rounded-lg object-cover mr-4"
-                                      src={
-                                        item.book.cover_image || item.book.image
-                                      }
-                                      alt={item.book.title}
-                                    />
-                                  )}
+                                {(item.book_image || (item.book && (item.book.cover_image || item.book.image))) && (
+                                  <img
+                                    className="h-10 w-10 rounded-lg object-cover mr-4"
+                                    src={
+                                      item.book_image || item.book?.cover_image || item.book?.image
+                                    }
+                                    alt={item.book_title || item.book?.title}
+                                  />
+                                )}
                                 <div>
                                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {item.book ? (
+                                    {item.book_id ? (
                                       <Link
-                                        to={`/admin/books/${item.book.id}`}
+                                        to={`/admin/books/${item.book_id}`}
                                         className="hover:text-blue-600 dark:hover:text-blue-400">
-                                        {item.book.title}
+                                        {item.book_title || item.book?.title || "N/A"}
                                       </Link>
                                     ) : (
-                                      item.product_name || "N/A"
+                                      item.book_title || item.product_name || "N/A"
                                     )}
                                   </div>
-                                  {item.book && item.book.author && (
+                                  {(item.author_name || (item.book && item.book.author)) && (
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                      {item.book.author.name}
+                                      {item.author_name || item.book?.author?.name}
                                     </div>
                                   )}
                                 </div>
@@ -500,7 +495,7 @@ const OrderDetail = () => {
                       Tên người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_name || order.user?.name || "Không có"}
+                      {order.address?.name || order.customer_name || order.user?.name || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -509,7 +504,7 @@ const OrderDetail = () => {
                       Email người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_email || order.user?.email || "Không có"}
+                      {order.address?.email || order.customer_email || order.user?.email || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -518,7 +513,7 @@ const OrderDetail = () => {
                       Số điện thoại người nhận
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.customer_phone || "Không có"}
+                      {order.address?.phone || order.customer_phone || order.phone || order.user?.phone || "Không có"}
                     </p>
                   </div>
                   <div>
@@ -527,7 +522,23 @@ const OrderDetail = () => {
                       Địa chỉ giao hàng
                     </label>
                     <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                      {order.shipping_address || "Không có"}
+                      {order.address?.address || order.address?.street || order.shipping_address || "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tỉnh/Thành Phố
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.address?.province?.name || "Chưa có thông tin"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phường/Xã
+                    </label>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                      {order.address?.ward_model?.name || "Chưa có thông tin"}
                     </p>
                   </div>
                 </div>
@@ -597,106 +608,13 @@ const OrderDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Customer Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Thông tin khách hàng
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Tên khách hàng
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.name || order.customer_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Email
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.email || order.customer_email || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Số điện thoại
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.user?.phone || order.customer_phone || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Địa chỉ giao hàng
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.shipping_address || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2" />
-                  Thông tin thanh toán
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Phương thức thanh toán
-                    </label>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      {order.payment_method || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Trạng thái thanh toán
-                    </label>
-                    <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          order.payment_status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : order.payment_status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}>
-                        {order.payment_status === "paid"
-                          ? "Đã thanh toán"
-                          : order.payment_status === "pending"
-                          ? "Chờ thanh toán"
-                          : order.payment_status === "failed"
-                          ? "Thanh toán thất bại"
-                          : order.payment_status || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                  {order.transaction_id && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Mã giao dịch
-                      </label>
-                      <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-sm">
-                        {order.transaction_id}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Order Summary */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   Tóm tắt đơn hàng
                 </h3>
                 <div className="space-y-3">
-                  {order.subtotal && (
+                  {(order.subtotal !== undefined && order.subtotal !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Tạm tính
@@ -706,7 +624,7 @@ const OrderDetail = () => {
                       </span>
                     </div>
                   )}
-                  {order.tax && (
+                  {(order.tax !== undefined && order.tax !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Thuế
@@ -716,7 +634,7 @@ const OrderDetail = () => {
                       </span>
                     </div>
                   )}
-                  {order.shipping && (
+                  {(order.shipping !== undefined && order.shipping !== null) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">
                         Phí vận chuyển
@@ -826,23 +744,76 @@ const OrderDetail = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Trạng thái mới
                 </label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                  <option value="">Chọn trạng thái</option>
-                  {allowedStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {statusLabels[status] || status}
-                    </option>
-                  ))}
-                </select>
+                {loadingStatuses ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    Đang tải trạng thái được phép...
+                  </div>
+                ) : (
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={loadingStatuses}>
+                    <option value="">Chọn trạng thái</option>
+                    {[
+                      { value: "pending", label: "Chờ Xử Lý" },
+                      { value: "processing", label: "Đang Xử Lý" },
+                      { value: "shipped", label: "Đã Gửi" },
+                      { value: "delivered", label: "Đã Giao" },
+                      { value: "cancelled", label: "Đã Hủy" },
+                    ].map((statusOption) => {
+                      const isCurrentStatus = statusOption.value === order.status;
+                      const isAllowed = allowedStatuses.includes(statusOption.value);
+                      const isDisabled = isCurrentStatus || !isAllowed;
+                      
+                      return (
+                        <option 
+                          key={statusOption.value} 
+                          value={statusOption.value}
+                          disabled={isDisabled}
+                          className={isDisabled ? 'text-gray-400' : ''}>
+                          {statusOption.label}
+                          {isCurrentStatus ? ' (Hiện tại)' : ''}
+                          {!isAllowed && !isCurrentStatus ? ' (Không được phép)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+                {allowedStatuses.length === 0 && !loadingStatuses && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Tất cả trạng thái đều được hiển thị. Các trạng thái không được phép sẽ bị vô hiệu hóa.
+                  </p>
+                )}
               </div>
+              
+              {/* Textarea cho lý do hủy khi chọn trạng thái cancelled */}
+              {newStatus === 'cancelled' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Lý do hủy đơn hàng <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={cancellationReason}
+                    onChange={(e) => setCancellationReason(e.target.value)}
+                    placeholder="Nhập lý do hủy đơn hàng..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    required
+                  />
+                  {!cancellationReason.trim() && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      Vui lòng nhập lý do hủy đơn hàng.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => {
                     setShowUpdateStatusModal(false);
                     setNewStatus("");
+                    setCancellationReason("");
                     setError(null);
                   }}
                   className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800"
@@ -852,7 +823,7 @@ const OrderDetail = () => {
                 <button
                   onClick={handleUpdateStatus}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  disabled={updating || !newStatus}>
+                  disabled={updating || loadingStatuses || !newStatus || (newStatus === 'cancelled' && !cancellationReason.trim())}>
                   {updating ? "Đang cập nhật..." : "Cập nhật"}
                 </button>
               </div>
@@ -860,35 +831,7 @@ const OrderDetail = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Xác nhận xóa
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Bạn có chắc chắn muốn xóa đơn hàng "#
-                {order.order_number || order.id}"? Hành động này không thể hoàn
-                tác và sẽ xóa tất cả các sản phẩm liên quan trong đơn hàng.
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800"
-                  disabled={deleting}>
-                  Hủy
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                  disabled={deleting}>
-                  {deleting ? "Đang xóa..." : "Xóa"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

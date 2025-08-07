@@ -183,7 +183,7 @@ const CartPage = () => {
                       {/* Book Image */}
                       <div className="w-20 h-28 flex-shrink-0">
                         <img
-                          src={item.cover_image}
+                          src={item.image}
                           alt={item.title}
                           className="w-full h-full object-cover rounded-md"
                         />

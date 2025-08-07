@@ -44,6 +44,7 @@ const OrderManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
 
   // Debounce search term
   useEffect(() => {
@@ -82,20 +83,35 @@ const OrderManagement = () => {
     navigate(`/admin/orders/${order.id}`);
   };
 
+  // Hàm xác định trạng thái được phép dựa trên logic nghiệp vụ
+  const getValidNextStatuses = (currentStatus) => {
+    const statusFlow = {
+      'pending': ['processing', 'cancelled'],
+      'processing': ['shipped', 'cancelled'], 
+      'shipped': ['delivered'],
+      'delivered': [], // Không thể thay đổi từ delivered
+      'cancelled': [] // Không thể thay đổi từ cancelled
+    };
+    
+    return statusFlow[currentStatus] || [];
+  };
+
   const handleUpdateStatus = async (order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
     setIsStatusModalOpen(true);
 
-    // Fetch allowed statuses for this order
+    // Sử dụng logic nghiệp vụ thay vì gọi API
     try {
       setLoadingAllowedStatuses(true);
-      const allowedStatusesData = await getAllowedStatuses(order.id);
-      setAllowedStatuses(allowedStatusesData.allowed_next_statuses || []);
+      const allowedNextStatuses = getValidNextStatuses(order.status);
+      setAllowedStatuses(allowedNextStatuses.map(status => ({
+        value: status,
+        label: statusOptions.find(opt => opt.value === status)?.label || status
+      })));
     } catch (error) {
-      console.error("Failed to fetch allowed statuses:", error);
-      // Fallback to all statuses if API fails
-      setAllowedStatuses(statusOptions);
+      console.error("Failed to set allowed statuses:", error);
+      setAllowedStatuses([]);
     } finally {
       setLoadingAllowedStatuses(false);
     }
@@ -104,9 +120,21 @@ const OrderManagement = () => {
   const handleStatusUpdate = async () => {
     if (!selectedOrder || !newStatus) return;
 
+    // Kiểm tra nếu trạng thái mới là 'cancelled' và chưa có lý do
+    if (newStatus === 'cancelled' && !cancellationReason.trim()) {
+      alert('Vui lòng nhập lý do hủy đơn hàng.');
+      return;
+    }
+
     try {
       setStatusLoading(true);
-      await updateOrderStatus(selectedOrder.id, newStatus);
+      
+      // Nếu là hủy đơn hàng, gửi kèm lý do
+      if (newStatus === 'cancelled') {
+        await updateOrderStatus(selectedOrder.id, newStatus, cancellationReason);
+      } else {
+        await updateOrderStatus(selectedOrder.id, newStatus);
+      }
 
       // Refresh orders after successful update with current filters
       const filters = {};
@@ -117,6 +145,7 @@ const OrderManagement = () => {
       setIsStatusModalOpen(false);
       setSelectedOrder(null);
       setNewStatus("");
+      setCancellationReason("");
       setAllowedStatuses([]);
     } catch (error) {
       console.error("Failed to update order status:", error);
@@ -255,7 +284,7 @@ const OrderManagement = () => {
             </div>
             <button
               onClick={() => getAllOrders()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
               Thử Lại
             </button>
           </div>
@@ -365,7 +394,7 @@ const OrderManagement = () => {
                 setStatusFilter("");
                 setCurrentPage(1);
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
               Xóa bộ lọc
             </button>
           )}
@@ -550,7 +579,8 @@ const OrderManagement = () => {
                 <div className="text-gray-700 dark:text-gray-300">
                   <p>{selectedOrder.address?.name || "N/A"}</p>
                   <p>{selectedOrder.address?.address || "N/A"}</p>
-                  <p>{selectedOrder.address?.city || "N/A"}</p>
+                  <p>Tỉnh/Thành Phố: {selectedOrder.address?.province?.name || "Chưa có thông tin"}</p>
+                  <p>Phường/Xã: {selectedOrder.address?.ward_model?.name || "Chưa có thông tin"}</p>
                 </div>
               </div>
             </div>
@@ -564,19 +594,19 @@ const OrderManagement = () => {
                 {selectedOrder.items?.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded">
+                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800">
                     <img
-                      src={item.book?.image_url || "/placeholder-book.jpg"}
-                      alt={item.book?.title || "Book"}
+                      src={item.book_image || item.book?.image_url || "/placeholder-book.jpg"}
+                      alt={item.book_title || item.book?.title || "Book"}
                       className="w-12 h-16 object-cover rounded"
                     />
                     <div className="flex-grow">
                       <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.book?.title || "Unknown Title"}
+                        {item.book_title || item.book?.title || "Unknown Title"}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         bởi{" "}
-                        {item.book?.author?.name || "Tác giả không xác định"}
+                        {item.author_name || item.book?.author?.name || "Tác giả không xác định"}
                       </p>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -598,7 +628,7 @@ const OrderManagement = () => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
                   Ghi Chú Đơn Hàng
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
                   {selectedOrder.notes}
                 </p>
               </div>
@@ -614,26 +644,29 @@ const OrderManagement = () => {
           setIsStatusModalOpen(false);
           setAllowedStatuses([]);
           setNewStatus("");
+          setCancellationReason("");
         }}
         title="Cập Nhật Trạng Thái Đơn Hàng"
         footer={
           <div className="flex justify-end space-x-3">
             <button
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => {
                 setIsStatusModalOpen(false);
                 setAllowedStatuses([]);
                 setNewStatus("");
+                setCancellationReason("");
               }}>
               Hủy
             </button>
             <button
-              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
               onClick={handleStatusUpdate}
               disabled={
                 statusLoading ||
                 loadingAllowedStatuses ||
-                allowedStatuses.length === 0
+                allowedStatuses.length === 0 ||
+                (newStatus === 'cancelled' && !cancellationReason.trim())
               }>
               {statusLoading
                 ? "Đang Cập Nhật..."
@@ -660,7 +693,7 @@ const OrderManagement = () => {
                 Trạng Thái Mới
               </label>
               {loadingAllowedStatuses ? (
-                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
                   Đang tải trạng thái được phép...
                 </div>
               ) : (
@@ -675,7 +708,7 @@ const OrderManagement = () => {
                       setNewStatus(e.target.value);
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400 focus:border-transparent">
                   <option value="">-- Chọn trạng thái mới --</option>
                   {statusOptions.map((status) => {
                     const isAllowed = allowedStatuses.some(
@@ -691,7 +724,7 @@ const OrderManagement = () => {
                         disabled={!isAllowed || isCurrentStatus}
                         className={`${
                           !isAllowed || isCurrentStatus
-                            ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-600"
+                            ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-700"
                             : "text-gray-800 dark:text-gray-200"
                         }`}>
                         {status.label} {isCurrentStatus ? "(Hiện tại)" : ""}{" "}
@@ -709,6 +742,29 @@ const OrderManagement = () => {
                 </p>
               )}
             </div>
+            
+            {/* Textarea cho lý do hủy khi chọn trạng thái cancelled */}
+            {newStatus === 'cancelled' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Lý do hủy đơn hàng <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Nhập lý do hủy đơn hàng..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+                {!cancellationReason.trim() && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                    Vui lòng nhập lý do hủy đơn hàng.
+                  </p>
+                )}
+              </div>
+            )}
+            
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <AlertCircle className="h-4 w-4" />

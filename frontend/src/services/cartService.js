@@ -50,6 +50,25 @@ const cartService = {
     }
   },
 
+  // Remove multiple items from server cart
+  removeItems: async (bookIds) => {
+    console.log('🌐 cartService.removeItems called with bookIds:', bookIds);
+    try {
+      const requestData = {
+        book_ids: bookIds,
+      };
+      console.log('📤 Sending request to /cart/items/remove-multiple with data:', requestData);
+      
+      const response = await api.post('/cart/items/remove-multiple', requestData);
+      console.log('📥 Backend response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Remove multiple items from cart error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      throw error;
+    }
+  },
+
   // Clear server cart
   clearCart: async () => {
     try {

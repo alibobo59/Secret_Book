@@ -17,14 +17,32 @@ const api = axios.create({
 // Add request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
-    console.log('API Request Config:', {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      headers: config.headers,
-      params: config.params,
-      data: config.data,
-    });
+    console.log('%c API Request Config:', 'background: #0066cc; color: white; padding: 2px 5px; border-radius: 3px;');
+    console.log('URL:', config.url);
+    console.log('Method:', config.method.toUpperCase());
+    console.log('Base URL:', config.baseURL);
+    console.log('Full URL:', config.baseURL + config.url);
+    
+    // Log headers in detail
+    console.log('Headers:', config.headers);
+    
+    // Log data in detail
+    if (config.data) {
+      if (config.data instanceof FormData) {
+        console.log('FormData Contents:');
+        for (let [key, value] of config.data.entries()) {
+          console.log(`  ${key}:`, value instanceof File ? `File: ${value.name} (${value.type}, ${value.size} bytes)` : value);
+        }
+      } else {
+        console.log('Data:', config.data);
+      }
+    }
+    
+    // Log params if any
+    if (config.params) {
+      console.log('Params:', config.params);
+    }
+    
     return config;
   },
   (error) => {
@@ -36,25 +54,91 @@ api.interceptors.request.use(
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      data: response.data,
-    });
+    console.log('%c API Response Success:', 'background: #00cc66; color: white; padding: 2px 5px; border-radius: 3px;');
+    console.log('Status:', response.status, response.statusText);
+    console.log('URL:', response.config.url);
+    console.log('Method:', response.config.method.toUpperCase());
+    console.log('Headers:', response.headers);
+    console.log('Data:', response.data);
+    
+    // Log request details that generated this response
+    console.log('Request that generated this response:');
+    console.log('  URL:', response.config.url);
+    console.log('  Method:', response.config.method.toUpperCase());
+    console.log('  Headers:', response.config.headers);
+    
+    if (response.config.data) {
+      if (typeof response.config.data === 'string') {
+        try {
+          // Try to parse if it's JSON string
+          const parsedData = JSON.parse(response.config.data);
+          console.log('  Request Data (parsed):', parsedData);
+        } catch (e) {
+          // If not JSON, show as is
+          console.log('  Request Data (raw):', response.config.data);
+        }
+      } else {
+        console.log('  Request Data:', response.config.data);
+      }
+    }
+    
     return response;
   },
   (error) => {
-    console.error('API Response Error:', {
-      message: error.message,
-      code: error.code,
-      response: error.response ? {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data,
-      } : 'No response',
-      request: error.request ? 'Request was made but no response received' : 'No request',
-    });
+    console.log('%c API Response Error:', 'background: #cc0000; color: white; padding: 2px 5px; border-radius: 3px;');
+    console.log('Error Message:', error.message);
+    console.log('Error Code:', error.code);
+    
+    if (error.response) {
+      console.log('Status:', error.response.status, error.response.statusText);
+      console.log('Headers:', error.response.headers);
+      console.log('Data:', error.response.data);
+      
+      // Log validation errors in detail if present
+      if (error.response.data && error.response.data.errors) {
+        console.log('Validation Errors:');
+        for (const [field, messages] of Object.entries(error.response.data.errors)) {
+          console.log(`  ${field}:`, messages);
+        }
+      }
+      
+      // Log request that caused the error
+      if (error.config) {
+        console.log('Request that caused error:');
+        console.log('  URL:', error.config.url);
+        console.log('  Method:', error.config.method.toUpperCase());
+        console.log('  Headers:', error.config.headers);
+        
+        if (error.config.data) {
+          if (error.config.data instanceof FormData) {
+            console.log('  FormData Contents:');
+            try {
+              for (let [key, value] of error.config.data.entries()) {
+                console.log(`    ${key}:`, value instanceof File ? `File: ${value.name}` : value);
+              }
+            } catch (e) {
+              console.log('  Could not iterate FormData:', e.message);
+            }
+          } else if (typeof error.config.data === 'string') {
+            try {
+              // Try to parse if it's JSON string
+              const parsedData = JSON.parse(error.config.data);
+              console.log('  Request Data (parsed):', parsedData);
+            } catch (e) {
+              // If not JSON, show as is
+              console.log('  Request Data (raw):', error.config.data);
+            }
+          } else {
+            console.log('  Request Data:', error.config.data);
+          }
+        }
+      }
+    } else if (error.request) {
+      console.log('No Response Received:', error.request);
+    } else {
+      console.log('Request Setup Error');
+    }
+    
     return Promise.reject(error);
   }
 );

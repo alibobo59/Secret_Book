@@ -9,6 +9,7 @@ import { useCoupon } from "../../contexts/CouponContext";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
 import CouponInput from "../../components/client/CouponInput";
+import CouponSelector from "../../components/client/CouponSelector";
 import {
   ArrowLeft,
   Package,
@@ -20,8 +21,6 @@ import {
   Phone,
   MapPin,
   FileText,
-  Plus,
-  Minus,
 } from "lucide-react";
 
 const CheckoutPage = () => {
@@ -31,9 +30,6 @@ const CheckoutPage = () => {
     getSelectedItems,
     getSelectedTotal,
     getSelectedItemsCount,
-    toggleItemSelection,
-    selectedItems: selectedItemIds,
-    updateQuantity,
   } = useCart();
   const { user } = useAuth();
   const { createOrder, loading } = useOrder();
@@ -45,7 +41,8 @@ const CheckoutPage = () => {
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    city: "",
+    province_id: "",
+    ward_id: "",
     address: "",
     notes: "",
   });
@@ -55,6 +52,9 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [provinces, setProvinces] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,6 +70,46 @@ const CheckoutPage = () => {
         [name]: "",
       }));
     }
+
+    // If province changes, reset ward and load new wards
+    if (name === "province_id" && value) {
+      setFormData((prev) => ({ ...prev, ward_id: "" }));
+      loadWards(value);
+    }
+  };
+
+  // Load provinces on component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const response = await api.get("/provinces");
+        setProvinces(response.data.data || []);
+      } catch (error) {
+        console.error("Error loading provinces:", error);
+        showError("Lỗi", "Không thể tải danh sách tỉnh/thành phố");
+      }
+    };
+    loadProvinces();
+  }, []);
+
+  // Load wards when province is selected
+  const loadWards = async (provinceId) => {
+    if (!provinceId) {
+      setWards([]);
+      return;
+    }
+
+    setLoadingWards(true);
+    try {
+      const response = await api.get(`/provinces/${provinceId}/wards`);
+      setWards(response.data.data || []);
+    } catch (error) {
+      console.error("Error loading wards:", error);
+      showError("Lỗi", "Không thể tải danh sách phường/xã");
+      setWards([]);
+    } finally {
+      setLoadingWards(false);
+    }
   };
 
   const validateForm = () => {
@@ -79,7 +119,9 @@ const CheckoutPage = () => {
     if (!formData.name.trim()) newErrors.name = "Họ và tên là bắt buộc";
     if (!formData.email.trim()) newErrors.email = "Email là bắt buộc";
     if (!formData.phone.trim()) newErrors.phone = "Số điện thoại là bắt buộc";
-    if (!formData.city.trim()) newErrors.city = "Thành phố là bắt buộc";
+    if (!formData.province_id)
+      newErrors.province_id = "Tỉnh/Thành phố là bắt buộc";
+    if (!formData.ward_id) newErrors.ward_id = "Phường/Xã là bắt buộc";
     if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc";
 
     // Email validation
@@ -119,7 +161,8 @@ const CheckoutPage = () => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          city: formData.city,
+          province_id: formData.province_id,
+          ward_id: formData.ward_id,
           address: formData.address,
         },
         shipping: 0, // Add shipping calculation if needed
@@ -148,7 +191,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Check if cart is empty
+  // Check if no items are selected for checkout
   const selectedItems = getSelectedItems();
   if (!cartItems || cartItems.length === 0) {
     return (
@@ -274,20 +317,55 @@ const CheckoutPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1" />
-                    Thành Phố *
+                    Tỉnh/Thành Phố *
                   </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
+                  <select
+                    name="province_id"
+                    value={formData.province_id}
                     onChange={handleInputChange}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                      errors.city ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Nhập thành phố"
-                  />
-                  {errors.city && (
-                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                      errors.province_id ? "border-red-500" : "border-gray-300"
+                    }`}>
+                    <option value="">Chọn tỉnh/thành phố</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.id}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.province_id && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.province_id}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <MapPin className="inline h-4 w-4 mr-1" />
+                    Phường/Xã *
+                  </label>
+                  <select
+                    name="ward_id"
+                    value={formData.ward_id}
+                    onChange={handleInputChange}
+                    disabled={!formData.province_id || loadingWards}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+                      errors.ward_id ? "border-red-500" : "border-gray-300"
+                    }`}>
+                    <option value="">
+                      {loadingWards ? "Đang tải..." : "Chọn phường/xã"}
+                    </option>
+                    {wards.map((ward) => (
+                      <option key={ward.id} value={ward.id}>
+                        {ward.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.ward_id && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.ward_id}
+                    </p>
                   )}
                 </div>
 
@@ -372,77 +450,81 @@ const CheckoutPage = () => {
 
           {/* Column 2: Cart Items with Checkboxes and Quantity Controls */}
           <div className="space-y-6">
-            {/* Cart Items */}
+            {/* Selected Items for Checkout */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Sản phẩm trong giỏ ({cartItems.length})
+                Sản phẩm đã chọn ({getSelectedItemsCount()})
               </h3>
 
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <input
-                      type="checkbox"
-                      checked={selectedItemIds.has(item.id)}
-                      onChange={() => toggleItemSelection(item.id)}
-                      className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 dark:focus:ring-amber-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-                    <img
-                      src={item.image || "/placeholder-book.jpg"}
-                      alt={item.title}
-                      className="w-16 h-20 object-cover rounded"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {item.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        bởi {item.author?.name || "Tác giả không xác định"}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        {/* Quantity Controls */}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Số lượng:
-                          </span>
-                          <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity - 1)
-                              }
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                              disabled={item.quantity <= 1}>
-                              <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            </button>
-                            <span className="px-3 py-1 text-sm font-medium text-gray-900 dark:text-white min-w-[2rem] text-center">
-                              {item.quantity}
+              {getSelectedItemsCount() === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Chưa có sản phẩm nào được chọn để thanh toán.
+                  </p>
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className="mt-4 text-amber-600 hover:text-amber-700 font-medium">
+                    Quay lại giỏ hàng để chọn sản phẩm
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {getSelectedItems().map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <img
+                        src={
+                          item.image
+                            ? `http://127.0.0.1:8000/storage/${item.image}`
+                            : "/placeholder-book.svg"
+                        }
+                        alt={item.title}
+                        className="w-16 h-20 object-cover rounded"
+                        onError={(e) => {
+                          e.target.src = "/placeholder-book.svg";
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-white">
+                          {item.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          bởi {item.author?.name || "Tác giả không xác định"}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Số lượng: {item.quantity}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity + 1)
-                              }
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            </button>
                           </div>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {(item.price * item.quantity).toLocaleString(
+                              "vi-VN"
+                            )}{" "}
+                            VND
+                          </span>
                         </div>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
-                          VND
-                        </span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Coupon Input */}
-            <CouponInput
+            {/* Coupon Selector */}
+            <CouponSelector
+              orderAmount={getSelectedTotal()}
+              onCouponSelected={(coupon, discount) => {
+                setAppliedCoupon(coupon);
+                setDiscountAmount(discount || 0);
+              }}
+              selectedCoupon={appliedCoupon}
+            />
+
+            {/* Manual Coupon Input */}
+            {/* <CouponInput
               orderAmount={getSelectedTotal()}
               onCouponApplied={(coupon, discount) => {
                 setAppliedCoupon(coupon);
@@ -452,7 +534,7 @@ const CheckoutPage = () => {
                 setAppliedCoupon(null);
                 setDiscountAmount(0);
               }}
-            />
+            /> */}
 
             {/* Order Total and Place Order Button */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">

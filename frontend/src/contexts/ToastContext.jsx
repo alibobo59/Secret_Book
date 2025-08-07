@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { formatCurrency } from '../utils/formatCurrency';
 
 const ToastContext = createContext();
 
@@ -141,7 +142,7 @@ export const ToastProvider = ({ children }) => {
     return addToast({
       type: 'info',
       title: 'Đã nhận đơn hàng mới',
-      message: `Order ${orderId} from ${customerName} - $${total.toFixed(2)}`,
+      message: `Order ${orderId} from ${customerName} - ${formatCurrency(total)}`,
       actionText: 'View Orders',
       actionUrl: '/admin/orders',
       duration: 8000,

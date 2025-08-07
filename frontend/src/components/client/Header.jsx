@@ -16,7 +16,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 
-import NotificationDropdown from "./NotificationDropdown";
+import NotificationDropdown from "../common/NotificationDropdown";
 import CartDropdown from "./CartDropdown";
 import UserProfileDropdown from "./UserProfileDropdown";
 import { motion, AnimatePresence } from "framer-motion";
@@ -107,7 +107,7 @@ const Header = () => {
             <Link to="/" className="flex items-center group">
               <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-500 transition-transform group-hover:rotate-6 duration-300" />
               <span className="ml-2 text-2xl font-serif font-bold text-gray-800 dark:text-white">
-                BookStore
+                Secret Book
               </span>
             </Link>
 

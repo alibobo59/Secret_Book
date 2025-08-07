@@ -54,7 +54,7 @@ class BookController extends Controller
     {
         $book = Book::with(['category', 'author', 'publisher', 'variations', 'reviews'])->find($id);
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
         return response()->json(['data' => $book], Response::HTTP_OK);
     }
@@ -69,7 +69,7 @@ class BookController extends Controller
                     $variation['attributes'] = json_decode($variation['attributes'], true);
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         return response()->json([
-                            'error' => ['variations.*.attributes' => ['Invalid JSON format in attributes.']]
+                            'error' => ['variations.*.attributes' => ['Định dạng JSON không hợp lệ trong thuộc tính.']]
                         ], Response::HTTP_UNPROCESSABLE_ENTITY);
                     }
                 }
@@ -93,6 +93,38 @@ class BookController extends Controller
             'variations.*.stock_quantity' => 'required|integer|min:0',
             'variations.*.sku' => 'nullable|string|unique:book_variations,sku',
             'variations.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'title.required' => 'Tiêu đề là bắt buộc.',
+            'title.string' => 'Tiêu đề phải là chuỗi ký tự.',
+            'title.max' => 'Tiêu đề không được vượt quá 255 ký tự.',
+            'price.required' => 'Giá là bắt buộc.',
+            'price.numeric' => 'Giá phải là số.',
+            'price.min' => 'Giá không được nhỏ hơn 0.',
+            'sku.required' => 'Mã SKU là bắt buộc.',
+            'sku.string' => 'Mã SKU phải là chuỗi ký tự.',
+            'sku.unique' => 'Mã SKU đã tồn tại.',
+            'stock_quantity.required_without' => 'Số lượng kho là bắt buộc khi không có biến thể.',
+            'stock_quantity.integer' => 'Số lượng kho phải là số nguyên.',
+            'stock_quantity.min' => 'Số lượng kho không được nhỏ hơn 0.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
+            'author_id.exists' => 'Tác giả không tồn tại.',
+            'publisher_id.exists' => 'Nhà xuất bản không tồn tại.',
+            'image.image' => 'File phải là hình ảnh.',
+            'image.mimes' => 'Hình ảnh phải có định dạng jpeg, png hoặc jpg.',
+            'image.max' => 'Kích thước hình ảnh không được vượt quá 2MB.',
+            'variations.array' => 'Biến thể phải là mảng.',
+            'variations.*.attributes.required' => 'Thuộc tính biến thể là bắt buộc.',
+            'variations.*.attributes.array' => 'Thuộc tính biến thể phải là mảng.',
+            'variations.*.price.numeric' => 'Giá biến thể phải là số.',
+            'variations.*.price.min' => 'Giá biến thể không được nhỏ hơn 0.',
+            'variations.*.stock_quantity.required' => 'Số lượng kho biến thể là bắt buộc.',
+            'variations.*.stock_quantity.integer' => 'Số lượng kho biến thể phải là số nguyên.',
+            'variations.*.stock_quantity.min' => 'Số lượng kho biến thể không được nhỏ hơn 0.',
+            'variations.*.sku.string' => 'Mã SKU biến thể phải là chuỗi ký tự.',
+            'variations.*.sku.unique' => 'Mã SKU biến thể đã tồn tại.',
+            'variations.*.image.image' => 'File biến thể phải là hình ảnh.',
+            'variations.*.image.mimes' => 'Hình ảnh biến thể phải có định dạng jpeg, png hoặc jpg.',
+            'variations.*.image.max' => 'Kích thước hình ảnh biến thể không được vượt quá 2MB.',
         ]);
 
         if ($validator->fails()) {
@@ -140,7 +172,7 @@ class BookController extends Controller
         $book = Book::with('variations')->find($id);
 
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
 
         // 1. Preprocess variations to decode JSON attributes, just like in store()
@@ -173,6 +205,39 @@ class BookController extends Controller
             // Unique SKU check must ignore the variation's own ID
             'variations.*.sku' => 'nullable|string|unique:book_variations,sku,' . ($request->input('variations.*.id') ?? 'NULL') . ',id',
             'variations.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'title.required' => 'Tiêu đề là bắt buộc.',
+            'title.string' => 'Tiêu đề phải là chuỗi ký tự.',
+            'title.max' => 'Tiêu đề không được vượt quá 255 ký tự.',
+            'sku.required' => 'Mã SKU là bắt buộc.',
+            'sku.string' => 'Mã SKU phải là chuỗi ký tự.',
+            'sku.unique' => 'Mã SKU đã tồn tại.',
+            'price.required' => 'Giá là bắt buộc.',
+            'price.numeric' => 'Giá phải là số.',
+            'price.min' => 'Giá không được nhỏ hơn 0.',
+            'stock_quantity.required_without' => 'Số lượng kho là bắt buộc khi không có biến thể.',
+            'stock_quantity.integer' => 'Số lượng kho phải là số nguyên.',
+            'stock_quantity.min' => 'Số lượng kho không được nhỏ hơn 0.',
+            'category_id.exists' => 'Danh mục không tồn tại.',
+            'author_id.exists' => 'Tác giả không tồn tại.',
+            'publisher_id.exists' => 'Nhà xuất bản không tồn tại.',
+            'image.image' => 'File phải là hình ảnh.',
+            'image.mimes' => 'Hình ảnh phải có định dạng jpeg, png hoặc jpg.',
+            'image.max' => 'Kích thước hình ảnh không được vượt quá 2MB.',
+            'variations.array' => 'Biến thể phải là mảng.',
+            'variations.*.id.exists' => 'Biến thể không tồn tại.',
+            'variations.*.attributes.required' => 'Thuộc tính biến thể là bắt buộc.',
+            'variations.*.attributes.array' => 'Thuộc tính biến thể phải là mảng.',
+            'variations.*.price.numeric' => 'Giá biến thể phải là số.',
+            'variations.*.price.min' => 'Giá biến thể không được nhỏ hơn 0.',
+            'variations.*.stock_quantity.required' => 'Số lượng kho biến thể là bắt buộc.',
+            'variations.*.stock_quantity.integer' => 'Số lượng kho biến thể phải là số nguyên.',
+            'variations.*.stock_quantity.min' => 'Số lượng kho biến thể không được nhỏ hơn 0.',
+            'variations.*.sku.string' => 'Mã SKU biến thể phải là chuỗi ký tự.',
+            'variations.*.sku.unique' => 'Mã SKU biến thể đã tồn tại.',
+            'variations.*.image.image' => 'File biến thể phải là hình ảnh.',
+            'variations.*.image.mimes' => 'Hình ảnh biến thể phải có định dạng jpeg, png hoặc jpg.',
+            'variations.*.image.max' => 'Kích thước hình ảnh biến thể không được vượt quá 2MB.',
         ]);
 
         if ($validator->fails()) {
@@ -255,7 +320,7 @@ class BookController extends Controller
         // Eager load variations to get their data
         $book = Book::with('variations')->find($id);
         if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
         }
 
         // Delete all variation images and the entire book folder
@@ -278,6 +343,12 @@ class BookController extends Controller
         $validator = Validator::make($request->all(), [
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:books,id'
+        ], [
+            'ids.required' => 'Danh sách ID là bắt buộc.',
+            'ids.array' => 'Danh sách ID phải là mảng.',
+            'ids.min' => 'Phải chọn ít nhất 1 sách để xóa.',
+            'ids.*.integer' => 'ID phải là số nguyên.',
+            'ids.*.exists' => 'Sách không tồn tại.',
         ]);
 
         if ($validator->fails()) {
@@ -314,6 +385,21 @@ class BookController extends Controller
             'updates.category_id' => 'sometimes|nullable|exists:categories,id',
             'updates.author_id' => 'sometimes|nullable|exists:authors,id',
             'updates.publisher_id' => 'sometimes|nullable|exists:publishers,id'
+        ], [
+            'ids.required' => 'Danh sách ID là bắt buộc.',
+            'ids.array' => 'Danh sách ID phải là mảng.',
+            'ids.min' => 'Phải chọn ít nhất 1 sách để cập nhật.',
+            'ids.*.integer' => 'ID phải là số nguyên.',
+            'ids.*.exists' => 'Sách không tồn tại.',
+            'updates.required' => 'Dữ liệu cập nhật là bắt buộc.',
+            'updates.array' => 'Dữ liệu cập nhật phải là mảng.',
+            'updates.price.numeric' => 'Giá phải là số.',
+            'updates.price.min' => 'Giá không được nhỏ hơn 0.',
+            'updates.stock_quantity.integer' => 'Số lượng kho phải là số nguyên.',
+            'updates.stock_quantity.min' => 'Số lượng kho không được nhỏ hơn 0.',
+            'updates.category_id.exists' => 'Danh mục không tồn tại.',
+            'updates.author_id.exists' => 'Tác giả không tồn tại.',
+            'updates.publisher_id.exists' => 'Nhà xuất bản không tồn tại.',
         ]);
 
         if ($validator->fails()) {
@@ -335,6 +421,16 @@ class BookController extends Controller
             'updates' => 'required|array|min:1',
             'updates.*.id' => 'required|integer|exists:books,id',
             'updates.*.stock_quantity' => 'required|integer|min:0'
+        ], [
+            'updates.required' => 'Dữ liệu cập nhật là bắt buộc.',
+            'updates.array' => 'Dữ liệu cập nhật phải là mảng.',
+            'updates.min' => 'Phải có ít nhất 1 sách để cập nhật kho.',
+            'updates.*.id.required' => 'ID sách là bắt buộc.',
+            'updates.*.id.integer' => 'ID sách phải là số nguyên.',
+            'updates.*.id.exists' => 'Sách không tồn tại.',
+            'updates.*.stock_quantity.required' => 'Số lượng kho là bắt buộc.',
+            'updates.*.stock_quantity.integer' => 'Số lượng kho phải là số nguyên.',
+            'updates.*.stock_quantity.min' => 'Số lượng kho không được nhỏ hơn 0.',
         ]);
 
         if ($validator->fails()) {
@@ -360,6 +456,12 @@ class BookController extends Controller
             'ids' => 'sometimes|array',
             'ids.*' => 'integer|exists:books,id',
             'format' => 'sometimes|string|in:csv,excel'
+        ], [
+            'ids.array' => 'Danh sách ID phải là mảng.',
+            'ids.*.integer' => 'ID phải là số nguyên.',
+            'ids.*.exists' => 'Sách không tồn tại.',
+            'format.string' => 'Định dạng phải là chuỗi ký tự.',
+            'format.in' => 'Định dạng phải là csv hoặc excel.',
         ]);
 
         if ($validator->fails()) {

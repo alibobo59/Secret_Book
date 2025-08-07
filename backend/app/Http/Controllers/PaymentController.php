@@ -22,6 +22,9 @@ class PaymentController extends Controller
         try {
             $request->validate([
                 'order_id' => 'required|exists:orders,id'
+            ], [
+                'order_id.required' => 'ID đơn hàng là bắt buộc.',
+                'order_id.exists' => 'Đơn hàng không tồn tại.'
             ]);
 
             $order = Order::findOrFail($request->order_id);

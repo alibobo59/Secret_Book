@@ -15,6 +15,9 @@ use App\Http\Controllers\API\AnalyticsController;
 use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\SettingsController;
+use App\Http\Controllers\API\ProfileController;
+use App\Http\Controllers\API\ImageUploadController;
 
 // Root route
 Route::get('/', function () {
@@ -24,7 +27,9 @@ Route::get('/', function () {
 // Authentication routes
 Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
 Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('auth.logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum'])->name('auth.logout');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Public routes (accessible by all, read-only)
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -39,8 +44,11 @@ Route::get('/publishers/{publisher}', [PublisherController::class, 'show'])->nam
 // Public review routes
 Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
-// Admin/Mod routes (protected by auth:sanctum and admin.or.mod middleware)
-Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
+// Admin/Mod routes (protected by auth:sanctum, check.user.status and admin.or.mod middleware)
+Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(function () {
+    // Image upload for RichText Editor
+    Route::post('/upload/editor-image', [ImageUploadController::class, 'uploadEditorImage'])->name('upload.editor-image');
+    Route::delete('/upload/editor-image', [ImageUploadController::class, 'deleteEditorImage'])->name('upload.delete-editor-image');
     // Categories
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
@@ -74,6 +82,8 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
 
     // Analytics
     Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboardStats'])->name('analytics.dashboard');
+    Route::get('/admin/analytics/order-stats', [AnalyticsController::class, 'getOrderStats'])->name('admin.analytics.order-stats');
+    Route::get('/admin/analytics/low-performing-books', [AnalyticsController::class, 'getLowPerformingBooks'])->name('admin.analytics.low-performing-books');
 
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
@@ -92,17 +102,22 @@ Route::middleware(['auth:sanctum', 'admin.or.mod'])->group(function () {
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
     Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
 
     // Review Management (Admin)
     Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
     Route::patch('/admin/reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
     Route::get('/admin/reviews/stats', [ReviewController::class, 'getStats'])->name('admin.reviews.stats');
     Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+
+    // Settings Management (Admin)
+    Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
+    Route::post('/admin/settings', [SettingsController::class, 'store'])->name('admin.settings.store');
+    Route::get('/admin/settings/shipping', [SettingsController::class, 'getShippingSettings'])->name('admin.settings.shipping');
 });
 
 // Authenticated user routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     // Order routes for authenticated users
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
@@ -129,4 +144,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cart/items/{bookId}', [CartController::class, 'removeItem'])->name('cart.remove-item');
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
+    
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
 });

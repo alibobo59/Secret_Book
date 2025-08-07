@@ -123,12 +123,45 @@ class OrderController extends Controller
             'address.city' => 'required|string|max:100',
             'address.phone' => 'required|string|max:20',
             'address.email' => 'required|email|max:255',
+        ], [
+            'items.required' => 'Danh sách sản phẩm là bắt buộc.',
+            'items.array' => 'Danh sách sản phẩm phải là mảng.',
+            'items.min' => 'Phải có ít nhất 1 sản phẩm trong đơn hàng.',
+            'items.*.book_id.required' => 'ID sách là bắt buộc.',
+            'items.*.book_id.exists' => 'Sách không tồn tại.',
+            'items.*.quantity.required' => 'Số lượng là bắt buộc.',
+            'items.*.quantity.integer' => 'Số lượng phải là số nguyên.',
+            'items.*.quantity.min' => 'Số lượng phải lớn hơn 0.',
+            'items.*.price.required' => 'Giá là bắt buộc.',
+            'items.*.price.numeric' => 'Giá phải là số.',
+            'items.*.price.min' => 'Giá không được nhỏ hơn 0.',
+            'shipping.numeric' => 'Phí vận chuyển phải là số.',
+            'shipping.min' => 'Phí vận chuyển không được nhỏ hơn 0.',
+            'notes.string' => 'Ghi chú phải là chuỗi ký tự.',
+            'notes.max' => 'Ghi chú không được vượt quá 1000 ký tự.',
+            'coupon_code.string' => 'Mã giảm giá phải là chuỗi ký tự.',
+            'coupon_code.max' => 'Mã giảm giá không được vượt quá 50 ký tự.',
+            'address.name.required' => 'Tên người nhận là bắt buộc.',
+            'address.name.string' => 'Tên người nhận phải là chuỗi ký tự.',
+            'address.name.max' => 'Tên người nhận không được vượt quá 255 ký tự.',
+            'address.address.required' => 'Địa chỉ là bắt buộc.',
+            'address.address.string' => 'Địa chỉ phải là chuỗi ký tự.',
+            'address.address.max' => 'Địa chỉ không được vượt quá 500 ký tự.',
+            'address.city.required' => 'Thành phố là bắt buộc.',
+            'address.city.string' => 'Thành phố phải là chuỗi ký tự.',
+            'address.city.max' => 'Thành phố không được vượt quá 100 ký tự.',
+            'address.phone.required' => 'Số điện thoại là bắt buộc.',
+            'address.phone.string' => 'Số điện thoại phải là chuỗi ký tự.',
+            'address.phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
+            'address.email.required' => 'Email là bắt buộc.',
+            'address.email.email' => 'Email không hợp lệ.',
+            'address.email.max' => 'Email không được vượt quá 255 ký tự.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -214,14 +247,28 @@ class OrderController extends Controller
                 'notes' => $request->notes,
             ]);
 
-            // Create order items
+            // Create order items and update stock
             foreach ($items as $item) {
+                // Check stock availability
+                $book = Book::find($item['book_id']);
+                if (!$book) {
+                    throw new \Exception("Sách với ID {$item['book_id']} không tồn tại");
+                }
+                
+                if ($book->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Sách '{$book->title}' không đủ số lượng trong kho. Còn lại: {$book->stock_quantity}, yêu cầu: {$item['quantity']}");
+                }
+                
+                // Create order item
                 OrderItem::create([
                     'order_id' => $order->id,
                     'book_id' => $item['book_id'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
+                
+                // Decrease stock quantity
+                $book->decrement('stock_quantity', $item['quantity']);
             }
 
             // Create address if provided
@@ -264,14 +311,14 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order created successfully',
+                'message' => 'Tạo đơn hàng thành công',
                 'data' => $order
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create order: ' . $e->getMessage()
+                'message' => 'Tạo đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -291,7 +338,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Không tìm thấy đơn hàng'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -311,7 +358,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Không tìm thấy đơn hàng'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -329,12 +376,17 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
             'notes' => 'nullable|string|max:1000',
+        ], [
+            'status.required' => 'Trạng thái đơn hàng là bắt buộc.',
+            'status.in' => 'Trạng thái đơn hàng không hợp lệ. Chỉ chấp nhận: pending, processing, shipped, delivered, cancelled.',
+            'notes.string' => 'Ghi chú phải là chuỗi ký tự.',
+            'notes.max' => 'Ghi chú không được vượt quá 1000 ký tự.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -344,7 +396,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Không tìm thấy đơn hàng'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -378,6 +430,17 @@ class OrderController extends Controller
                 'notes' => $request->notes ?? $order->notes,
             ]);
 
+            // Handle stock restoration when order is cancelled
+            if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
+                foreach ($order->items as $item) {
+                    $book = Book::find($item->book_id);
+                    if ($book) {
+                        // Restore stock quantity
+                        $book->increment('stock_quantity', $item->quantity);
+                    }
+                }
+            }
+
             $order->load(['items.book.author', 'user', 'address']);
 
             // Send email notification if status changed and user has email
@@ -403,13 +466,13 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully',
+                'message' => 'Cập nhật trạng thái đơn hàng thành công',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update order status: ' . $e->getMessage()
+                'message' => 'Cập nhật trạng thái đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -429,7 +492,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found or cannot be cancelled'
+                'message' => 'Không tìm thấy đơn hàng hoặc không thể hủy'
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -439,17 +502,25 @@ class OrderController extends Controller
                 'payment_status' => 'cancelled'
             ]);
 
+            // Restore stock quantity when order is cancelled
+            foreach ($order->items as $item) {
+                $book = Book::find($item->book_id);
+                if ($book) {
+                    $book->increment('stock_quantity', $item->quantity);
+                }
+            }
+
             $order->load(['items.book.author', 'user']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order cancelled successfully',
+                'message' => 'Hủy đơn hàng thành công',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cancel order: ' . $e->getMessage()
+                'message' => 'Hủy đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -492,12 +563,15 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'payment_status' => 'required|in:pending,completed,failed,refunded'
+        ], [
+            'payment_status.required' => 'Trạng thái thanh toán là bắt buộc.',
+            'payment_status.in' => 'Trạng thái thanh toán không hợp lệ. Chỉ chấp nhận: pending, completed, failed, refunded.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Xác thực thất bại',
                 'errors' => $validator->errors()
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -512,13 +586,13 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment status updated successfully',
+                'message' => 'Cập nhật trạng thái thanh toán thành công',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update payment status: ' . $e->getMessage()
+                'message' => 'Cập nhật trạng thái thanh toán thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -539,12 +613,12 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order deleted successfully'
+                'message' => 'Xóa đơn hàng thành công'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete order: ' . $e->getMessage()
+                'message' => 'Xóa đơn hàng thất bại: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -559,7 +633,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Không tìm thấy đơn hàng'
             ], Response::HTTP_NOT_FOUND);
         }
         

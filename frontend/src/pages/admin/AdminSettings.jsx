@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader, StatCard, FormField } from '../../components/admin';
+import { settingsService } from '../../services/settingsService';
 import {
   Settings,
   Mail,
@@ -18,11 +19,12 @@ import {
 const AdminSettings = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [saveMessage, setSaveMessage] = useState('');
 
   // General Settings
   const [generalSettings, setGeneralSettings] = useState({
-    siteName: 'BookStore Admin',
-    contactEmail: 'admin@bookstore.com',
+    siteName: 'Secret Book Admin',
+    contactEmail: 'admin@secretbook.com',
     siteDescription: 'Your premier online bookstore',
     contactPhone: '+1 (555) 123-4567',
     timezone: 'UTC',
@@ -35,8 +37,8 @@ const AdminSettings = () => {
     smtpPort: 587,
     smtpUsername: '',
     smtpPassword: '',
-    fromName: 'BookStore',
-    fromEmail: 'noreply@bookstore.com',
+    fromName: 'Secret Book',
+    fromEmail: 'noreply@secretbook.com',
     enableSSL: true,
     testMode: false
   });
@@ -64,10 +66,10 @@ const AdminSettings = () => {
 
   // Shipping Settings
   const [shippingSettings, setShippingSettings] = useState({
-    freeShippingThreshold: 50.00,
-    standardShippingCost: 5.99,
-    expressShippingCost: 12.99,
-    internationalShippingCost: 25.00,
+    freeShippingThreshold: 500000,
+    standardShippingCost: 30000,
+    expressShippingCost: 50000,
+    internationalShippingCost: 100000,
     estimatedDeliveryDays: 5,
     expressDeliveryDays: 2,
     internationalShipping: true,
@@ -111,14 +113,66 @@ const AdminSettings = () => {
     { id: 'system', label: 'Hệ thống', icon: Server }
   ];
 
+  // Load settings on component mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await settingsService.getAllSettings();
+        if (settings.general) setGeneralSettings(settings.general);
+        if (settings.email) setEmailSettings(settings.email);
+        if (settings.payment) setPaymentSettings(settings.payment);
+        if (settings.orders) setOrderSettings(settings.orders);
+        if (settings.shipping) setShippingSettings(settings.shipping);
+        if (settings.notifications) setNotificationSettings(settings.notifications);
+        if (settings.system) setSystemSettings(settings.system);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        setSaveMessage('Không thể tải cài đặt từ server');
+      }
+    };
+    loadSettings();
+  }, []);
+
   const handleSaveSettings = async (settingsType) => {
     setLoading(true);
+    setSaveMessage('');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log(`Saving ${settingsType} settings`);
+      let settingsData = {};
+      
+      switch (settingsType) {
+        case 'general':
+          settingsData = { general: generalSettings };
+          break;
+        case 'email':
+          settingsData = { email: emailSettings };
+          break;
+        case 'payment':
+          settingsData = { payment: paymentSettings };
+          break;
+        case 'orders':
+          settingsData = { orders: orderSettings };
+          break;
+        case 'shipping':
+          settingsData = { shipping: shippingSettings };
+          break;
+        case 'notifications':
+          settingsData = { notifications: notificationSettings };
+          break;
+        case 'system':
+          settingsData = { system: systemSettings };
+          break;
+        default:
+          throw new Error('Invalid settings type');
+      }
+      
+      await settingsService.saveSettings(settingsData);
+      setSaveMessage('Cài đặt đã được lưu thành công!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       console.error('Error saving settings:', error);
+      setSaveMessage('Lỗi khi lưu cài đặt: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -587,14 +641,25 @@ const AdminSettings = () => {
                 </label>
               </div>
 
-              <button
-                onClick={() => handleSaveSettings('shipping')}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                Lưu Cài Đặt Vận Chuyển
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => handleSaveSettings('shipping')}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  Lưu Cài Đặt Vận Chuyển
+                </button>
+                {saveMessage && (
+                  <div className={`px-4 py-2 rounded-lg text-sm ${
+                    saveMessage.includes('thành công') 
+                      ? 'bg-green-100 text-green-800 border border-green-200' 
+                      : 'bg-red-100 text-red-800 border border-red-200'
+                  }`}>
+                    {saveMessage}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

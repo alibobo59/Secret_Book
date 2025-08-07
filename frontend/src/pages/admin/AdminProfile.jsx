@@ -30,11 +30,11 @@ const AdminProfile = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Người Dùng Quản Trị', // Admin User
-    email: user?.email || 'admin@bookstore.com',
-    phone: '+84 (028) 123-4567', // +1 (555) 123-4567
-    bio: 'Quản trị viên hệ thống cho Secret Bookstore', // System Administrator for Secret Bookstore
-    location: 'Hồ Chí Minh, Việt Nam', // New York, NY
+    name: user?.name || 'Admin User',
+    email: user?.email || 'admin@secretbook.com',
+    phone: '+1 (555) 123-4567',
+    bio: 'System Administrator for Secret Book',
+    location: 'New York, NY',
     avatar: user?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
     joinDate: '2022-01-15',
     lastLogin: new Date().toISOString(),
@@ -246,8 +246,8 @@ const AdminProfile = () => {
                   label="Địa Chỉ Email"
                   type="email"
                   value={profileData.email}
-                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                  disabled={!isEditing}
+                  onChange={() => {}}
+                  disabled={true}
                   required
                 />
                 <FormField

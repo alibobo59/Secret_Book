@@ -45,7 +45,7 @@ class CartController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to fetch cart',
+                'message' => 'Lấy giỏ hàng thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -57,11 +57,17 @@ class CartController extends Controller
             $validator = Validator::make($request->all(), [
                 'book_id' => 'required|exists:books,id',
                 'quantity' => 'required|integer|min:1'
+            ], [
+                'book_id.required' => 'ID sách là bắt buộc.',
+                'book_id.exists' => 'Sách không tồn tại.',
+                'quantity.required' => 'Số lượng là bắt buộc.',
+                'quantity.integer' => 'Số lượng phải là số nguyên.',
+                'quantity.min' => 'Số lượng phải lớn hơn 0.'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => 'Xác thực thất bại',
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -86,7 +92,7 @@ class CartController extends Controller
             $cartItem->load('book');
 
             return response()->json([
-                'message' => 'Item added to cart successfully',
+                'message' => 'Thêm sản phẩm vào giỏ hàng thành công',
                 'item' => [
                     'id' => $cartItem->book->id,
                     'title' => $cartItem->book->title,
@@ -98,7 +104,7 @@ class CartController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to add item to cart',
+                'message' => 'Thêm sản phẩm vào giỏ hàng thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -109,11 +115,15 @@ class CartController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'quantity' => 'required|integer|min:1'
+            ], [
+                'quantity.required' => 'Số lượng là bắt buộc.',
+                'quantity.integer' => 'Số lượng phải là số nguyên.',
+                'quantity.min' => 'Số lượng phải lớn hơn 0.'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => 'Xác thực thất bại',
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -122,20 +132,20 @@ class CartController extends Controller
             $cart = $user->cart;
 
             if (!$cart) {
-                return response()->json(['message' => 'Cart not found'], 404);
+                return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
             $cartItem = $cart->items()->where('book_id', $bookId)->first();
 
             if (!$cartItem) {
-                return response()->json(['message' => 'Item not found in cart'], 404);
+                return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
             }
 
             $cartItem->update(['quantity' => $request->quantity]);
             $cartItem->load('book');
 
             return response()->json([
-                'message' => 'Item updated successfully',
+                'message' => 'Cập nhật sản phẩm thành công',
                 'item' => [
                     'id' => $cartItem->book->id,
                     'title' => $cartItem->book->title,
@@ -147,7 +157,7 @@ class CartController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to update item',
+                'message' => 'Cập nhật sản phẩm thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -160,21 +170,21 @@ class CartController extends Controller
             $cart = $user->cart;
 
             if (!$cart) {
-                return response()->json(['message' => 'Cart not found'], 404);
+                return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
             $cartItem = $cart->items()->where('book_id', $bookId)->first();
 
             if (!$cartItem) {
-                return response()->json(['message' => 'Item not found in cart'], 404);
+                return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
             }
 
             $cartItem->delete();
 
-            return response()->json(['message' => 'Item removed from cart successfully']);
+            return response()->json(['message' => 'Xóa sản phẩm khỏi giỏ hàng thành công']);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to remove item',
+                'message' => 'Xóa sản phẩm thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -190,10 +200,10 @@ class CartController extends Controller
                 $cart->items()->delete();
             }
 
-            return response()->json(['message' => 'Cart cleared successfully']);
+            return response()->json(['message' => 'Xóa giỏ hàng thành công']);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to clear cart',
+                'message' => 'Xóa giỏ hàng thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -210,7 +220,7 @@ class CartController extends Controller
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => 'Xác thực thất bại',
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -242,7 +252,7 @@ class CartController extends Controller
             $cart->load(['items.book']);
 
             return response()->json([
-                'message' => 'Cart merged successfully',
+                'message' => 'Hợp nhất giỏ hàng thành công',
                 'cart' => [
                     'items' => $cart->items->map(function ($item) {
                         return [
@@ -260,7 +270,7 @@ class CartController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to merge cart',
+                'message' => 'Hợp nhất giỏ hàng thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }

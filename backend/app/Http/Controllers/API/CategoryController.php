@@ -49,6 +49,11 @@ class CategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:categories,name',
+        ], [
+            'name.required' => 'Tên danh mục là bắt buộc.',
+            'name.string' => 'Tên danh mục phải là chuỗi ký tự.',
+            'name.max' => 'Tên danh mục không được vượt quá 255 ký tự.',
+            'name.unique' => 'Tên danh mục đã tồn tại.'
         ]);
 
         if ($validator->fails()) {
@@ -74,11 +79,16 @@ class CategoryController extends Controller
         $category = Category::find($id);
 
         if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy danh mục'], Response::HTTP_NOT_FOUND);
         }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:categories,name,' . $id,
+        ], [
+            'name.required' => 'Tên danh mục là bắt buộc.',
+            'name.string' => 'Tên danh mục phải là chuỗi ký tự.',
+            'name.max' => 'Tên danh mục không được vượt quá 255 ký tự.',
+            'name.unique' => 'Tên danh mục đã tồn tại.'
         ]);
 
         if ($validator->fails()) {
@@ -103,7 +113,7 @@ class CategoryController extends Controller
         $category = Category::find($id);
 
         if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy danh mục'], Response::HTTP_NOT_FOUND);
         }
 
         $category->delete();

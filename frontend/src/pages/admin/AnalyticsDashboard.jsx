@@ -47,6 +47,12 @@ const AnalyticsDashboard = () => {
   const [selectedChart, setSelectedChart] = useState("revenue");
   const [localLoading, setLocalLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
+  const [orderStats, setOrderStats] = useState(null);
+  const [lowPerformingBooks, setLowPerformingBooks] = useState([]);
 
   useEffect(() => {
     if (!user || (!isAdmin() && !isMod())) {
@@ -74,12 +80,65 @@ const AnalyticsDashboard = () => {
       const backendPeriod = convertPeriodFormat(selectedPeriod);
       const data = await getDashboardStats(backendPeriod);
       console.log("Analytics data:", data);
+      
+      // Load additional statistics
+      await Promise.all([
+        loadOrderStatistics(),
+        loadLowPerformingBooks()
+      ]);
+      
       setLastUpdated(new Date());
     } catch (error) {
       console.error("Failed to load analytics data:", error);
     } finally {
       setLocalLoading(false);
     }
+  };
+
+  const loadOrderStatistics = async () => {
+    try {
+      const response = await fetch(`/api/admin/analytics/order-stats?start_date=${dateRange.startDate}&end_date=${dateRange.endDate}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrderStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to load order statistics:', error);
+    }
+  };
+
+  const loadLowPerformingBooks = async () => {
+    try {
+      const response = await fetch(`/api/admin/analytics/low-performing-books?start_date=${dateRange.startDate}&end_date=${dateRange.endDate}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLowPerformingBooks(data);
+      }
+    } catch (error) {
+      console.error('Failed to load low performing books:', error);
+    }
+  };
+
+  const handleDateRangeChange = (field, value) => {
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const applyDateFilter = () => {
+    loadOrderStatistics();
+    loadLowPerformingBooks();
   };
 
   const handleRefreshAnalytics = async () => {
@@ -182,6 +241,36 @@ const AnalyticsDashboard = () => {
       {/* Header */}
       <PageHeader title="Bảng Điều Khiển Phân Tích" hideAddButton />
 
+      {/* Date Range Filter */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Bộ lọc theo khoảng thời gian</h4>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">Từ ngày:</label>
+            <input
+              type="date"
+              value={dateRange.startDate}
+              onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">Đến ngày:</label>
+            <input
+              type="date"
+              value={dateRange.endDate}
+              onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            />
+          </div>
+          <button
+            onClick={applyDateFilter}
+            className="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm">
+            Áp dụng
+          </button>
+        </div>
+      </div>
+
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
@@ -205,48 +294,80 @@ const AnalyticsDashboard = () => {
       )}
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-            <select
-              value={selectedPeriod}
-              onChange={(e) => handlePeriodChange(e.target.value)}
-              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              disabled={isLoading}>
-              <option value="7_days">7 ngày qua</option>
-              <option value="30_days">30 ngày qua</option>
-              <option value="90_days">90 ngày qua</option>
-              <option value="1_year">1 năm qua</option>
-            </select>
-          </div>
-          {lastUpdated && (
-            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-              <Clock className="h-4 w-4" />
-              <span>Cập nhật: {lastUpdated.toLocaleTimeString("vi-VN")}</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <select
+                value={selectedPeriod}
+                onChange={(e) => handlePeriodChange(e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                disabled={isLoading}>
+                <option value="7_days">7 ngày qua</option>
+                <option value="30_days">30 ngày qua</option>
+                <option value="90_days">90 ngày qua</option>
+                <option value="1_year">1 năm qua</option>
+              </select>
             </div>
-          )}
+            {lastUpdated && (
+              <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                <Clock className="h-4 w-4" />
+                <span>Cập nhật: {lastUpdated.toLocaleTimeString("vi-VN")}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshAnalytics}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+              Làm mới
+            </button>
+            <button
+              onClick={handleExportData}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <Download className="h-4 w-4" />
+              Xuất dữ liệu
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefreshAnalytics}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-            Làm mới
-          </button>
-          <button
-            onClick={handleExportData}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            <Download className="h-4 w-4" />
-            Xuất dữ liệu
-          </button>
+        {/* Date Range Filter */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Bộ lọc theo khoảng thời gian</h4>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Từ ngày:</label>
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Đến ngày:</label>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              />
+            </div>
+            <button
+              onClick={applyDateFilter}
+              className="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm">
+              Áp dụng
+            </button>
+          </div>
         </div>
-      </div>
+       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -299,6 +420,125 @@ const AnalyticsDashboard = () => {
 
 
 
+      </div>
+
+      {/* Order Statistics by Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Order Status Statistics */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Thống Kê Đơn Hàng Theo Trạng Thái
+            </h3>
+            {isLoading && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              ))
+            ) : orderStats ? (
+              Object.entries(orderStats).map(([status, count], index) => {
+                const statusLabels = {
+                  pending: 'Chờ xử lý',
+                  processing: 'Đang xử lý',
+                  shipped: 'Đã gửi',
+                  delivered: 'Đã giao',
+                  cancelled: 'Đã hủy'
+                };
+                const statusColors = {
+                  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                  processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                  shipped: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                  delivered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                };
+                
+                return (
+                  <div key={status} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        statusColors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {statusLabels[status] || status}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      {Number(count).toLocaleString('vi-VN')} đơn
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Không có dữ liệu đơn hàng
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Low Performing Books */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Sách Có Doanh Thu Thấp
+            </h3>
+            {isLoading && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              ))
+            ) : lowPerformingBooks.length > 0 ? (
+              lowPerformingBooks.map((book, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-800 dark:text-white truncate block">
+                        {book.title}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Số lượng bán: {book.sold_quantity || 0}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                    {Number(book.revenue || 0).toLocaleString('vi-VN')} VNĐ
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Không có sách có doanh thu thấp
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Secondary Charts */}

@@ -22,7 +22,7 @@ class Book extends Model
         'image',
     ];
 
-    protected $appends = ['image_url', 'average_rating', 'reviews_count'];
+    protected $appends = ['image_url', 'average_rating', 'reviews_count', 'stock'];
 
     public function category()
     {
@@ -68,6 +68,11 @@ class Book extends Model
     public function getReviewsCountAttribute()
     {
         return $this->verifiedReviews()->count();
+    }
+
+    public function getStockAttribute()
+    {
+        return $this->stock_quantity;
     }
 
     /**

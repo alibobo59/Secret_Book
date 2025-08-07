@@ -92,10 +92,10 @@
                         Đang xử lý
                         @break
                     @case('shipped')
-                        Đã giao hàng
+                        Đã gửi
                         @break
                     @case('delivered')
-                        Đã giao thành công
+                        Đã giao
                         @break
                     @case('cancelled')
                         Đã hủy
@@ -116,10 +116,10 @@
                         Đang xử lý
                         @break
                     @case('shipped')
-                        Đã giao hàng
+                        Đã gửi
                         @break
                     @case('delivered')
-                        Đã giao thành công
+                        Đã giao
                         @break
                     @case('cancelled')
                         Đã hủy

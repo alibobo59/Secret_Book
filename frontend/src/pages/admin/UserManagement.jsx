@@ -6,7 +6,6 @@ import {
   Search,
   Filter,
   Edit,
-  Trash2,
   Lock,
   Unlock,
   Shield,
@@ -27,7 +26,6 @@ const UserManagement = () => {
     getAllUsers,
     toggleUserStatus,
     updateUser,
-    deleteUser,
     updateUserRole,
     getUserStats,
     clearError,
@@ -44,7 +42,7 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [lockReason, setLockReason] = useState("");
   const [newRole, setNewRole] = useState("");
   const [pagination, setPagination] = useState(null);
@@ -129,19 +127,7 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async () => {
-    try {
-      await deleteUser(selectedUser.id);
-      setShowDeleteModal(false);
-      setSelectedUser(null);
-      toast.success("Người dùng đã được xóa thành công");
-      loadUsers();
-      loadUserStats();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Không thể xóa người dùng");
-    }
-  };
+
 
   const openStatusModal = (user) => {
     setSelectedUser(user);
@@ -154,10 +140,7 @@ const UserManagement = () => {
     setShowRoleModal(true);
   };
 
-  const openDeleteModal = (user) => {
-    setSelectedUser(user);
-    setShowDeleteModal(true);
-  };
+
 
   const getRoleLabel = (role) => {
     switch (role) {
@@ -451,14 +434,7 @@ const UserManagement = () => {
                             <Unlock className="w-4 h-4" />
                           )}
                         </button>
-                        {user.role !== "admin" && (
-                          <button
-                            onClick={() => openDeleteModal(user)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                            title="Xóa người dùng">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+
                       </div>
                     </td>
                   </tr>
@@ -625,42 +601,7 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Delete User Modal */}
-      {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-200 mb-4">
-                Xóa người dùng
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Bạn có chắc chắn muốn xóa tài khoản của{" "}
-                <strong>{selectedUser.name}</strong>?
-                <br />
-                <span className="text-red-600 dark:text-red-400 font-medium">
-                  Hành động này không thể hoàn tác!
-                </span>
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedUser(null);
-                  }}
-                  className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500">
-                  Hủy
-                </button>
-                <button
-                  onClick={handleDeleteUser}
-                  disabled={loading}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
-                  {loading ? "Đang xóa..." : "Xóa người dùng"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useBook } from "../../contexts/BookContext";
 import NotificationTestPanel from "../../components/admin/NotificationTestPanel";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 /**
  * Dashboard home component showing statistics and low stock books
@@ -79,7 +80,7 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Bảng Điều Khiển</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Bảng Điều Khiển</h2>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -112,7 +113,7 @@ const DashboardHome = () => {
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
           title="Tổng giá trị"
-          value={`$${totalValue.toFixed(2)}`}
+          value={formatCurrency(totalValue)}
         />
       </div>
 
@@ -121,7 +122,7 @@ const DashboardHome = () => {
 
       {/* Low Stock Alert */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Cảnh Báo Tồn Kho Thấp</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Cảnh Báo Tồn Kho Thấp</h3>
         {lowStockBooksData.length > 0 ? (
           <Table
             columns={columns}
@@ -149,7 +150,7 @@ const DashboardHome = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  ${(book.price || 0).toFixed(2)}
+                  {formatCurrency(book.price || 0)}
                 </td>
               </tr>
             )}

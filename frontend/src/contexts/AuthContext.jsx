@@ -1,3 +1,5 @@
+// src/contexts/AuthContext.jsx
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import authService from "../services/authService";
 
@@ -29,10 +31,10 @@ export const AuthProvider = ({ children }) => {
         "color: purple"
       );
       setUser(response.user);
-      
+
       // Trigger cart merge after successful login
       // This will be handled by CartContext useEffect when user changes
-      
+
       return response.user;
     } catch (error) {
       console.log(
@@ -64,10 +66,10 @@ export const AuthProvider = ({ children }) => {
         password_confirmation,
       });
       setUser(response.user);
-      
+
       // Trigger cart merge after successful registration
       // This will be handled by CartContext useEffect when user changes
-      
+
       return response.user;
     } catch (error) {
       setUser(null);
@@ -99,24 +101,24 @@ export const AuthProvider = ({ children }) => {
     if (!user || !user.role) {
       return false;
     }
-    
+
     // If roles is an array, check if user's role is in the array
     if (Array.isArray(roles)) {
       return roles.includes(user.role);
     }
-    
+
     // If roles is a string, check direct match
     return user.role === roles;
   };
 
   // Add this isAdmin function
   const isAdmin = () => {
-    return user && user.role === 'admin';
+    return user && user.role === "admin";
   };
 
   // Add this isMod function
   const isMod = () => {
-    return user && user.role === 'mod';
+    return user && user.role === "mod";
   };
 
   const value = {

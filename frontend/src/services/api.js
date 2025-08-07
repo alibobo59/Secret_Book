@@ -85,13 +85,17 @@ const fetchCsrfToken = async () => {
 // Request interceptor to add auth token and handle CSRF
 api.interceptors.request.use(
   async (config) => {
-    // Only fetch CSRF token for non-GET requests
+    // Only fetch CSRF token for non-GET requests and if not already fetched
     if (
       ["post", "put", "delete", "patch"].includes(config.method.toLowerCase())
     ) {
-      const success = await fetchCsrfToken();
-      if (!success) {
-        throw new Error("Unable to fetch CSRF token");
+      // Check if CSRF token already exists in cookies
+      const hasCSRFToken = document.cookie.includes('XSRF-TOKEN');
+      if (!hasCSRFToken) {
+        const success = await fetchCsrfToken();
+        if (!success) {
+          throw new Error("Unable to fetch CSRF token");
+        }
       }
     }
 
@@ -145,8 +149,8 @@ api.interceptors.response.use(
   async (error) => {
     const { config } = error;
 
-    // Skip retry for specific status codes
-    if (error.response?.status === 401 || error.response?.status === 419) {
+    // Skip retry for specific status codes (authentication and validation errors)
+    if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 419 || error.response?.status === 422) {
       return Promise.reject(error);
     }
 
@@ -193,6 +197,19 @@ api.interceptors.response.use(
       // localStorage.removeItem("user");
       // window.location.assign("/login");
       return null;
+    }
+
+    // Handle 403 errors (account locked) - but not for login endpoint
+    if (error.response?.status === 403 && !config.url.includes('login')) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error;
+      if (errorMessage && errorMessage.includes('khóa')) {
+        // Clear authentication data
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        // Redirect to login page
+        window.location.assign("/login");
+        return Promise.reject(new Error(errorMessage));
+      }
     }
 
     console.error("API Error:", {

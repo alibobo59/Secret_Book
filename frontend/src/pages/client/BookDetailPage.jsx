@@ -1,3 +1,4 @@
+// src/pages/client/BookDetailPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
@@ -232,7 +233,7 @@ const BookDetailPage = () => {
           <div className="space-y-3">
             <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Calendar className="h-5 w-5 mr-2" />
-              Xuất bản: 
+              Xuất bản:
               {new Date(book.published_date).toLocaleDateString()}
             </div>
             <div className="flex items-center text-gray-600 dark:text-gray-400">
@@ -245,9 +246,15 @@ const BookDetailPage = () => {
             </div>
           </div>
 
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {book.description || "Không có mô tả"}
-          </p>
+          {/* Book Description */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Mô Tả Sách
+            </h3>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed prose max-w-none"
+                 dangerouslySetInnerHTML={{ __html: book.description || "Không có mô tả" }}>
+            </div>
+          </div>
 
           {/* Price and Add to Cart */}
           <div className="space-y-4">

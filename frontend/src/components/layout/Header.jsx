@@ -90,7 +90,7 @@ const Header = () => {
               <span className="text-white font-bold text-lg">B</span>
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
-              BookStore
+              Secret Book
             </span>
           </Link>
 

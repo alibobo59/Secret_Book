@@ -56,19 +56,7 @@ const userService = {
     }
   },
 
-  // Delete user (Admin only)
-  deleteUser: async (id) => {
-    try {
-      const response = await api.delete(`/admin/users/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(
-        "Delete user error:",
-        error.response?.data || error.message
-      );
-      throw error;
-    }
-  },
+
 
   // Get user statistics (Admin only)
   getUserStats: async () => {

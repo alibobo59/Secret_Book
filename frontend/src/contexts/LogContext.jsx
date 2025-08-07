@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { formatCurrency } from '../utils/formatCurrency';
 
 const LogContext = createContext();
 
@@ -120,7 +121,7 @@ export const LogProvider = ({ children }) => {
       'Database update': 'Database schema updated to version 2.1.3',
       'Security scan': 'Security vulnerability scan completed',
       'Failed login attempt': `Failed login attempt for user ${user}`,
-      'Payment processed': `Payment of $${(Math.random() * 100).toFixed(2)} processed successfully`,
+      'Payment processed': `Payment of ${formatCurrency(Math.random() * 100000)} processed successfully`,
       'Inventory updated': `Stock levels updated for ${Math.floor(Math.random() * 50)} items`,
       'Category created': `New category "${getRandomCategory()}" created`,
       'User deleted': `User account for ${user} was deleted`,

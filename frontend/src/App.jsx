@@ -23,6 +23,8 @@ import {
   OrderConfirmationPage,
   PaymentVNPayReturn,
 } from "./pages/client";
+import ForgotPasswordPage from "./pages/client/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/client/ResetPasswordPage";
 import ReviewPage from "./pages/client/ReviewPage";
 import {
   DashboardHome,
@@ -31,6 +33,8 @@ import {
   AuthorManagement,
   PublisherManagement,
   UserManagement,
+  UserDetail,
+  UserEdit,
   OrderManagement,
   OrderDetail,
   PublisherCreate,
@@ -76,12 +80,17 @@ function App() {
                     <Route path="/books" element={<BrowseBooksPage />} />
                     <Route path="/books/:id" element={<BookDetailPage />} />
                     <Route path="/checkout" element={<CheckOutPage />} />
-                    <Route
-                      path="/profile/:username"
-                      element={<ProfilePage />}
-                    />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route
+                      path="/forgot-password"
+                      element={<ForgotPasswordPage />}
+                    />
+                    <Route
+                      path="/reset-password"
+                      element={<ResetPasswordPage />}
+                    />
                     <Route path="/orders" element={<OrderManagementClient />} />
                     <Route
                       path="/orders/:orderId/review"
@@ -138,6 +147,8 @@ function App() {
                       element={<PublisherEdit />}
                     />
                     <Route path="users" element={<UserManagement />} />
+                    <Route path="users/:id" element={<UserDetail />} />
+                    <Route path="users/:id/edit" element={<UserEdit />} />
                     <Route path="orders" element={<OrderManagement />} />
                     <Route path="orders/:id" element={<OrderDetail />} />
                     <Route path="audit-logs" element={<LogManagement />} />

@@ -10,12 +10,10 @@ import {
   Award,
   TrendingUp,
 } from "lucide-react";
-import { useLanguage } from "../contexts/LanguageContext";
 import ReviewInteractionButtons from "../components/reviews/ReviewInteractionButtons";
 
 const ReviewerProfilePage = () => {
   const { reviewerId } = useParams();
-  const { t } = useLanguage();
   const [reviewer, setReviewer] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);

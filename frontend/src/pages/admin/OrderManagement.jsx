@@ -15,6 +15,7 @@ import {
   MapPin,
   CreditCard,
 } from "lucide-react";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const OrderManagement = () => {
   const navigate = useNavigate();
@@ -306,7 +307,7 @@ const OrderManagement = () => {
               {new Date(order.created_at).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {parseFloat(order.total || 0).toLocaleString("vi-VN")} ₫
+              {formatCurrency(order.total || 0)}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               <span
@@ -511,7 +512,7 @@ const OrderManagement = () => {
                   Tổng Tiền
                 </label>
                 <p className="text-gray-900 dark:text-white font-semibold">
-                  {parseFloat(selectedOrder.total || 0).toFixed(2)}đ
+                  {formatCurrency(selectedOrder.total || 0)}
                 </p>
               </div>
             </div>
@@ -582,7 +583,7 @@ const OrderManagement = () => {
                           SL: {item.quantity}
                         </span>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                          {formatCurrency(parseFloat(item.price) * item.quantity)}
                         </span>
                       </div>
                     </div>

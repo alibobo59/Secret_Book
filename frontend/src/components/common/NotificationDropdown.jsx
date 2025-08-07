@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react';
 
-const NotificationDropdown = ({ className = "" }) => {
+const NotificationDropdown = ({ className = "", language = "vi" }) => {
   const {
     notifications,
     unreadCount,
@@ -53,7 +53,7 @@ const NotificationDropdown = ({ className = "" }) => {
       case 'warning':
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       case 'order':
-        return <Package className="h-4 w-4 text-blue-500" />;
+        return <Package className="h-4 w-4 text-purple-500" />;
       case 'system':
         return <Settings className="h-4 w-4 text-gray-500" />;
       default:
@@ -61,31 +61,93 @@ const NotificationDropdown = ({ className = "" }) => {
     }
   };
 
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
+  const formatTimeAgo = (dateString) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now - date) / 1000);
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    if (language === 'vi') {
+      if (diffInSeconds < 60) return 'Vừa xong';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+      return date.toLocaleDateString('vi-VN');
+    } else {
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+      return date.toLocaleDateString();
+    }
   };
 
+  const handleNotificationClick = (notification) => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+  };
+
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const texts = {
+    vi: {
+      notifications: 'Thông báo',
+      markAllRead: 'Đánh dấu tất cả đã đọc',
+      clearAll: 'Xóa tất cả',
+      noNotifications: 'Không có thông báo',
+      allRead: 'Bạn đã xem hết rồi!',
+      view: 'Xem',
+      viewAll: 'Xem tất cả thông báo',
+      markAsRead: 'Đánh dấu đã đọc',
+      delete: 'Xóa thông báo'
+    },
+    en: {
+      notifications: 'Notifications',
+      markAllRead: 'Mark all read',
+      clearAll: 'Clear all',
+      noNotifications: 'No notifications yet',
+      allRead: 'You\'re all caught up!',
+      view: 'View',
+      viewAll: 'View all notifications',
+      markAsRead: 'Mark as read',
+      delete: 'Delete'
+    }
+  };
+
+  const t = texts[language] || texts.en;
+
+  // Limit notifications shown in dropdown
   const displayedNotifications = notifications.slice(0, 5);
+  const hasMoreNotifications = notifications.length > 5;
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Notification Bell */}
+      {/* Notification Bell Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleDropdown}
         className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-        aria-label="Notifications">
+        aria-label={`${t.notifications} ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+      >
         <Bell className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+        
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium border-2 border-white dark:border-gray-800"
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </motion.span>
+        )}
+        
+        {unreadCount > 0 && (
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute -top-1 -right-1 bg-red-500 rounded-full w-[18px] h-[18px] opacity-75 border-2 border-white dark:border-gray-800"
+          />
         )}
       </button>
 
@@ -97,111 +159,166 @@ const NotificationDropdown = ({ className = "" }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+            className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden"
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <Bell className="h-5 w-5 text-amber-600 dark:text-amber-500 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  Notifications
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                <h3 className="font-semibold text-gray-800 dark:text-white">
+                  {t.notifications}
                 </h3>
                 {unreadCount > 0 && (
-                  <span className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 text-xs px-2 py-1 rounded-full">
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                     {unreadCount}
                   </span>
                 )}
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                <X className="h-5 w-5" />
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {/* Actions */}
             {notifications.length > 0 && (
-              <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => {
+                      markAllAsRead();
+                    }}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
+                  >
+                    <CheckCheck className="h-3 w-3" />
+                    {t.markAllRead}
+                  </button>
+                )}
                 <button
-                  onClick={markAllAsRead}
-                  className="text-sm text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center"
-                  disabled={unreadCount === 0}>
-                  <CheckCheck className="h-4 w-4 mr-1" />
-                  Mark all read
-                </button>
-                <button
-                  onClick={clearAllNotifications}
-                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center">
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Clear all
+                  onClick={() => {
+                    clearAllNotifications();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  {t.clearAll}
                 </button>
               </div>
             )}
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-6 text-center">
-                  <Bell className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    No notifications yet
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Bell className="h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t.noNotifications}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {t.allRead}
                   </p>
                 </div>
               ) : (
-                displayedNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      !notification.read ? 'bg-amber-50 dark:bg-amber-900/20' : ''
-                    }`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start flex-1">
-                        <div className="mr-3 mt-1">
+                <>
+                  {displayedNotifications.map((notification) => (
+                    <motion.div
+                      key={notification.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
+                        !notification.read ? 'bg-amber-50 dark:bg-amber-900/10' : ''
+                      }`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex gap-3">
+                        {/* Icon */}
+                        <div className="shrink-0 mt-0.5">
                           {getNotificationIcon(notification.type)}
                         </div>
+
+                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className={`text-sm font-medium line-clamp-1 ${
+                              !notification.read 
+                                ? 'text-gray-900 dark:text-white' 
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}>
                               {notification.title}
                             </h4>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 whitespace-nowrap">
-                              {formatTime(notification.createdAt)}
-                            </span>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-amber-500 rounded-full shrink-0 mt-1" />
+                            )}
                           </div>
-                          {notification.message && (
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                              {notification.message}
-                            </p>
-                          )}
-                          {notification.actionUrl && (
-                            <Link
-                              to={notification.actionUrl}
-                              onClick={() => setIsOpen(false)}
-                              className="inline-flex items-center text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mt-2">
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              {notification.actionText || 'View'}
-                            </Link>
-                          )}
+                          
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatTimeAgo(notification.createdAt)}
+                            </span>
+                            
+                            <div className="flex items-center gap-1">
+                              {notification.actionUrl && (
+                                <Link
+                                  to={notification.actionUrl}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsOpen(false);
+                                  }}
+                                  className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
+                                >
+                                  {notification.actionText || t.view}
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                </Link>
+                              )}
+                              
+                              {!notification.read && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsRead(notification.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                                  title={t.markAsRead}
+                                >
+                                  <Check className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotification(notification.id);
+                                }}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                                title={t.delete}
+                              >
+                                <Trash2 className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center ml-2">
-                        {!notification.read && (
-                          <button
-                            onClick={() => markAsRead(notification.id)}
-                            className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 mr-2"
-                            title="Mark as read">
-                            <Check className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotification(notification.id)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                          title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                    </motion.div>
+                  ))}
+                  
+                  {hasMoreNotifications && (
+                    <div className="p-3 text-center border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={() => setIsOpen(false)}
+                        className="text-xs text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium"
+                      >
+                        {t.viewAll} ({notifications.length})
+                      </button>
                     </div>
-                  </div>
-                ))
+                  )}
+                </>
               )}
             </div>
 

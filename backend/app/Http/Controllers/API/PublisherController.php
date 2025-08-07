@@ -50,6 +50,12 @@ class PublisherController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Tên nhà xuất bản là bắt buộc.',
+            'name.string' => 'Tên nhà xuất bản phải là chuỗi ký tự.',
+            'name.max' => 'Tên nhà xuất bản không được vượt quá 255 ký tự.',
+            'address.string' => 'Địa chỉ phải là chuỗi ký tự.',
+            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -76,12 +82,18 @@ class PublisherController extends Controller
         $publisher = Publisher::find($id);
 
         if (!$publisher) {
-            return response()->json(['error' => 'Publisher not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy nhà xuất bản'], Response::HTTP_NOT_FOUND);
         }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Tên nhà xuất bản là bắt buộc.',
+            'name.string' => 'Tên nhà xuất bản phải là chuỗi ký tự.',
+            'name.max' => 'Tên nhà xuất bản không được vượt quá 255 ký tự.',
+            'address.string' => 'Địa chỉ phải là chuỗi ký tự.',
+            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -107,7 +119,7 @@ class PublisherController extends Controller
         $publisher = Publisher::find($id);
 
         if (!$publisher) {
-            return response()->json(['error' => 'Publisher not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy nhà xuất bản'], Response::HTTP_NOT_FOUND);
         }
 
         $publisher->delete();

@@ -34,6 +34,15 @@ class ReviewController extends Controller
             'book_id' => 'required|exists:books,id',
             'rating' => 'required|integer|min:1|max:5',
             'review' => 'nullable|string|max:1000'
+        ], [
+            'book_id.required' => 'ID sách là bắt buộc.',
+            'book_id.exists' => 'Sách không tồn tại.',
+            'rating.required' => 'Đánh giá là bắt buộc.',
+            'rating.integer' => 'Đánh giá phải là số nguyên.',
+            'rating.min' => 'Đánh giá phải từ 1 đến 5 sao.',
+            'rating.max' => 'Đánh giá phải từ 1 đến 5 sao.',
+            'review.string' => 'Nội dung đánh giá phải là chuỗi ký tự.',
+            'review.max' => 'Nội dung đánh giá không được vượt quá 1000 ký tự.'
         ]);
 
         $user = Auth::user();
@@ -42,7 +51,7 @@ class ReviewController extends Controller
         // Check if user has purchased the book
         if (!$user->hasPurchased($bookId)) {
             return response()->json([
-                'message' => 'You must purchase this book before reviewing it.'
+                'message' => 'Bạn phải mua sách này trước khi đánh giá.'
             ], 403);
         }
 
@@ -53,7 +62,7 @@ class ReviewController extends Controller
 
         if ($existingReview) {
             return response()->json([
-                'message' => 'You have already reviewed this book.'
+                'message' => 'Bạn đã đánh giá sách này rồi.'
             ], 409);
         }
 
@@ -76,7 +85,7 @@ class ReviewController extends Controller
         $review->load('user:id,name');
 
         return response()->json([
-            'message' => 'Review submitted successfully.',
+            'message' => 'Gửi đánh giá thành công.',
             'review' => $review
         ], 201);
     }
@@ -108,7 +117,7 @@ class ReviewController extends Controller
         $review->load('user:id,name');
 
         return response()->json([
-            'message' => 'Review updated successfully.',
+            'message' => 'Cập nhật đánh giá thành công.',
             'review' => $review
         ]);
     }
@@ -123,14 +132,14 @@ class ReviewController extends Controller
         // Check if user owns the review or is admin
         if ($review->user_id !== $user->id && $user->role !== 'admin') {
             return response()->json([
-                'message' => 'Unauthorized to delete this review.'
+                'message' => 'Không có quyền xóa đánh giá này.'
             ], 403);
         }
 
         $review->delete();
 
         return response()->json([
-            'message' => 'Review deleted successfully.'
+            'message' => 'Xóa đánh giá thành công.'
         ]);
     }
 
@@ -144,7 +153,7 @@ class ReviewController extends Controller
         if (!$user) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'User not authenticated'
+                'reason' => 'Người dùng chưa xác thực'
             ]);
         }
 
@@ -152,7 +161,7 @@ class ReviewController extends Controller
         if (!$user->hasPurchased($book->id)) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'You must purchase this book to review it'
+                'reason' => 'Bạn phải mua sách này để đánh giá'
             ]);
         }
 
@@ -164,7 +173,7 @@ class ReviewController extends Controller
         if ($existingReview) {
             return response()->json([
                 'can_review' => false,
-                'reason' => 'You have already reviewed this book',
+                'reason' => 'Bạn đã đánh giá sách này rồi',
                 'existing_review' => $existingReview
             ]);
         }
@@ -270,7 +279,7 @@ class ReviewController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get review statistics: ' . $e->getMessage()
+                'message' => 'Lấy thống kê đánh giá thất bại: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -50,6 +50,11 @@ class AuthorController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
+        ], [
+            'name.required' => 'Tên tác giả là bắt buộc.',
+            'name.string' => 'Tên tác giả phải là chuỗi ký tự.',
+            'name.max' => 'Tên tác giả không được vượt quá 255 ký tự.',
+            'bio.string' => 'Tiểu sử phải là chuỗi ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -76,12 +81,17 @@ class AuthorController extends Controller
         $author = Author::find($id);
 
         if (!$author) {
-            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy tác giả'], Response::HTTP_NOT_FOUND);
         }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
+        ], [
+            'name.required' => 'Tên tác giả là bắt buộc.',
+            'name.string' => 'Tên tác giả phải là chuỗi ký tự.',
+            'name.max' => 'Tên tác giả không được vượt quá 255 ký tự.',
+            'bio.string' => 'Tiểu sử phải là chuỗi ký tự.'
         ]);
 
         if ($validator->fails()) {
@@ -107,7 +117,7 @@ class AuthorController extends Controller
         $author = Author::find($id);
 
         if (!$author) {
-            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['error' => 'Không tìm thấy tác giả'], Response::HTTP_NOT_FOUND);
         }
 
         $author->delete();

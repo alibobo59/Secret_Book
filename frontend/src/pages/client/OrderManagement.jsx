@@ -5,6 +5,7 @@ import { useOrder } from "../../contexts/OrderContext";
 import { motion, AnimatePresence } from "framer-motion";
 import CancelOrderModal from "../../components/common/CancelOrderModal";
 import { reviewAPI } from "../../services/api";
+import { formatCurrency } from "../../utils/formatCurrency";
 import {
   Package,
   Truck,
@@ -197,10 +198,8 @@ const OrderManagementPage = () => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "confirmed":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "processing":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "shipped":
         return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
       case "delivered":
@@ -216,7 +215,6 @@ const OrderManagementPage = () => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4" />;
-      case "confirmed":
       case "processing":
         return <Package className="h-4 w-4" />;
       case "shipped":
@@ -237,8 +235,8 @@ const OrderManagementPage = () => {
   const statusOptions = [
     { value: "pending", label: "Chờ Xử Lý" },
     { value: "processing", label: "Đang Xử Lý" },
-    { value: "shipped", label: "Đã Giao" },
-    { value: "delivered", label: "Đã Nhận" },
+    { value: "shipped", label: "Đã Gửi" },
+    { value: "delivered", label: "Đã Giao" },
     { value: "cancelled", label: "Đã Hủy" },
   ];
 
@@ -436,11 +434,15 @@ const OrderManagementPage = () => {
                           order.status
                         )}`}>
                         {getStatusIcon(order.status)}
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
+                        {order.status === 'pending' ? 'Chờ xử lý' :
+                         order.status === 'processing' ? 'Đang xử lý' :
+                         order.status === 'shipped' ? 'Đã gửi' :
+                         order.status === 'delivered' ? 'Đã giao' :
+                         order.status === 'cancelled' ? 'Đã hủy' :
+                         order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </span>
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
-                        {(order.total / 100).toFixed(2)}đ
+                        {formatCurrency(order.total)}
                       </span>
                     </div>
                   </div>
@@ -472,7 +474,7 @@ const OrderManagementPage = () => {
                               SL: {item.quantity}
                             </span>
                             <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              {((item.price / 100) * item.quantity).toFixed(2)}đ
+                              {formatCurrency(item.price * item.quantity)}
                             </span>
                           </div>
                         </div>
@@ -560,8 +562,12 @@ const OrderManagementPage = () => {
                           selectedOrder.status
                         )}`}>
                         {getStatusIcon(selectedOrder.status)}
-                        {selectedOrder.status.charAt(0).toUpperCase() +
-                          selectedOrder.status.slice(1)}
+                        {selectedOrder.status === 'pending' ? 'Chờ xử lý' :
+                         selectedOrder.status === 'processing' ? 'Đang xử lý' :
+                         selectedOrder.status === 'shipped' ? 'Đã gửi' :
+                         selectedOrder.status === 'delivered' ? 'Đã giao' :
+                         selectedOrder.status === 'cancelled' ? 'Đã hủy' :
+                         selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                       </span>
                     </div>
                     <div>
@@ -579,7 +585,7 @@ const OrderManagementPage = () => {
                         Tổng Tiền
                       </h3>
                       <p className="text-lg font-semibold text-gray-800 dark:text-white">
-                        {(selectedOrder.total / 100).toFixed(2)}đ
+                        {formatCurrency(selectedOrder.total)}
                       </p>
                     </div>
                   </div>
@@ -683,10 +689,7 @@ const OrderManagementPage = () => {
                                 Số lượng: {item.quantity}
                               </span>
                               <span className="font-medium text-gray-800 dark:text-white">
-                                {((item.price / 100) * item.quantity).toFixed(
-                                  2
-                                )}
-                                đ
+                                {formatCurrency(item.price * item.quantity)}
                               </span>
                             </div>
                           </div>
@@ -708,15 +711,29 @@ const OrderManagementPage = () => {
                         <CreditCard className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="font-medium text-gray-800 dark:text-white">
-                            {selectedOrder.payment_method ||
-                              selectedOrder.paymentMethod?.type ||
-                              "Thanh toán khi nhận hàng (COD)"}
+                            {selectedOrder.payment_method === 'credit_card' ? 'Thẻ tín dụng' :
+                             selectedOrder.payment_method === 'debit_card' ? 'Thẻ ghi nợ' :
+                             selectedOrder.payment_method === 'paypal' ? 'PayPal' :
+                             selectedOrder.payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
+                             selectedOrder.payment_method === 'cash_on_delivery' ? 'Thanh toán khi nhận hàng (COD)' :
+                             selectedOrder.paymentMethod?.type === 'credit_card' ? 'Thẻ tín dụng' :
+                             selectedOrder.paymentMethod?.type === 'debit_card' ? 'Thẻ ghi nợ' :
+                             selectedOrder.paymentMethod?.type === 'paypal' ? 'PayPal' :
+                             selectedOrder.paymentMethod?.type === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
+                             selectedOrder.paymentMethod?.type === 'cash_on_delivery' ? 'Thanh toán khi nhận hàng (COD)' :
+                             selectedOrder.payment_method || selectedOrder.paymentMethod?.type || "Thanh toán khi nhận hàng (COD)"}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Trạng thái:{" "}
-                            {selectedOrder.payment_status ||
-                              selectedOrder.paymentStatus ||
-                              "Đang chờ"}
+                            {selectedOrder.payment_status === 'pending' ? 'Đang chờ' :
+                             selectedOrder.payment_status === 'paid' ? 'Đã thanh toán' :
+                             selectedOrder.payment_status === 'failed' ? 'Thanh toán thất bại' :
+                             selectedOrder.payment_status === 'refunded' ? 'Đã hoàn tiền' :
+                             selectedOrder.paymentStatus === 'pending' ? 'Đang chờ' :
+                             selectedOrder.paymentStatus === 'paid' ? 'Đã thanh toán' :
+                             selectedOrder.paymentStatus === 'failed' ? 'Thanh toán thất bại' :
+                             selectedOrder.paymentStatus === 'refunded' ? 'Đã hoàn tiền' :
+                             selectedOrder.payment_status || selectedOrder.paymentStatus || "Đang chờ"}
                           </p>
                         </div>
                       </div>

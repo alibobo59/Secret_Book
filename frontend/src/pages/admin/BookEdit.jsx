@@ -3,7 +3,7 @@ import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBook } from "../../contexts/BookContext";
 import { api } from "../../services/api";
-import { Loading } from "../../components/admin";
+import { Loading, RichTextEditor } from "../../components/admin";
 
 const BookEdit = () => {
   const { loading, user, hasRole } = useOutletContext();
@@ -45,7 +45,7 @@ const BookEdit = () => {
     try {
       const token = getToken();
       if (!token) {
-        setError("Authentication token is missing. Please log in.");
+        setError("Token xác thực bị thiếu. Vui lòng đăng nhập.");
         return;
       }
       const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -75,7 +75,7 @@ const BookEdit = () => {
 
       setError(null);
     } catch (err) {
-      setError("Failed to fetch book: " + (err.message || err));
+      setError("Không thể tải thông tin sách: " + (err.message || err));
       console.error("Fetch error:", err);
     } finally {
       setLocalLoading(false);
@@ -116,15 +116,15 @@ const BookEdit = () => {
     attrs.forEach((attr, index) => {
       const err = {};
       if (!attr.name.trim()) {
-        err.name = "Attribute name is required.";
+        err.name = "Tên thuộc tính là bắt buộc.";
       } else if (
         names.filter((name) => name === attr.name.trim().toLowerCase()).length >
         1
       ) {
-        err.name = "Duplicate attribute name.";
+        err.name = "Tên thuộc tính bị trùng lặp.";
       }
       if (!attr.values.trim()) {
-        err.values = "Attribute values are required.";
+        err.values = "Giá trị thuộc tính là bắt buộc.";
       }
       if (Object.keys(err).length > 0) {
         errors[index] = err;
@@ -152,14 +152,14 @@ const BookEdit = () => {
 
   const generateVariationsForm = () => {
     if (!validateAttributes(attributes)) {
-      setError("Please fix attribute errors before generating variations.");
+      setError("Vui lòng sửa lỗi thuộc tính trước khi tạo biến thể.");
       return;
     }
     const validAttributes = attributes.filter(
       (attr) => attr.name.trim() && attr.values.trim()
     );
     if (validAttributes.length === 0) {
-      setError("Please define at least one valid attribute with values.");
+      setError("Vui lòng định nghĩa ít nhất một thuộc tính hợp lệ với giá trị.");
       return;
     }
     const attributeValues = validAttributes.map((attr) => ({
@@ -268,14 +268,14 @@ const BookEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!hasRole(["admin"])) {
-      setError("Only admins can edit books.");
+      setError("Chỉ quản trị viên mới có thể chỉnh sửa sách.");
       return;
     }
 
     setLocalLoading(true);
     const token = getToken();
     if (!token) {
-      setError("Authentication token is missing. Please log in.");
+      setError("Token xác thực bị thiếu. Vui lòng đăng nhập.");
       setLocalLoading(false);
       return;
     }
@@ -340,9 +340,9 @@ const BookEdit = () => {
     } catch (err) {
       if (err.response?.status === 422) {
         setValidationErrors(err.response.data.error || {});
-        setError("Please correct the form errors.");
+        setError("Vui lòng sửa các lỗi trong form.");
       } else {
-        const message = err.response?.data?.error || "Failed to update book";
+        const message = err.response?.data?.error || "Không thể cập nhật sách";
         setError(message);
       }
     } finally {
@@ -359,12 +359,12 @@ const BookEdit = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-        Edit Book
+        Chỉnh Sửa Sách
       </h2>
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
       {!hasRole(["admin"]) && !error && (
         <p className="text-red-500 text-sm mb-16">
-          Only admins can edit books.
+          Chỉ quản trị viên mới có thể chỉnh sửa sách.
         </p>
       )}
       {hasRole(["admin"]) && (
@@ -377,7 +377,7 @@ const BookEdit = () => {
               {/* Product Type Toggle */}
               <div className="md:col-span-2">
                 <label className="text-gray-700 dark:text-gray-200 font-semibold">
-                  Product Type
+                  Loại Sản Phẩm
                 </label>
                 <div className="flex space-x-4 mt-2">
                   <button
@@ -388,7 +388,7 @@ const BookEdit = () => {
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 dark:bg-gray-600"
                     }`}>
-                    Simple Product
+                    Sản Phẩm Đơn Giản
                   </button>
                   <button
                     type="button"
@@ -398,7 +398,7 @@ const BookEdit = () => {
                         ? "bg-blue-600 text-white"
                         : "bg-gray-200 dark:bg-gray-600"
                     }`}>
-                    Variable Product
+                    Sản Phẩm Biến Thể
                   </button>
                 </div>
               </div>
@@ -406,13 +406,13 @@ const BookEdit = () => {
               {/* Basic Book Fields */}
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Title <span className="text-red-600">*</span>
+                  Tiêu Đề <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 />
                 {validationErrors.title && (
                   <p className="text-red-500 text-sm mt-1">
@@ -428,7 +428,7 @@ const BookEdit = () => {
                   type="text"
                   value={form.sku}
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 />
                 {validationErrors.sku && (
                   <p className="text-red-500 text-sm mt-1">
@@ -438,15 +438,14 @@ const BookEdit = () => {
               </div>
               <div className="md:col-span-2">
                 <label className="text-gray-700 dark:text-gray-200">
-                  Description
+                  Mô Tả
                 </label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
+                <RichTextEditor
+                  content={form.description}
+                  onChange={(content) =>
+                    setForm({ ...form, description: content })
                   }
-                  rows="4"
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                  placeholder="Nhập mô tả chi tiết về sách (tùy chọn)"
                 />
                 {validationErrors.description && (
                   <p className="text-red-500 text-sm mt-1">
@@ -456,7 +455,7 @@ const BookEdit = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Price <span className="text-red-600">*</span>
+                  Giá <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="number"
@@ -464,7 +463,7 @@ const BookEdit = () => {
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   min="0"
                   step="0.01"
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 />
                 {validationErrors.price && (
                   <p className="text-red-500 text-sm mt-1">
@@ -484,7 +483,7 @@ const BookEdit = () => {
                       setForm({ ...form, stock_quantity: e.target.value })
                     }
                     min="0"
-                    className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                    className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
                   />
                   {validationErrors.stock_quantity && (
                     <p className="text-red-500 text-sm mt-1">
@@ -496,15 +495,15 @@ const BookEdit = () => {
               {/* Select Fields and Image */}
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Category
+                  Danh Mục
                 </label>
                 <select
                   value={form.category_id}
                   onChange={(e) =>
                     setForm({ ...form, category_id: e.target.value })
                   }
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700">
-                  <option value="">Select Category</option>
+                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                  <option value="">Chọn Danh Mục</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -514,15 +513,15 @@ const BookEdit = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Author
+                  Tác Giả
                 </label>
                 <select
                   value={form.author_id}
                   onChange={(e) =>
-                    setForm({ ...form, author_id: e.target.value })
-                  }
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700">
-                  <option value="">Select Author</option>
+                      setForm({ ...form, author_id: e.target.value })
+                    }
+                    className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                  <option value="">Chọn Tác Giả</option>
                   {authors.map((author) => (
                     <option key={author.id} value={author.id}>
                       {author.name}
@@ -532,15 +531,15 @@ const BookEdit = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Publisher
+                  Nhà Xuất Bản
                 </label>
                 <select
                   value={form.publisher_id}
                   onChange={(e) =>
-                    setForm({ ...form, publisher_id: e.target.value })
-                  }
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700">
-                  <option value="">Select Publisher</option>
+                      setForm({ ...form, publisher_id: e.target.value })
+                    }
+                    className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                  <option value="">Chọn Nhà Xuất Bản</option>
                   {publishers.map((pub) => (
                     <option key={pub.id} value={pub.id}>
                       {pub.name}
@@ -550,16 +549,16 @@ const BookEdit = () => {
               </div>
               <div>
                 <label className="text-gray-700 dark:text-gray-200">
-                  Image
+                  Hình Ảnh
                 </label>
                 <input
                   type="file"
                   onChange={handleFileChange}
                   accept="image/jpeg,image/png,image/jpg"
-                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700"
+                  className="mt-1 p-2 border rounded-md w-full dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Upload a new image to replace the current one.
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Tải lên hình ảnh mới để thay thế hình ảnh hiện tại.
                 </p>
                 {validationErrors.image && (
                   <p className="text-red-500 text-sm mt-1">
@@ -572,25 +571,25 @@ const BookEdit = () => {
               {isVariableProduct && (
                 <div className="md:col-span-2">
                   <h3 className="text-lg font-semibold mb-2 dark:text-gray-200">
-                    Attributes
+                    Thuộc Tính
                   </h3>
                   {attributes.map((attr, index) => (
                     <div
                       key={index}
                       className="border p-4 mb-4 rounded-md bg-gray-50 dark:bg-gray-700">
                       <div className="flex justify-between items-center mb-2">
-                        <h4>Attribute {index + 1}</h4>
+                        <h4 className="text-gray-700 dark:text-gray-200">Thuộc Tính {index + 1}</h4>
                         <button
                           type="button"
                           onClick={() => removeAttribute(index)}
                           className="text-red-500 hover:text-red-700">
-                          Remove
+                          Xóa
                         </button>
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label>
-                            Name <span className="text-red-600">*</span>
+                          <label className="text-gray-700 dark:text-gray-200">
+                            Tên <span className="text-red-600">*</span>
                           </label>
                           <input
                             type="text"
@@ -602,8 +601,8 @@ const BookEdit = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="e.g., Format"
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                            placeholder="ví dụ: Định dạng"
+                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {attributeErrors[index]?.name && (
                             <p className="text-red-500 text-sm mt-1">
@@ -612,8 +611,8 @@ const BookEdit = () => {
                           )}
                         </div>
                         <div>
-                          <label>
-                            Values <span className="text-red-600">*</span>
+                          <label className="text-gray-700 dark:text-gray-200">
+                            Giá Trị <span className="text-red-600">*</span>
                           </label>
                           <input
                             type="text"
@@ -625,8 +624,8 @@ const BookEdit = () => {
                                 e.target.value
                               )
                             }
-                            placeholder="e.g., Hardcover, Paperback"
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                            placeholder="ví dụ: Bìa cứng, Bìa mềm"
+                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {attributeErrors[index]?.values && (
                             <p className="text-red-500 text-sm mt-1">
@@ -641,13 +640,13 @@ const BookEdit = () => {
                     type="button"
                     onClick={addAttribute}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mr-2">
-                    Add Attribute
+                    Thêm Thuộc Tính
                   </button>
                   <button
                     type="button"
                     onClick={generateVariationsForm}
                     className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                    Generate Variations
+                    Tạo Biến Thể
                   </button>
                 </div>
               )}
@@ -656,14 +655,14 @@ const BookEdit = () => {
               {isVariableProduct && (
                 <div className="md:col-span-2">
                   <h3 className="text-lg font-semibold mb-2 dark:text-gray-200">
-                    Variations
+                    Biến Thể
                   </h3>
                   {form.variations.map((variation, index) => (
                     <div
                       key={variation.id || index}
                       className="border p-4 mb-4 rounded-md bg-gray-50 dark:bg-gray-700">
                       <div className="flex justify-between items-center mb-2">
-                        <h4>Variation</h4>
+                        <h4 className="text-gray-700 dark:text-gray-200">Biến Thể</h4>
                         <button
                           type="button"
                           onClick={() => removeVariation(index)}
@@ -683,15 +682,15 @@ const BookEdit = () => {
                           )
                         )}
                         <div>
-                          <label>Price</label>
+                          <label className="text-gray-700 dark:text-gray-200">Giá</label>
                           <input
                             type="number"
                             value={variation.price}
                             onChange={(e) =>
                               updateVariation(index, "price", e.target.value)
                             }
-                            placeholder="Leave blank to use parent"
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                            placeholder="Để trống để sử dụng giá gốc"
+                             className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {validationErrors[`variations.${index}.price`] && (
                             <p className="text-red-500 text-sm">
@@ -700,8 +699,8 @@ const BookEdit = () => {
                           )}
                         </div>
                         <div>
-                          <label>
-                            Stock Qty <span className="text-red-600">*</span>
+                          <label className="text-gray-700 dark:text-gray-200">
+                            Số Lượng Tồn Kho <span className="text-red-600">*</span>
                           </label>
                           <input
                             type="number"
@@ -712,8 +711,8 @@ const BookEdit = () => {
                                 "stock_quantity",
                                 e.target.value
                               )
-                            }
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                             }
+                             className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {validationErrors[
                             `variations.${index}.stock_quantity`
@@ -728,14 +727,14 @@ const BookEdit = () => {
                           )}
                         </div>
                         <div>
-                          <label>SKU</label>
+                          <label className="text-gray-700 dark:text-gray-200">SKU</label>
                           <input
                             type="text"
                             value={variation.sku}
                             onChange={(e) =>
-                              updateVariation(index, "sku", e.target.value)
-                            }
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                               updateVariation(index, "sku", e.target.value)
+                             }
+                             className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {validationErrors[`variations.${index}.sku`] && (
                             <p className="text-red-500 text-sm">
@@ -744,13 +743,13 @@ const BookEdit = () => {
                           )}
                         </div>
                         <div>
-                          <label>Image</label>
+                          <label className="text-gray-700 dark:text-gray-200">Hình Ảnh</label>
                           <input
                             type="file"
                             onChange={(e) =>
-                              handleVariationFileChange(index, e)
-                            }
-                            className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600"
+                               handleVariationFileChange(index, e)
+                             }
+                             className="mt-1 p-2 border rounded-md w-full dark:bg-gray-600 dark:text-white dark:border-gray-500"
                           />
                           {validationErrors[`variations.${index}.image`] && (
                             <p className="text-red-500 text-sm">
@@ -765,7 +764,7 @@ const BookEdit = () => {
                     type="button"
                     onClick={addVariation}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                    Add Variation Manually
+                    Thêm Biến Thể Thủ Công
                   </button>
                 </div>
               )}
@@ -774,7 +773,7 @@ const BookEdit = () => {
                 type="submit"
                 className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 md:col-span-2"
                 disabled={localLoading}>
-                Update Book
+                Cập Nhật Sách
               </button>
             </form>
           )}

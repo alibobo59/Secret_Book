@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
 
-class OrderStatusChanged extends Mailable
+class OrderStatusChanged extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -23,7 +23,8 @@ class OrderStatusChanged extends Mailable
      */
     public function __construct(Order $order, $oldStatus, $newStatus)
     {
-        $this->order = $order;
+        // Load necessary relationships for queue serialization
+        $this->order = $order->load(['items.book', 'user', 'address.province', 'address.wardModel']);
         $this->oldStatus = $oldStatus;
         $this->newStatus = $newStatus;
     }

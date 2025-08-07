@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OrderPlaced extends Mailable
+class OrderPlaced extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -21,7 +21,8 @@ class OrderPlaced extends Mailable
      */
     public function __construct(Order $order)
     {
-        $this->order = $order;
+        // Load necessary relationships for queue serialization
+        $this->order = $order->load(['items.book', 'user', 'address.province', 'address.wardModel']);
     }
 
     /**

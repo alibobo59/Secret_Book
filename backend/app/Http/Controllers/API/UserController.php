@@ -93,9 +93,9 @@ class UserController extends Controller
         $user->save();
 
         // Send email notification if account is being deactivated
-        if ($oldStatus && !$user->is_active) {
+        if ($oldStatus && !$user->is_active && $user->email && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             try {
-                Mail::to($user->email)->send(new AccountStatusChanged($user, 'deactivated', $request->reason));
+                Mail::to($user->email)->queue(new AccountStatusChanged($user, 'deactivated', $request->reason));
             } catch (\Exception $e) {
                 Log::error('Failed to send account deactivation email: ' . $e->getMessage());
             }

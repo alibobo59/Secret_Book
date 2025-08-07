@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OrderCancelledByAdmin extends Mailable
+class OrderCancelledByAdmin extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -22,7 +22,8 @@ class OrderCancelledByAdmin extends Mailable
      */
     public function __construct(Order $order, ?string $reason = null)
     {
-        $this->order = $order;
+        // Load necessary relationships for queue serialization
+        $this->order = $order->load(['items.book', 'user', 'address.province', 'address.wardModel']);
         $this->reason = $reason;
     }
 

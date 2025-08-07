@@ -166,15 +166,17 @@ class AuthController extends Controller
                 'created_at' => Carbon::now()
             ]);
 
-            // Gửi email
-            Mail::send('emails.password-reset', [
-                'user' => $user,
-                'token' => $token,
-                'resetUrl' => config('app.frontend_url') . '/reset-password?token=' . $token . '&email=' . urlencode($request->email)
-            ], function($message) use ($request) {
-                $message->to($request->email);
-                $message->subject('Đặt lại mật khẩu - BookStore');
-            });
+            // Gửi email (với validation bổ sung)
+            if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+                Mail::send('emails.password-reset', [
+                    'user' => $user,
+                    'token' => $token,
+                    'resetUrl' => config('app.frontend_url') . '/reset-password?token=' . $token . '&email=' . urlencode($request->email)
+                ], function($message) use ($request) {
+                    $message->to($request->email);
+                    $message->subject('Đặt lại mật khẩu - BookStore');
+                });
+            }
 
             return response()->json([
                 'message' => 'Chúng tôi đã gửi link đặt lại mật khẩu đến email của bạn. Vui lòng kiểm tra hộp thư.'

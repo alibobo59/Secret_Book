@@ -310,9 +310,9 @@ class OrderController extends Controller
             $order->load(['items', 'user', 'address.province', 'address.wardModel']);
 
             // Send order placed email notification
-            if ($order->user && $order->user->email) {
+            if ($order->user && $order->user->email && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
                 try {
-                    Mail::to($order->user->email)->send(new OrderPlaced($order));
+                    Mail::to($order->user->email)->queue(new OrderPlaced($order));
                 } catch (\Exception $mailException) {
                     // Log email error but don't fail the order creation
                     Log::error('Failed to send order placed email: ' . $mailException->getMessage());
@@ -455,20 +455,21 @@ class OrderController extends Controller
                 }
             }
 
-            $order->load(['items', 'user', 'address']);
+            // Load all necessary relationships for email templates
+            $order->load(['items.book.author', 'user', 'address.province', 'address.wardModel']);
 
             // Send email notification if status changed and user has email
-            if ($oldStatus !== $request->status && $order->user && $order->user->email) {
+            if ($oldStatus !== $request->status && $order->user && $order->user->email && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
                 try {
                     // Send order cancelled by admin email if status changed to cancelled
                     if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
                         $reason = $request->cancellation_reason ?? 'Không có lý do cụ thể';
-                        Mail::to($order->user->email)->send(
+                        Mail::to($order->user->email)->queue(
                             new OrderCancelledByAdmin($order, $reason)
                         );
                     } else {
                         // Send regular status change email
-                        Mail::to($order->user->email)->send(
+                        Mail::to($order->user->email)->queue(
                             new OrderStatusChanged($order, $oldStatus, $request->status)
                         );
                     }

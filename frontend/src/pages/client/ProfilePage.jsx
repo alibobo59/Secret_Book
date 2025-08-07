@@ -69,7 +69,12 @@ const ProfilePage = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log(editedUser);
+      
+      // Debug: Log data before sending to backend
+      console.log('Data trước khi gửi đến backend:', editedUser);
+      console.log('Data type:', typeof editedUser);
+      console.log('Data JSON:', JSON.stringify(editedUser));
+      
       // Validate required fields
       if (!editedUser.name) {
         setError("Tên là bắt buộc");
@@ -77,7 +82,14 @@ const ProfilePage = () => {
         return;
       }
 
+      // Debug: Log request details
+      console.log('Gửi request đến endpoint: /api/profile');
+      
       const response = await profileService.updateProfile(editedUser);
+      
+      // Debug: Log response
+      console.log('Response từ backend:', response);
+      
       if (response.success) {
         setProfileData(response.data);
         setIsEditing(false);

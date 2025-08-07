@@ -153,6 +153,24 @@ export const CouponProvider = ({ children }) => {
     }
   };
 
+  // Get active coupons for users
+  const getActiveCoupons = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/active-coupons");
+      return response.data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Có lỗi xảy ra khi tải danh sách mã khuyến mại";
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     loading,
     error,
@@ -164,6 +182,7 @@ export const CouponProvider = ({ children }) => {
     deleteCoupon,
     generateCouponCode,
     getCouponStats,
+    getActiveCoupons,
   };
 
   return (

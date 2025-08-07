@@ -95,9 +95,9 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
     Route::get('/audit-logs/{modelType}/{modelId}', [AuditLogController::class, 'getModelAuditLogs'])->name('audit-logs.model');
 
     // Coupons (Admin)
-    Route::apiResource('coupons', CouponController::class);
     Route::post('/coupons/generate-code', [CouponController::class, 'generateCode'])->name('coupons.generate-code');
     Route::get('/coupons/{coupon}/stats', [CouponController::class, 'stats'])->name('coupons.stats');
+    Route::apiResource('coupons', CouponController::class);
 
     // User Management (Admin)
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
@@ -137,7 +137,8 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
 
-    // Coupon validation for authenticated users
+    // Coupon routes for authenticated users
+    Route::get('/active-coupons', [CouponController::class, 'getActiveCoupons'])->name('coupons.active');
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
     
     // Cart routes

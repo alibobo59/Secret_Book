@@ -9,6 +9,7 @@ import { useCoupon } from "../../contexts/CouponContext";
 import { useToast } from "../../contexts/ToastContext";
 import { api } from "../../services/api";
 import CouponInput from "../../components/client/CouponInput";
+import CouponSelector from "../../components/client/CouponSelector";
 import {
   ArrowLeft,
   Package,
@@ -441,7 +442,17 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Coupon Input */}
+            {/* Coupon Selector */}
+            <CouponSelector
+              orderAmount={getSelectedTotal()}
+              onCouponSelected={(coupon, discount) => {
+                setAppliedCoupon(coupon);
+                setDiscountAmount(discount || 0);
+              }}
+              selectedCoupon={appliedCoupon}
+            />
+
+            {/* Manual Coupon Input */}
             <CouponInput
               orderAmount={getSelectedTotal()}
               onCouponApplied={(coupon, discount) => {

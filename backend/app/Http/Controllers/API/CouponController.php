@@ -358,6 +358,56 @@ class CouponController extends Controller
     }
 
     /**
+     * Lấy danh sách mã khuyến mại đang hoạt động cho user
+     */
+    public function getActiveCoupons(Request $request)
+    {
+        $now = Carbon::now();
+        $userId = Auth::id();
+        
+        $coupons = Coupon::where('is_active', true)
+                         ->where('start_date', '<=', $now)
+                         ->where('end_date', '>=', $now)
+                         ->where(function ($query) {
+                             $query->whereNull('usage_limit')
+                                   ->orWhereRaw('used_count < usage_limit');
+                         })
+                         ->orderBy('created_at', 'desc')
+                         ->get();
+
+        // Lọc các coupon mà user chưa sử dụng hết lượt
+        $availableCoupons = $coupons->filter(function ($coupon) use ($userId) {
+            if ($coupon->usage_limit_per_user && $userId) {
+                $userUsageCount = $coupon->usages()->where('user_id', $userId)->count();
+                return $userUsageCount < $coupon->usage_limit_per_user;
+            }
+            return true;
+        });
+
+        // Format dữ liệu trả về
+        $formattedCoupons = $availableCoupons->map(function ($coupon) {
+            return [
+                'id' => $coupon->id,
+                'code' => $coupon->code,
+                'name' => $coupon->name,
+                'description' => $coupon->description,
+                'type' => $coupon->type,
+                'value' => $coupon->value,
+                'minimum_amount' => $coupon->minimum_amount,
+                'maximum_discount' => $coupon->maximum_discount,
+                'end_date' => $coupon->end_date->format('Y-m-d H:i:s'),
+                'value_display' => $coupon->value_display,
+                'type_display' => $coupon->type_display_name
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $formattedCoupons
+        ]);
+    }
+
+    /**
      * Thống kê sử dụng mã khuyến mại
      */
     public function stats(Coupon $coupon)

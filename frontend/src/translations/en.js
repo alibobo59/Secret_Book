@@ -125,11 +125,24 @@ export const enTranslations = {
   "message.itemAdded": "Item added to cart",
   "message.itemRemoved": "Item removed from cart",
   "message.orderPlaced": "Your order has been placed successfully",
+  "message.error.login": "Login failed. Please check your credentials.",
+  "message.error.register": "Registration failed. Please try again.",
+  "message.error.validation": "Please check your input and try again.",
 
   // Language Switcher
   "language.en": "English",
   "language.vi": "Vietnamese",
   "language.select": "Select Language",
+
+  // Login
+  "login.title": "Welcome Back",
+  "login.subtitle": "Sign in to your account",
+  "login.remember": "Remember me",
+  "login.forgot": "Forgot your password?",
+  "login.submit": "Sign In",
+  "login.noAccount": "Don't have an account?",
+  "login.signUp": "Sign up",
+  "login.error.invalidCredentials": "Invalid email or password. Please check your credentials and try again.",
 
   // General
   "general.browseBooks": "Browse Books",

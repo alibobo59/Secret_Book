@@ -4,12 +4,12 @@ import { useBook } from "../../contexts/BookContext";
 import { motion } from "framer-motion";
 import { Search, ChevronRight } from "lucide-react";
 import BookCard from "../../components/client/BookCard";
-import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const HomePage = () => {
   const { books, categories, loading, error } = useBook();
   const [searchQuery, setSearchQuery] = React.useState("");
-  const { t } = useLanguage();
+
 
   useEffect(() => {
     console.log(
@@ -69,15 +69,15 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-6">
-              {t("home.hero.title")}
+              Khám Phá Thế Giới Sách
             </h1>
             <p className="text-xl md:text-2xl mb-8 opacity-90">
-              {t("home.hero.subtitle")}
+              Tìm kiếm và đọc những cuốn sách yêu thích của bạn
             </p>
             <form onSubmit={handleSearch} className="max-w-xl mx-auto relative">
               <input
                 type="text"
-                placeholder={t("search.placeholder")}
+                placeholder="Tìm kiếm sách, tác giả..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full py-3 px-5 pl-12 rounded-full bg-white bg-opacity-20 backdrop-blur-sm text-white placeholder-white placeholder-opacity-75 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:bg-opacity-30 transition-all duration-200"
@@ -97,7 +97,7 @@ const HomePage = () => {
         <section className="py-8 bg-red-100 dark:bg-red-900">
           <div className="container mx-auto px-4 text-center">
             <p className="text-red-800 dark:text-red-200">
-              {t("error.fetchData")}: {error}
+              Lỗi tải dữ liệu: {error}
             </p>
           </div>
         </section>
@@ -108,12 +108,12 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
-              {t("home.featured")}
+              Sách Nổi Bật
             </h2>
             <Link
               to="/books"
               className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium flex items-center">
-              {t("common.viewAll")}
+              Xem Tất Cả
               <ChevronRight className="h-5 w-5 ml-1" />
             </Link>
           </div>
@@ -134,7 +134,7 @@ const HomePage = () => {
             </div>
           ) : featuredBooks.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              No books available (Debug: books length: {books.length})
+              Không có sách nào (Debug: books length: {books.length})
             </p>
           ) : (
             <motion.div
@@ -157,7 +157,7 @@ const HomePage = () => {
       <section className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white mb-8">
-            {t("home.categories")}
+            Danh Mục
           </h2>
 
           {loading ? (
@@ -170,7 +170,7 @@ const HomePage = () => {
             </div>
           ) : categories.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              No categories available (Debug: categories length:{" "}
+              Không có danh mục nào (Debug: categories length: 
               {categories.length})
             </p>
           ) : (
@@ -207,12 +207,12 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">
-              {t("home.new")}
+              Sách Mới
             </h2>
             <Link
               to="/new-releases"
               className="text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium flex items-center">
-              {t("common.viewAll")}
+              Xem Tất Cả
               <ChevronRight className="h-5 w-5 ml-1" />
             </Link>
           </div>
@@ -233,7 +233,7 @@ const HomePage = () => {
             </div>
           ) : newReleases.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              No books available (Debug: newReleases length:{" "}
+              Không có sách nào (Debug: newReleases length: 
               {newReleases.length})
             </p>
           ) : (
@@ -263,15 +263,15 @@ const HomePage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}>
             <h2 className="text-3xl font-serif font-bold mb-6">
-              {t("home.community.title")}
+              Tham Gia Cộng Đồng Độc Giả
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              {t("home.community.subtitle")}
+              Kết nối với những người yêu sách và chia sẻ trải nghiệm đọc
             </p>
             <Link
               to="/register"
               className="inline-block px-8 py-3 bg-white text-teal-600 font-medium rounded-full hover:bg-opacity-90 transition-colors duration-200">
-              {t("nav.register")}
+              Đăng Ký Ngay
             </Link>
           </motion.div>
         </div>

@@ -78,7 +78,7 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
         Category Management
       </h2>
@@ -90,9 +90,8 @@ const CategoryManagement = () => {
             type="text"
             value={form.name}
             onChange={(e) => setForm({ name: e.target.value })}
-            placeholder="Category Name"
+            placeholder="Tên Danh Mục"
             className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
-            required
           />
           <button
             type="submit"

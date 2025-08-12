@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 /**
  * Reusable StatCard component for admin dashboard statistics

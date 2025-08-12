@@ -28,7 +28,7 @@ const PublisherEdit = () => {
       });
       setError(null);
     } catch (err) {
-      setError("Failed to fetch publisher: " + (err.message || err));
+      setError("Không thể tải thông tin nhà xuất bản: " + (err.message || err));
       console.error("Fetch error:", err);
       setForm({ name: "", address: "" }); // Reset on error
     } finally {
@@ -44,7 +44,7 @@ const PublisherEdit = () => {
       setError(null);
       navigate("/admin/publishers");
     } catch (err) {
-      setError("Failed to update publisher: " + (err.message || err));
+      setError("Không thể cập nhật nhà xuất bản: " + (err.message || err));
       console.error("Update error:", err);
     } finally {
       setLocalLoading(false);
@@ -54,12 +54,12 @@ const PublisherEdit = () => {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Edit Publisher
+        Chỉnh sửa nhà xuất bản
       </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {!hasRole(["admin"]) && !error && (
-        <p className="text-red-500 mb-4">Only admins can edit publishers.</p>
-      )}
+          <p className="text-red-500 mb-4">Chỉ quản trị viên mới có thể chỉnh sửa nhà xuất bản.</p>
+        )}
       {(hasRole(["admin"]) || authLoading) && (
         <>
           {localLoading && <Loading />}
@@ -69,22 +69,21 @@ const PublisherEdit = () => {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Publisher Name"
+                placeholder="Tên nhà xuất bản"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
-                required
               />
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Publisher Address"
+                placeholder="Địa chỉ nhà xuất bản"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
               <button
                 type="submit"
                 className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700"
                 disabled={localLoading}>
-                Update Publisher
+                Cập nhật nhà xuất bản
               </button>
             </form>
           )}

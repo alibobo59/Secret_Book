@@ -32,7 +32,8 @@ class AuthorController extends Controller
         $author = Author::find($id);
 
         if (!$author) {
-            return response()->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
+            // Dòng 35, 78, 109
+            return response()->json(['error' => 'Không tìm thấy tác giả'], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json(['data' => $author], Response::HTTP_OK);

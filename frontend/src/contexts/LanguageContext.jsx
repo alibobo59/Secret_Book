@@ -1,5 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import { enTranslations } from "../translations/en";
+import React, { createContext, useContext, useEffect } from "react";
 import { viTranslations } from "../translations/vi";
 
 const LanguageContext = createContext();
@@ -7,33 +6,22 @@ const LanguageContext = createContext();
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider = ({ children }) => {
-  // Initialize language from localStorage or default to English
-  const [language, setLanguage] = useState(() => {
-    const savedLanguage = localStorage.getItem("language");
-    return savedLanguage || "en";
-  });
-
-  // Get translations based on current language
-  const translations = language === "en" ? enTranslations : viTranslations;
-
-  // Function to change language
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-    localStorage.setItem("language", lang);
-  };
+  // Set Vietnamese as the default and only language
+  const language = "vi";
+  const translations = viTranslations;
 
   // Function to get translation for a key
   const t = (key) => {
     return translations[key] || key;
   };
 
+  // Set html lang attribute to Vietnamese
   useEffect(() => {
-    // Update html lang attribute when language changes
-    document.documentElement.lang = language;
-  }, [language]);
+    document.documentElement.lang = "vi";
+  }, []);
 
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage, t }}>
+    <LanguageContext.Provider value={{ language, t }}>
       {children}
     </LanguageContext.Provider>
   );

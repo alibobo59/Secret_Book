@@ -32,7 +32,8 @@ class PublisherController extends Controller
         $publisher = Publisher::find($id);
 
         if (!$publisher) {
-            return response()->json(['error' => 'Publisher not found'], Response::HTTP_NOT_FOUND);
+            // Dòng 35, 78, 109
+            return response()->json(['error' => 'Không tìm thấy nhà xuất bản'], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json(['data' => $publisher], Response::HTTP_OK);

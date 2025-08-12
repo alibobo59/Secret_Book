@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { api } from "../services/api";
 
 const BookContext = createContext();
@@ -11,22 +17,32 @@ export const BookProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all required data in parallel
+      // Fetch all required data in parallel with individual error handling
+      const fetchWithTimeout = async (endpoint) => {
+        try {
+          const response = await api.get(endpoint);
+          return response;
+        } catch (error) {
+          console.error(`Error fetching ${endpoint}:`, error);
+          throw error;
+        }
+      };
+
       const [
         booksResponse,
         categoriesResponse,
         authorsResponse,
         publishersResponse,
       ] = await Promise.all([
-        api.get("/books"),
-        api.get("/categories"),
-        api.get("/authors"),
-        api.get("/publishers"),
+        fetchWithTimeout("/books"),
+        fetchWithTimeout("/categories"),
+        fetchWithTimeout("/authors"),
+        fetchWithTimeout("/publishers"),
       ]);
 
       // Extract data from responses
@@ -36,12 +52,12 @@ export const BookProvider = ({ children }) => {
       const fetchedPublishers = publishersResponse.data.data || [];
 
       // Log fetched data for debugging
-      console.log("Fetched data:", {
-        books: fetchedBooks,
-        categories: fetchedCategories,
-        authors: fetchedAuthors,
-        publishers: fetchedPublishers,
-      });
+      // console.log("Fetched data:", {
+      //   books: fetchedBooks,
+      //   categories: fetchedCategories,
+      //   authors: fetchedAuthors,
+      //   publishers: fetchedPublishers,
+      // });
 
       // Update state
       setBooks(fetchedBooks);
@@ -50,27 +66,39 @@ export const BookProvider = ({ children }) => {
       setPublishers(fetchedPublishers);
 
       // Log state after update
-      console.log("State updated:", {
-        books: fetchedBooks,
-        categories: fetchedCategories,
-        authors: fetchedAuthors,
-        publishers: fetchedPublishers,
-      });
+      // console.log("State updated:", {
+      //   books: fetchedBooks,
+      //   categories: fetchedCategories,
+      //   authors: fetchedAuthors,
+      //   publishers: fetchedPublishers,
+      // });
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError(err.response?.data?.error || "Failed to fetch data");
+      let errorMessage = "Failed to fetch data";
+
+      if (err.code === "ECONNABORTED") {
+        errorMessage = "Connection timeout. Please try again.";
+      } else if (!err.response) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (err.response.status === 404) {
+        errorMessage = `Resource not found: ${err.config.url}`;
+      } else if (err.response.data?.error) {
+        errorMessage = err.response.data.error;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
-      console.log("Final state:", {
-        loading: false,
-        error,
-        booksLength: books.length,
-        categoriesLength: categories.length,
-        authorsLength: authors.length,
-        publishersLength: publishers.length,
-      });
+      // console.log("Final state:", {
+      //   loading: false,
+      //   error,
+      //   booksLength: books.length,
+      //   categoriesLength: categories.length,
+      //   authorsLength: authors.length,
+      //   publishersLength: publishers.length,
+      // });
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -86,6 +114,7 @@ export const BookProvider = ({ children }) => {
         publishers,
         loading,
         error,
+        fetchBooks: fetchData,
       }}>
       {children}
     </BookContext.Provider>

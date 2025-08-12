@@ -32,7 +32,7 @@ const AuthorManagement = () => {
       setAuthors(data);
       setError(null); // Clear error on success
     } catch (err) {
-      setError("Failed to fetch authors: " + (err.message || err));
+      setError("Không thể tải danh sách tác giả: " + (err.message || err));
       console.error("Fetch error:", err);
       setAuthors([]); // Fallback to empty array
     } finally {
@@ -57,7 +57,7 @@ const AuthorManagement = () => {
       setForm({ name: "", bio: "" });
       setError(null); // Clear error on success
     } catch (err) {
-      setError("Failed to save author: " + (err.message || err));
+      setError("Không thể lưu tác giả: " + (err.message || err));
       console.error("Save error:", err);
     } finally {
       setLocalLoading(false); // Stop local loading immediately
@@ -71,14 +71,14 @@ const AuthorManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this author?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa tác giả này không?")) {
       setLocalLoading(true); // Start local loading for delete
       try {
         await api.delete(`/authors/${id}`);
         setAuthors(authors.filter((auth) => auth.id !== id));
         setError(null); // Clear error on success
       } catch (err) {
-        setError("Failed to delete author: " + (err.message || err));
+        setError("Không thể xóa tác giả: " + (err.message || err));
         console.error("Delete error:", err);
       } finally {
         setLocalLoading(false); // Stop local loading immediately
@@ -87,14 +87,14 @@ const AuthorManagement = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-        Author Management
+        Quản Lý Tác Giả
       </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
-      {!hasRole(["admin"]) && !error && (
-        <p className="text-red-500 mb-4">Only admins can manage authors.</p>
-      )}
+        {!hasRole(["admin"]) && !error && (
+          <p className="text-red-500 mb-4">Chỉ quản trị viên mới có thể quản lý tác giả.</p>
+        )}
       {(hasRole(["admin"]) || authLoading) && (
         <>
           {localLoading && <Loading />} {/* Local loading only */}
@@ -104,21 +104,20 @@ const AuthorManagement = () => {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Author Name"
+                placeholder="Tên tác giả"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
-                required
               />
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="Author Bio"
+                placeholder="Tiểu sử tác giả"
                 className="w-full p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200"
               />
               <button
                 type="submit"
                 className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700"
                 disabled={localLoading}>
-                {editingId ? "Update" : "Add"} Author
+                {editingId ? "Cập Nhật" : "Thêm"} Tác Giả
               </button>
             </form>
           )}
@@ -128,26 +127,30 @@ const AuthorManagement = () => {
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Name
+                      Tên
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Bio
+                      Tiểu sử
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Actions
+                      Hành động
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {authors.map((author) => (
-                    <tr key={author.id}>
+                    <tr 
+                      key={author.id}
+                      className="hover:bg-purple-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200"
+                      onClick={() => navigate(`/admin/authors/${author.id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                         {author.name}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
                         {author.bio || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => handleEdit(author)}
                           className="text-amber-600 hover:text-amber-800 mr-4"

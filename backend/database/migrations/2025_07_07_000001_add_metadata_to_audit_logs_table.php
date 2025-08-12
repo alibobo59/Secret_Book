@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('authors', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('audit_logs', function (Blueprint $table) {
+            $table->json('metadata')->nullable()->after('user_agent'); // Additional metadata for enhanced tracking
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('authors');
+        Schema::table('audit_logs', function (Blueprint $table) {
+            $table->dropColumn('metadata');
+        });
     }
 };

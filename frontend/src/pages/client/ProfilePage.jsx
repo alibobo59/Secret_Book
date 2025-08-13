@@ -6,10 +6,14 @@ import { useParams } from "react-router-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { api, fetchCsrfToken } from "../../services/api.js";
 
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { api, fetchCsrfToken } from "../../services/api.js";
 import { useAuth } from "../../contexts/AuthContext";
 
 // UI utils
 const cx = (...xs) => xs.filter(Boolean).join(" ");
+
 
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -39,6 +43,18 @@ function Section({ title, children, footer }) {
   );
 }
 
+
+function Section({ title, children, footer }) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-base font-semibold text-slate-800">{title}</h2>
+      <div className="grid gap-4">{children}</div>
+      {footer && <div className="mt-4 flex justify-end">{footer}</div>}
+    </section>
+  );
+}
+
+
 function TextInput({ error, className, ...rest }) {
   return (
     <div>
@@ -51,6 +67,9 @@ function TextInput({ error, className, ...rest }) {
         )}
       />
       {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
+
+
+
 
 
 

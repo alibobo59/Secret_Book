@@ -7,6 +7,7 @@ import { api } from "../../services/api";
 import Loading from "../../components/admin/Loading";
 import AuditLogTable from "../../components/admin/AuditLogTable";
 import { getImageUrl } from "../../utils/imageUtils";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const BookDetail = () => {
   const { id } = useParams();
@@ -19,6 +20,27 @@ const BookDetail = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Function to generate variation name from attributes
+  const getVariationName = (variation, index) => {
+    // First try to use variation name if available
+    if (variation.name && variation.name.trim()) {
+      return variation.name;
+    }
+    
+    // Then try to use attributes
+    if (variation.attributes && typeof variation.attributes === 'object') {
+      const attributeEntries = Object.entries(variation.attributes);
+      if (attributeEntries.length > 0) {
+        return attributeEntries
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ');
+      }
+    }
+    
+    // Fallback to generic name
+    return `Biến thể ${index + 1}`;
+  };
 
   useEffect(() => {
     const fetchBookDetail = async () => {
@@ -325,7 +347,7 @@ const BookDetail = () => {
                       Giá
                     </label>
                         <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md font-semibold text-green-600 dark:text-green-400">
-                          ${book.price}
+                          {formatCurrency(book.price)}
                         </p>
                       </div>
                     )}
@@ -371,11 +393,11 @@ const BookDetail = () => {
                       <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {variation.type || `Biến thể ${index + 1}`}
+                            {getVariationName(variation, index)}
                           </span>
                           {variation.price && (
                             <span className="text-green-600 dark:text-green-400 font-semibold">
-                              ${variation.price}
+                              {formatCurrency(variation.price)}
                             </span>
                           )}
                         </div>
@@ -392,7 +414,7 @@ const BookDetail = () => {
                         {variation.image && (
                           <img
                             src={getImageUrl(variation.image)}
-                            alt={`Biến thể ${index + 1}`}
+                            alt={getVariationName(variation, index)}
                             className="w-16 h-16 object-cover rounded mt-2"
                           />
                         )}
@@ -412,7 +434,7 @@ const BookDetail = () => {
                   {book.price && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 dark:text-gray-400">Giá hiện tại</span>
-                      <span className="font-semibold text-green-600 dark:text-green-400">${book.price}</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(book.price)}</span>
                     </div>
                   )}
                   {book.stock_quantity !== undefined && (

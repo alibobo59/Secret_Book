@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('book_id')->nullable()->change();
             
             // Add book snapshot fields
-            $table->string('book_title')->after('book_id');
+            $table->string('book_title')->nullable()->after('book_id');
             $table->string('book_sku')->nullable()->after('book_title');
             $table->text('book_description')->nullable()->after('book_sku');
             $table->string('book_image')->nullable()->after('book_description');

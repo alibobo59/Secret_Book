@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BookVariation;
 
 class CartItem extends Model
 {
@@ -12,6 +13,7 @@ class CartItem extends Model
     protected $fillable = [
         'cart_id',
         'book_id',
+        'variation_id',
         'quantity',
     ];
 
@@ -25,8 +27,14 @@ class CartItem extends Model
         return $this->belongsTo(Book::class);
     }
 
+    public function variation()
+    {
+        return $this->belongsTo(BookVariation::class, 'variation_id');
+    }
+
     public function getSubtotalAttribute()
     {
-        return $this->quantity * $this->book->price;
+        $price = $this->variation ? $this->variation->price : $this->book->price;
+        return $this->quantity * $price;
     }
 }

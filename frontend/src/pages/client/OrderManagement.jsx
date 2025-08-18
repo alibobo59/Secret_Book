@@ -488,6 +488,27 @@ const OrderManagementPage = () => {
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                             của {item.book?.author?.name || item.author_name || item.author || 'Không rõ tác giả'}
                           </p>
+                          {/* Display variation information if available */}
+                          {(item.variation_id || item.variation_attributes) && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                {item.variation_attributes ? 
+                                  (() => {
+                                    try {
+                                      const attrs = typeof item.variation_attributes === 'string' ? 
+                                        JSON.parse(item.variation_attributes) : item.variation_attributes;
+                                      return `${attrs.type}: ${attrs.value}`;
+                                    } catch {
+                                      return 'Biến thể';
+                                    }
+                                  })() :
+                                  item.bookVariation ? 
+                                    `${item.bookVariation.variation_type}: ${item.bookVariation.variation_value}` :
+                                    'Biến thể'
+                                }
+                              </span>
+                            </div>
+                          )}
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               SL: {item.quantity}
@@ -730,6 +751,27 @@ const OrderManagementPage = () => {
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               của {item.book?.author?.name || item.author_name || item.author || 'Không rõ tác giả'}
                             </p>
+                            {/* Display variation information if available */}
+                            {(item.variation_id || item.variation_attributes) && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                  {item.variation_attributes ? 
+                                    (() => {
+                                      try {
+                                        const attrs = typeof item.variation_attributes === 'string' ? 
+                                          JSON.parse(item.variation_attributes) : item.variation_attributes;
+                                        return `${attrs.type}: ${attrs.value}`;
+                                      } catch {
+                                        return 'Biến thể đặc biệt';
+                                      }
+                                    })() :
+                                    item.bookVariation ? 
+                                      `${item.bookVariation.variation_type}: ${item.bookVariation.variation_value}` :
+                                      'Biến thể đặc biệt'
+                                  }
+                                </span>
+                              </div>
+                            )}
                             <div className="flex justify-between items-center mt-2">
                               <span className="text-sm text-gray-600 dark:text-gray-400">
                                 Số lượng: {item.quantity}

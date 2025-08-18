@@ -18,7 +18,7 @@ class CartController extends Controller
     {
         try {
             $user = Auth::user();
-            $cart = $user->cart ? $user->cart->load(['items.book.author']) : null;
+            $cart = $user->cart ? $user->cart->load(['items.book.author', 'items.variation']) : null;
 
             if (!$cart) {
                 return response()->json([
@@ -32,16 +32,30 @@ class CartController extends Controller
             return response()->json([
                 'cart' => $cart,
                 'items' => $cart->items->map(function ($item) {
-                    return [
+                    $itemData = [
                         'id' => $item->book->id,
                         'title' => $item->book->title,
-                        'price' => $item->book->price,
-                        'image' => $item->book->image,
+                        'price' => $item->variation ? $item->variation->price : $item->book->price,
+                        'image' => $item->variation && $item->variation->image ? $item->variation->image : $item->book->image,
                         'quantity' => $item->quantity,
                         'subtotal' => $item->subtotal,
-                        'stock_quantity' => $item->book->stock_quantity,
-                        'author' => $item->book->author
+                        'stock_quantity' => $item->variation ? $item->variation->stock_quantity : $item->book->stock_quantity,
+                        'author' => $item->book->author,
+                        'variation_id' => $item->variation_id
                     ];
+                    
+                    // Add variation info if exists
+                    if ($item->variation) {
+                        $itemData['variation'] = [
+                            'id' => $item->variation->id,
+                            'attributes' => $item->variation->attributes,
+                            'price' => $item->variation->price,
+                            'stock_quantity' => $item->variation->stock_quantity,
+                            'image' => $item->variation->image
+                        ];
+                    }
+                    
+                    return $itemData;
                 }),
                 'total' => $cart->total,
                 'item_count' => $cart->item_count
@@ -82,7 +96,11 @@ class CartController extends Controller
                 $cart = Cart::create(['user_id' => $user->id]);
             }
 
-            $existingItem = $cart->items()->where('book_id', $request->book_id)->first();
+            // Check for existing item with same book_id and variation_id
+            $existingItem = $cart->items()
+                ->where('book_id', $request->book_id)
+                ->where('variation_id', $request->variation_id ?? null)
+                ->first();
 
             if ($existingItem) {
                 $existingItem->update([
@@ -90,26 +108,46 @@ class CartController extends Controller
                 ]);
                 $cartItem = $existingItem;
             } else {
-                $cartItem = $cart->items()->create([
+                $cartItemData = [
                     'book_id' => $request->book_id,
                     'quantity' => $request->quantity
-                ]);
+                ];
+                
+                // Add variation_id if provided
+                if ($request->variation_id) {
+                    $cartItemData['variation_id'] = $request->variation_id;
+                }
+                
+                $cartItem = $cart->items()->create($cartItemData);
             }
 
-            $cartItem->load('book.author');
+            $cartItem->load(['book.author', 'variation']);
 
+            $itemResponse = [
+                'id' => $cartItem->book->id,
+                'title' => $cartItem->book->title,
+                'price' => $cartItem->variation ? $cartItem->variation->price : $cartItem->book->price,
+                'image' => $cartItem->variation && $cartItem->variation->image ? $cartItem->variation->image : $cartItem->book->image,
+                'quantity' => $cartItem->quantity,
+                'subtotal' => $cartItem->subtotal,
+                'stock_quantity' => $cartItem->variation ? $cartItem->variation->stock_quantity : $cartItem->book->stock_quantity,
+                'author' => $cartItem->book->author
+            ];
+            
+            // Add variation info if exists
+            if ($cartItem->variation) {
+                $itemResponse['variation'] = [
+                    'id' => $cartItem->variation->id,
+                    'attributes' => $cartItem->variation->attributes,
+                    'price' => $cartItem->variation->price,
+                    'stock_quantity' => $cartItem->variation->stock_quantity,
+                    'image' => $cartItem->variation->image
+                ];
+            }
+            
             return response()->json([
                 'message' => 'Thêm sản phẩm vào giỏ hàng thành công',
-                'item' => [
-                    'id' => $cartItem->book->id,
-                    'title' => $cartItem->book->title,
-                    'price' => $cartItem->book->price,
-                    'image' => $cartItem->book->image,
-                    'quantity' => $cartItem->quantity,
-                    'subtotal' => $cartItem->subtotal,
-                    'stock_quantity' => $cartItem->book->stock_quantity,
-                    'author' => $cartItem->book->author
-                ]
+                'item' => $itemResponse
             ]);
         } catch (\Exception $e) {
             return response()->json([

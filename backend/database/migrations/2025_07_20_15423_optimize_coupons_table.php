@@ -21,12 +21,24 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('coupons', function (Blueprint $table) {
-            $table->dropIndex('idx_coupon_validity');
-            $table->dropIndex('idx_coupon_usage');
-            $table->dropIndex('idx_coupon_type_active');
-            $table->dropIndex('idx_coupon_name');
-            $table->dropIndex('idx_coupon_code_upper');
-        });
+        if (Schema::hasTable('coupons')) {
+            Schema::table('coupons', function (Blueprint $table) {
+                if (Schema::hasColumn('coupons', 'valid_from')) {
+                    $table->dropIndex('idx_coupon_validity');
+                }
+                if (Schema::hasColumn('coupons', 'usage_count')) {
+                    $table->dropIndex('idx_coupon_usage');
+                }
+                if (Schema::hasColumn('coupons', 'type')) {
+                    $table->dropIndex('idx_coupon_type_active');
+                }
+                if (Schema::hasColumn('coupons', 'name')) {
+                    $table->dropIndex('idx_coupon_name');
+                }
+                if (Schema::hasColumn('coupons', 'code')) {
+                    $table->dropIndex('idx_coupon_code_upper');
+                }
+            });
+        }
     }
 };

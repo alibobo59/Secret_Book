@@ -13,12 +13,19 @@ const cartService = {
   },
 
   // Add item to server cart
-  addItem: async (bookId, quantity = 1) => {
+  addItem: async (bookId, quantity = 1, variationId = null) => {
     try {
-      const response = await api.post('/cart/items', {
+      const requestData = {
         book_id: bookId,
         quantity
-      });
+      };
+      
+      // Add variation_id if provided
+      if (variationId) {
+        requestData.variation_id = variationId;
+      }
+      
+      const response = await api.post('/cart/items', requestData);
       return response.data;
     } catch (error) {
       console.error('Add to cart error:', error);

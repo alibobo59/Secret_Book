@@ -47,6 +47,9 @@ Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('r
 // Public analytics routes
 Route::get('/featured-books', [AnalyticsController::class, 'getFeaturedBooks'])->name('featured-books');
 
+// VNPay callback route (public - no authentication required)
+Route::post('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);
+
 // Admin/Mod routes (protected by auth:sanctum, check.user.status and admin.or.mod middleware)
 Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(function () {
     // Image upload for RichText Editor
@@ -130,7 +133,6 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     // Payment routes
     Route::post('/payment/vnpay/create', [PaymentController::class, 'createVNPayPayment']);
     Route::post('/payment/vnpay/verify', [PaymentController::class, 'verifyVNPayPayment']);
-    Route::post('/payment/vnpay/return', [PaymentController::class, 'vnpayReturn']);
     Route::post('/payment/vnpay/retry/{orderId}', [PaymentController::class, 'retryVNPayPayment']);
     Route::post('/payment/change-method/{orderId}', [PaymentController::class, 'changePaymentMethod']);
     // Review routes for authenticated users

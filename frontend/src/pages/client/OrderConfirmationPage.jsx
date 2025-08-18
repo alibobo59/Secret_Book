@@ -153,9 +153,11 @@ const OrderConfirmationPage = () => {
                 <h3 className="font-medium text-gray-800 dark:text-white">
                   Các Sản Phẩm Đã Đặt ({order.items.length})
                 </h3>
-                {order.items.map((item) => (
+                {order.items.map((item) => {
+                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  return (
                   <div
-                    key={item.id}
+                    key={itemKey}
                     className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <img
                       src={item.book.cover_image}
@@ -167,6 +169,13 @@ const OrderConfirmationPage = () => {
                         to={`/books/${item.book.id}`}
                         className="text-lg font-medium text-gray-800 dark:text-white hover:text-amber-600 dark:hover:text-amber-500 transition-colors">
                         {item.book.title}
+                        {item.variation && (
+                          <span className="text-amber-600 dark:text-amber-400 ml-1">
+                            ({Object.entries(item.variation.attributes || {}).map(([key, value]) => 
+                              `${key}: ${value}`
+                            ).join(', ')})
+                          </span>
+                        )}
                       </Link>
                       <p className="text-gray-600 dark:text-gray-400 text-sm">
                         tác giả {typeof item.book.author === 'object' ? item.book.author?.name || 'Tác giả không xác định' : item.book.author || 'Tác giả không xác định'}
@@ -181,7 +190,8 @@ const OrderConfirmationPage = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
 

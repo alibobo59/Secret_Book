@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BookVariation;
 
 class OrderItem extends Model
 {
@@ -11,6 +12,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'book_id',
+        'variation_id',
         'quantity',
         'price',
         'book_title',
@@ -34,5 +36,10 @@ class OrderItem extends Model
     public function book()
     {
         return $this->belongsTo(Book::class);
+    }
+
+    public function variation()
+    {
+        return $this->belongsTo(BookVariation::class, 'variation_id');
     }
 }

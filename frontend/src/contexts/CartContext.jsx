@@ -26,14 +26,22 @@ export const CartProvider = ({ children }) => {
           const serverCart = await cartService.getCart();
           const items = serverCart.items || [];
           setCartItems(items);
-          setSelectedItems(new Set(items.map(item => item.id)));
+          // Create unique keys for items with variations
+          const itemKeys = items.map(item => {
+            return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+          });
+          setSelectedItems(new Set(itemKeys));
         } else {
           // Load from localStorage for guests
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
             const items = JSON.parse(storedCart);
             setCartItems(items);
-            setSelectedItems(new Set(items.map(item => item.id)));
+            // Create unique keys for items with variations
+            const itemKeys = items.map(item => {
+              return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            });
+            setSelectedItems(new Set(itemKeys));
           }
         }
       } catch (error) {
@@ -42,7 +50,13 @@ export const CartProvider = ({ children }) => {
         if (user) {
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
-            setCartItems(JSON.parse(storedCart));
+            const items = JSON.parse(storedCart);
+            setCartItems(items);
+            // Create unique keys for items with variations
+            const itemKeys = items.map(item => {
+              return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            });
+            setSelectedItems(new Set(itemKeys));
           }
         }
       } finally {
@@ -81,16 +95,38 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (book, quantity = 1) => {
     try {
       if (user) {
-        // Add to server cart
-        await cartService.addItem(book.id, quantity);
+        // Add to server cart with variation support
+        const itemData = {
+          book_id: book.id,
+          quantity: quantity
+        };
+        
+        // Add variation_id if it exists
+        if (book.variation_id) {
+          itemData.variation_id = book.variation_id;
+        }
+        
+        await cartService.addItem(itemData.book_id, itemData.quantity, itemData.variation_id);
         // Reload cart from server
         const serverCart = await cartService.getCart();
-        setCartItems(serverCart.items || []);
+        const items = serverCart.items || [];
+        setCartItems(items);
+        // Update selectedItems with unique keys
+        const itemKeys = items.map(item => {
+          return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+        });
+        setSelectedItems(new Set(itemKeys));
       } else {
-        // Add to local cart
+        // Add to local cart with variation support
         setCartItems((prevItems) => {
+          // Create unique identifier for cart item (book_id + variation_id)
+          const itemKey = book.variation_id ? `${book.id}_${book.variation_id}` : book.id.toString();
+          
           const existingItemIndex = prevItems.findIndex(
-            (item) => item.id === book.id
+            (item) => {
+              const existingKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+              return existingKey === itemKey;
+            }
           );
 
           if (existingItemIndex >= 0) {
@@ -101,8 +137,14 @@ export const CartProvider = ({ children }) => {
             };
             return updatedItems;
           } else {
-            setSelectedItems((prev) => new Set([...prev, book.id]));
-            return [...prevItems, { ...book, quantity }];
+            const cartItem = {
+              ...book,
+              quantity,
+              cart_item_key: itemKey // Add unique key for identification
+            };
+            
+            setSelectedItems((prev) => new Set([...prev, itemKey]));
+            return [...prevItems, cartItem];
           }
         });
       }
@@ -112,25 +154,32 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = async (bookId, quantity) => {
+  const updateQuantity = async (itemKey, quantity) => {
     if (quantity <= 0) {
-      await removeFromCart(bookId);
+      await removeFromCart(itemKey);
       return;
     }
 
     try {
       if (user) {
-        // Update on server
-        await cartService.updateItem(bookId, quantity);
+        // Update on server - use itemKey directly
+        await cartService.updateItem(itemKey, quantity);
         // Reload cart from server
         const serverCart = await cartService.getCart();
-        setCartItems(serverCart.items || []);
+        const items = serverCart.items || [];
+        setCartItems(items);
+        // Update selectedItems with unique keys
+        const itemKeys = items.map(item => {
+          return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+        });
+        setSelectedItems(new Set(itemKeys));
       } else {
-        // Update local cart
+        // Update local cart - match by itemKey
         setCartItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === bookId ? { ...item, quantity } : item
-          )
+          prevItems.map((item) => {
+            const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            return currentItemKey === itemKey ? { ...item, quantity } : item;
+          })
         );
       }
     } catch (error) {
@@ -139,23 +188,26 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (bookId) => {
+  const removeFromCart = async (itemKey) => {
     try {
       if (user) {
-        // Remove from server
-        await cartService.removeItem(bookId);
+        // Remove from server - use itemKey directly
+        await cartService.removeItem(itemKey);
         // Reload cart from server
         const serverCart = await cartService.getCart();
         setCartItems(serverCart.items || []);
       } else {
-        // Remove from local cart
-        setCartItems((prevItems) => prevItems.filter((item) => item.id !== bookId));
+        // Remove from local cart - match by itemKey
+        setCartItems((prevItems) => prevItems.filter((item) => {
+          const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+          return currentItemKey !== itemKey;
+        }));
       }
       
       // Also remove from selected items
       setSelectedItems((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(bookId);
+        newSet.delete(itemKey);
         return newSet;
       });
     } catch (error) {
@@ -164,31 +216,34 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeItemsFromCart = async (itemIds) => {
-    console.log('🔍 removeItemsFromCart called with itemIds:', itemIds);
-    console.log('🛒 Current cart items before removal:', cartItems.map(item => ({ id: item.id, title: item.title })));
+  const removeItemsFromCart = async (itemKeys) => {
+    console.log('🔍 removeItemsFromCart called with itemKeys:', itemKeys);
+    console.log('🛒 Current cart items before removal:', cartItems.map(item => ({ id: item.id, title: item.title, variation_id: item.variation_id })));
     console.log('✅ Current selected items:', Array.from(selectedItems));
     
     try {
       if (user) {
-        console.log('👤 User authenticated, calling cartService.removeItems with:', itemIds);
-        await cartService.removeItems(itemIds);
+        console.log('👤 User authenticated, calling cartService.removeItems with:', itemKeys);
+        await cartService.removeItems(itemKeys);
         // Reload cart from server to ensure consistency
         const serverCart = await cartService.getCart();
-        console.log('📦 Server cart after removal:', serverCart.items?.map(item => ({ id: item.id, title: item.title })));
+        console.log('📦 Server cart after removal:', serverCart.items?.map(item => ({ id: item.id, title: item.title, variation_id: item.variation_id })));
         setCartItems(serverCart.items || []);
       } else {
         console.log('👤 Guest user, filtering local cart');
-        // For guests, filter items from local state
+        // For guests, filter items from local state by matching itemKeys
         setCartItems((prevItems) =>
-          prevItems.filter((item) => !itemIds.includes(item.id))
+          prevItems.filter((item) => {
+            const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            return !itemKeys.includes(currentItemKey);
+          })
         );
       }
 
       // Update selected items
       setSelectedItems((prev) => {
         const newSet = new Set(prev);
-        itemIds.forEach((id) => newSet.delete(id));
+        itemKeys.forEach((key) => newSet.delete(key));
         console.log('✅ Updated selected items after removal:', Array.from(newSet));
         return newSet;
       });
@@ -242,7 +297,10 @@ export const CartProvider = ({ children }) => {
   };
 
   const selectAllItems = () => {
-    setSelectedItems(new Set(cartItems.map((item) => item.id)));
+    const itemKeys = cartItems.map((item) => {
+      return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+    });
+    setSelectedItems(new Set(itemKeys));
   };
 
   const deselectAllItems = () => {
@@ -250,7 +308,10 @@ export const CartProvider = ({ children }) => {
   };
 
   const getSelectedItems = () => {
-    return cartItems.filter((item) => selectedItems.has(item.id));
+    return cartItems.filter((item) => {
+      const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+      return selectedItems.has(itemKey);
+    });
   };
 
   const getSelectedTotal = () => {
@@ -280,7 +341,7 @@ export const CartProvider = ({ children }) => {
       } else {
         // Remove from local cart
         setCartItems((prevItems) =>
-          prevItems.filter((item) => !selectedItemIds.includes(item.id))
+          prevItems.filter((item) => !selectedItemIds.includes(item.book_id))
         );
       }
       

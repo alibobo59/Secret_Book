@@ -23,6 +23,7 @@ const BookDetailPage = () => {
 
   const [book, setBook] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariation, setSelectedVariation] = useState(null);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -128,9 +129,60 @@ const BookDetailPage = () => {
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(book, quantity);
+  // Helper function to get variation name from attributes
+  const getVariationName = (variation) => {
+    if (!variation.attributes || typeof variation.attributes !== 'object') {
+      return variation.type || 'Biến thể';
+    }
+    
+    const attributeStrings = Object.entries(variation.attributes).map(
+      ([key, value]) => `${key}: ${value}`
+    );
+    
+    return attributeStrings.join(', ');
   };
+
+  // Get current product info (book or selected variation)
+  const getCurrentProduct = () => {
+    if (selectedVariation) {
+      return {
+        ...book,
+        ...selectedVariation,
+        variation_id: selectedVariation.id,
+        variation_name: getVariationName(selectedVariation)
+      };
+    }
+    return book;
+  };
+
+  const handleAddToCart = () => {
+    const productToAdd = getCurrentProduct();
+    addToCart(productToAdd, quantity);
+  };
+
+  // Handle variation selection
+  const handleVariationSelect = (variation) => {
+    setSelectedVariation(variation);
+    setQuantity(1); // Reset quantity when changing variation
+  };
+
+  // Get current stock and price
+  const getCurrentStock = () => {
+    if (selectedVariation) {
+      return parseInt(selectedVariation.stock_quantity) || 0;
+    }
+    return parseInt(book?.stock_quantity || book?.stock) || 0;
+  };
+
+  const getCurrentPrice = () => {
+    if (selectedVariation) {
+      return parseInt(selectedVariation.price) || 0;
+    }
+    return parseInt(book?.price) || 0;
+  };
+
+  // Check if book has variations
+  const hasVariations = book?.variations && book.variations.length > 0;
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -254,25 +306,85 @@ const BookDetailPage = () => {
             </div>
           </div>
 
+          {/* Variations Selection */}
+          {hasVariations && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Chọn biến thể
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {book.variations.map((variation) => {
+                  const isSelected = selectedVariation?.id === variation.id;
+                  const variationStock = parseInt(variation.stock_quantity) || 0;
+                  const isOutOfStock = variationStock <= 0;
+                  
+                  return (
+                    <div
+                      key={variation.id}
+                      onClick={() => !isOutOfStock && handleVariationSelect(variation)}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-400'
+                          : isOutOfStock
+                          ? 'border-gray-200 bg-gray-100 dark:bg-gray-800 dark:border-gray-700 cursor-not-allowed opacity-50'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-amber-300 dark:hover:border-amber-500 bg-white dark:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {getVariationName(variation)}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Tồn kho: {variationStock} cuốn
+                          </p>
+                          <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                            {parseInt(variation.price).toLocaleString("vi-VN")}₫
+                          </p>
+                        </div>
+                        {variation.image && (
+                          <div className="ml-3">
+                            <img
+                              src={`http://127.0.0.1:8000/storage/${variation.image}`}
+                              alt={getVariationName(variation)}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {isOutOfStock && (
+                        <p className="text-sm text-red-500 mt-2">Hết hàng</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Price and Add to Cart */}
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">
-                {(parseInt(book.price) || 0).toLocaleString("vi-VN")} ₫
-                {/* Display string directly with fallback */}
+                {getCurrentPrice().toLocaleString("vi-VN")} ₫
               </span>
+              {selectedVariation && (
+                <span className="ml-4 text-sm text-amber-600 dark:text-amber-400">
+                  ({getVariationName(selectedVariation)})
+                </span>
+              )}
               <span
                 className={`ml-4 px-3 py-1 rounded-full text-sm ${
-                  parseInt(book.stock_quantity || book.stock) > 10
+                  getCurrentStock() > 10
                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : parseInt(book.stock_quantity || book.stock) > 0
+                    : getCurrentStock() > 0
                     ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
-                {parseInt(book.stock_quantity || book.stock) > 10
+                {getCurrentStock() > 10
                   ? "Còn hàng"
-                  : parseInt(book.stock_quantity || book.stock) > 0
-                  ? `Chỉ còn ${parseInt(book.stock_quantity || book.stock)} cuốn`
+                  : getCurrentStock() > 0
+                  ? `Chỉ còn ${getCurrentStock()} cuốn`
                   : "Hết hàng"}
               </span>
             </div>
@@ -286,7 +398,7 @@ const BookDetailPage = () => {
                   type="number"
                   id="quantity"
                   min="1"
-                  max={parseInt(book.stock_quantity || book.stock) || 1}
+                  max={getCurrentStock() || 1}
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
@@ -294,7 +406,7 @@ const BookDetailPage = () => {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={parseInt(book.stock_quantity || book.stock) === 0}
+                disabled={getCurrentStock() === 0 || (hasVariations && !selectedVariation)}
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Thêm Vào Giỏ

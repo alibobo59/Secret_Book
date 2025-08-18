@@ -88,18 +88,23 @@ const BookEdit = () => {
     const newIsVariable = !isVariableProduct;
     setIsVariableProduct(newIsVariable);
     if (newIsVariable) {
-      // Switching to Variable
+      // Switching to Variable - preserve existing variations
       setForm({
         ...form,
         stock_quantity: "",
-        variations: form.variations.length > 0 ? form.variations : [],
+        // Keep existing variations if any, don't reset them
       });
     } else {
-      // Switching to Simple
-      setForm({ ...form, variations: [] });
+      // Switching to Simple - don't delete variations, just hide them
+      // This allows user to switch back without losing data
+      setForm({ 
+        ...form, 
+        stock_quantity: form.stock_quantity || "0" 
+      });
     }
-    setAttributes([{ name: "", values: "" }]);
-    setAttributeErrors([]);
+    // Don't reset attributes when switching - preserve user's work
+    // setAttributes([{ name: "", values: "" }]);
+    // setAttributeErrors([]);
   };
 
   const handleAttributeChange = (index, field, value) => {

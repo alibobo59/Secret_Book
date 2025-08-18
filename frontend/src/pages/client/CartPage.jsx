@@ -160,9 +160,11 @@ const CartPage = () => {
 
               {/* Cart Items List */}
               <AnimatePresence>
-                {cartItems.map((item) => (
+                {cartItems.map((item) => {
+                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  return (
                   <motion.div
-                    key={item.id}
+                    key={itemKey}
                     initial={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     className="p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
@@ -170,10 +172,10 @@ const CartPage = () => {
                     <div className="flex items-start gap-4">
                       {/* Selection Checkbox */}
                       <button
-                        onClick={() => toggleItemSelection(item.id)}
+                        onClick={() => toggleItemSelection(itemKey)}
                         className="mt-2 text-gray-400 hover:text-amber-600 transition-colors"
                       >
-                        {selectedItems.has(item.id) ? (
+                        {selectedItems.has(itemKey) ? (
                           <CheckSquare className="h-5 w-5 text-amber-600" />
                         ) : (
                           <Square className="h-5 w-5" />
@@ -192,11 +194,18 @@ const CartPage = () => {
                       {/* Book Details */}
                       <div className="flex-1 min-w-0">
                         <Link
-                          to={`/books/${item.id}`}
+                          to={`/books/${item.book_id}`}
                           className="block hover:text-amber-600 transition-colors"
                         >
                           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-1 line-clamp-2">
                             {item.title}
+                            {item.variation && (
+                              <span className="text-amber-600 dark:text-amber-400 ml-1">
+                                ({Object.entries(item.variation.attributes || {}).map(([key, value]) => 
+                                  `${key}: ${value}`
+                                ).join(', ')})
+                              </span>
+                            )}
                           </h3>
                         </Link>
                         <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
@@ -218,7 +227,7 @@ const CartPage = () => {
                       <div className="flex items-center gap-3">
                         <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(itemKey, item.quantity - 1)}
                             disabled={item.quantity <= 1}
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
@@ -228,7 +237,7 @@ const CartPage = () => {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(itemKey, item.quantity + 1)}
                             disabled={item.quantity >= (item.stock_quantity || item.stock)}
                             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
@@ -238,7 +247,7 @@ const CartPage = () => {
 
                         {/* Remove Button */}
                         <button
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => handleRemoveItem(itemKey)}
                           className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                           aria-label="Xóa sản phẩm"
                         >
@@ -254,7 +263,8 @@ const CartPage = () => {
                       </div>
                     )}
                   </motion.div>
-                ))}
+                  );
+                })}
               </AnimatePresence>
             </div>
           </div>

@@ -252,32 +252,54 @@ class OrderController extends Controller
             // Create order items and update stock
             foreach ($items as $item) {
                 // Check stock availability and load relationships
-                $book = Book::with(['author', 'publisher', 'category'])->find($item['book_id']);
+                $book = Book::with(['author', 'publisher', 'category', 'variations'])->find($item['book_id']);
                 if (!$book) {
                     throw new \Exception("Sách với ID {$item['book_id']} không tồn tại");
                 }
                 
-                if ($book->stock_quantity < $item['quantity']) {
-                    throw new \Exception("Sách '{$book->title}' không đủ số lượng trong kho. Còn lại: {$book->stock_quantity}, yêu cầu: {$item['quantity']}");
+                $variation = null;
+                $stockQuantity = $book->stock_quantity;
+                $itemPrice = $book->price;
+                $itemImage = $book->image;
+                
+                // If variation_id is provided, check variation stock
+                if (isset($item['variation_id']) && $item['variation_id']) {
+                    $variation = $book->variations()->find($item['variation_id']);
+                    if (!$variation) {
+                        throw new \Exception("Biến thể sách với ID {$item['variation_id']} không tồn tại");
+                    }
+                    $stockQuantity = $variation->stock_quantity;
+                    $itemPrice = $variation->price;
+                    $itemImage = $variation->image ?: $book->image;
+                }
+                
+                if ($stockQuantity < $item['quantity']) {
+                    $productName = $variation ? "{$book->title} (biến thể)" : $book->title;
+                    throw new \Exception("Sản phẩm '{$productName}' không đủ số lượng trong kho. Còn lại: {$stockQuantity}, yêu cầu: {$item['quantity']}");
                 }
                 
                 // Create order item with book snapshot
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'book_id' => $item['book_id'], // Keep for reference, but nullable
+                    'book_id' => $item['book_id'],
+                    'variation_id' => $item['variation_id'] ?? null,
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'book_title' => $book->title,
-                    'book_sku' => $book->sku,
+                    'book_sku' => $variation ? $variation->sku : $book->sku,
                     'book_description' => $book->description,
-                    'book_image' => $book->image,
+                    'book_image' => $itemImage,
                     'author_name' => $book->author->name ?? null,
                     'publisher_name' => $book->publisher->name ?? null,
                     'category_name' => $book->category->name ?? null,
                 ]);
                 
                 // Decrease stock quantity
-                $book->decrement('stock_quantity', $item['quantity']);
+                if ($variation) {
+                    $variation->decrement('stock_quantity', $item['quantity']);
+                } else {
+                    $book->decrement('stock_quantity', $item['quantity']);
+                }
             }
 
             // Create address if provided

@@ -116,6 +116,23 @@ class PaymentController extends Controller
                     'status' => 'processing' // Update order status
                 ]);
 
+                // Update stock for order items with variations
+                foreach ($order->items as $item) {
+                    if ($item->variation_id) {
+                        // Update variation stock
+                        $variation = \App\Models\BookVariation::find($item->variation_id);
+                        if ($variation && $variation->stock_quantity >= $item->quantity) {
+                            $variation->decrement('stock_quantity', $item->quantity);
+                        }
+                    } else {
+                        // Update book stock if no variation
+                        $book = \App\Models\Book::find($item->book_id);
+                        if ($book && $book->stock_quantity >= $item->quantity) {
+                            $book->decrement('stock_quantity', $item->quantity);
+                        }
+                    }
+                }
+
                 Log::info('VNPay payment successful', [
                     'order_number' => $orderNumber,
                     'transaction_id' => $vnp_TransactionNo,
@@ -192,7 +209,7 @@ class PaymentController extends Controller
         try {
             // Validate order exists and belongs to authenticated user
             $order = Order::where('id', $orderId)
-                         ->where('user_id', auth()->user()->id)
+                         ->where('user_id', Auth::user()->id)
                          ->first();
 
             if (!$order) {
@@ -228,7 +245,7 @@ class PaymentController extends Controller
             Log::info('VNPay payment retry initiated', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-                'user_id' => auth()->user()->id
+                'user_id' => Auth::user()->id
             ]);
 
             return response()->json([
@@ -255,7 +272,7 @@ class PaymentController extends Controller
             ]);
 
             $order = Order::where('id', $orderId)
-                         ->where('user_id', auth()->user()->id)
+                         ->where('user_id', Auth::user()->id)
                          ->first();
 
             if (!$order) {
@@ -290,7 +307,7 @@ class PaymentController extends Controller
 
                 Log::info('Payment method changed to COD', [
                     'order_id' => $orderId,
-                    'user_id' => auth()->user()->id,
+                    'user_id' => Auth::user()->id,
                     'new_method' => $paymentMethod
                 ]);
 
@@ -316,7 +333,7 @@ class PaymentController extends Controller
 
                 Log::info('Payment method changed to VNPay', [
                     'order_id' => $orderId,
-                    'user_id' => auth()->user()->id,
+                    'user_id' => Auth::user()->id,
                     'new_method' => $paymentMethod
                 ]);
 

@@ -189,9 +189,10 @@ const CheckoutPage = () => {
       // Create the order data with proper address structure
       const orderData = {
         items: getSelectedItems().map((item) => ({
-          book_id: item.id,
+          book_id: item.book_id,
           price: item.price,
           quantity: item.quantity,
+          variation_id: item.variation_id || null,
         })),
         address: {
           name: formData.name,
@@ -507,6 +508,7 @@ const CheckoutPage = () => {
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {getSelectedItems().map((item) => {
+                    const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
                     const stock = item.stock_quantity || item.stock || 0;
                     const isOutOfStock = stock === 0;
                     const isInsufficientStock = item.quantity > stock;
@@ -514,7 +516,7 @@ const CheckoutPage = () => {
                     
                     return (
                       <div
-                        key={item.id}
+                        key={itemKey}
                         className={`flex items-center space-x-4 p-4 border rounded-lg ${
                           hasStockIssue 
                             ? "border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20" 
@@ -535,6 +537,13 @@ const CheckoutPage = () => {
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900 dark:text-white">
                             {item.title}
+                            {item.variation && (
+                              <span className="text-amber-600 dark:text-amber-400 ml-1">
+                                ({Object.entries(item.variation.attributes || {})
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join(', ')})
+                              </span>
+                            )}
                           </h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             bởi {item.author?.name || "Tác giả không xác định"}
@@ -603,14 +612,23 @@ const CheckoutPage = () => {
               </h2>
 
               <div className="space-y-4 mb-6">
-                {getSelectedItems().map((item) => (
+                {getSelectedItems().map((item) => {
+                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  return (
                   <div
-                    key={item.id}
+                    key={itemKey}
                     className="flex justify-between items-center">
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                         {item.title}
                       </h3>
+                      {item.variation && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          {Object.entries(item.variation.attributes || {})
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join(', ')}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         SL: {item.quantity}
                       </p>
@@ -622,7 +640,8 @@ const CheckoutPage = () => {
                       ₫
                     </span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {getSelectedItemsCount() === 0 && (

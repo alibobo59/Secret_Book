@@ -203,7 +203,6 @@ class OrderSeeder extends Seeder
                 'order_id' => $order->id,
                 'name' => $orderData['address']['name'],
                 'address' => $orderData['address']['address'],
-                'city' => $orderData['address']['city'],
                 'phone' => $orderData['address']['phone'],
                 'email' => $orderData['address']['email']
             ]);

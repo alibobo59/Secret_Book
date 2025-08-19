@@ -16,10 +16,16 @@ export const BookProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [publishers, setPublishers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (force = false) => {
+    // Skip if data is already loaded and not forcing refresh
+    if (isDataLoaded && !force) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -91,6 +97,7 @@ export const BookProvider = ({ children }) => {
       setError(errorMessage);
     } finally {
       setLoading(false);
+      setIsDataLoaded(true);
       // console.log("Final state:", {
       //   loading: false,
       //   error,
@@ -100,11 +107,14 @@ export const BookProvider = ({ children }) => {
       //   publishersLength: publishers.length,
       // });
     }
-  }, []);
+  }, [isDataLoaded]);
 
+  // Only fetch data on first mount, not on every render
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!isDataLoaded) {
+      fetchData();
+    }
+  }, [fetchData, isDataLoaded]);
 
   return (
     <BookContext.Provider

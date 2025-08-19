@@ -154,7 +154,8 @@ const OrderConfirmationPage = () => {
                   Các Sản Phẩm Đã Đặt ({order.items.length})
                 </h3>
                 {order.items.map((item) => {
-                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  // Use SKU as unique identifier
+                  const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
                   return (
                   <div
                     key={itemKey}

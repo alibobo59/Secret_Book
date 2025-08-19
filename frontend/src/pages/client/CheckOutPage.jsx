@@ -187,13 +187,20 @@ const CheckoutPage = () => {
 
     try {
       // Create the order data with proper address structure
+      const selectedItems = getSelectedItems();
+      console.log('Selected items before mapping:', selectedItems);
+      
       const orderData = {
-        items: getSelectedItems().map((item) => ({
-          book_id: item.book_id,
-          price: item.price,
-          quantity: item.quantity,
-          variation_id: item.variation_id || null,
-        })),
+        items: selectedItems.map((item) => {
+          const mappedItem = {
+            book_id: item.book_id || item.id,
+            price: item.price,
+            quantity: item.quantity,
+            variation_id: item.variation_id || null,
+          };
+          console.log('Mapping item:', item, 'to:', mappedItem);
+          return mappedItem;
+        }),
         address: {
           name: formData.name,
           email: formData.email,
@@ -206,6 +213,8 @@ const CheckoutPage = () => {
         notes: formData.notes,
         coupon_code: appliedCoupon?.code || null,
       };
+      
+      console.log('Final order data:', orderData);
 
       // Use createOrder from OrderContext which automatically clears cart
       const order = await createOrder(orderData);
@@ -508,7 +517,8 @@ const CheckoutPage = () => {
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {getSelectedItems().map((item) => {
-                    const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                    // Use SKU as unique identifier
+                    const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
                     const stock = item.stock_quantity || item.stock || 0;
                     const isOutOfStock = stock === 0;
                     const isInsufficientStock = item.quantity > stock;
@@ -524,8 +534,8 @@ const CheckoutPage = () => {
                         }`}>
                         <img
                           src={
-                            item.image
-                              ? `http://127.0.0.1:8000/storage/${item.image}`
+                            (item.variation?.image || item.image)
+                              ? `http://127.0.0.1:8000/storage/${item.variation?.image || item.image}`
                               : "/placeholder-book.svg"
                           }
                           alt={item.title}
@@ -539,9 +549,30 @@ const CheckoutPage = () => {
                             {item.title}
                             {item.variation && (
                               <span className="text-amber-600 dark:text-amber-400 ml-1">
-                                ({Object.entries(item.variation.attributes || {})
-                                  .map(([key, value]) => `${key}: ${value}`)
-                                  .join(', ')})
+                                {(() => {
+                                  console.log('Variation data:', item.variation);
+                                  console.log('Attributes:', item.variation.attributes);
+                                  console.log('Attributes type:', typeof item.variation.attributes);
+                                  
+                                  const attributes = item.variation.attributes || {};
+                                  if (typeof attributes === 'string') {
+                                    try {
+                                      const parsed = JSON.parse(attributes);
+                                      return `(${Object.entries(parsed)
+                                        .map(([key, value]) => `${key}: ${value}`)
+                                        .join(', ')})`;
+                                    } catch (e) {
+                                      console.error('Failed to parse attributes:', e);
+                                      return '(Biến thể)';
+                                    }
+                                  } else if (typeof attributes === 'object' && attributes !== null) {
+                                    return `(${Object.entries(attributes)
+                                      .map(([key, value]) => `${key}: ${value}`)
+                                      .join(', ')})`;
+                                  }
+                                  return '(Biến thể)';
+                                })()
+                              }
                               </span>
                             )}
                           </h4>
@@ -613,7 +644,7 @@ const CheckoutPage = () => {
 
               <div className="space-y-4 mb-6">
                 {getSelectedItems().map((item) => {
-                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
                   return (
                   <div
                     key={itemKey}
@@ -624,9 +655,25 @@ const CheckoutPage = () => {
                       </h3>
                       {item.variation && (
                         <p className="text-xs text-amber-600 dark:text-amber-400">
-                          {Object.entries(item.variation.attributes || {})
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join(', ')}
+                          {(() => {
+                            const attributes = item.variation.attributes || {};
+                            if (typeof attributes === 'string') {
+                              try {
+                                const parsed = JSON.parse(attributes);
+                                return Object.entries(parsed)
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join(', ');
+                              } catch (e) {
+                                return 'Biến thể';
+                              }
+                            } else if (typeof attributes === 'object' && attributes !== null) {
+                              return Object.entries(attributes)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join(', ');
+                            }
+                            return 'Biến thể';
+                          })()
+                        }
                         </p>
                       )}
                       <p className="text-sm text-gray-500 dark:text-gray-400">

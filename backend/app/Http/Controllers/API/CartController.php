@@ -34,6 +34,7 @@ class CartController extends Controller
                 'items' => $cart->items->map(function ($item) {
                     $itemData = [
                         'id' => $item->book->id,
+                        'book_id' => $item->book->id, // Add explicit book_id field
                         'title' => $item->book->title,
                         'price' => $item->variation ? $item->variation->price : $item->book->price,
                         'image' => $item->variation && $item->variation->image ? $item->variation->image : $item->book->image,
@@ -41,7 +42,8 @@ class CartController extends Controller
                         'subtotal' => $item->subtotal,
                         'stock_quantity' => $item->variation ? $item->variation->stock_quantity : $item->book->stock_quantity,
                         'author' => $item->book->author,
-                        'variation_id' => $item->variation_id
+                        'variation_id' => $item->variation_id,
+                        'sku' => $item->variation ? $item->variation->sku : $item->book->sku
                     ];
                     
                     // Add variation info if exists
@@ -51,7 +53,8 @@ class CartController extends Controller
                             'attributes' => $item->variation->attributes,
                             'price' => $item->variation->price,
                             'stock_quantity' => $item->variation->stock_quantity,
-                            'image' => $item->variation->image
+                            'image' => $item->variation->image,
+                            'sku' => $item->variation->sku
                         ];
                     }
                     
@@ -73,13 +76,15 @@ class CartController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'book_id' => 'required|exists:books,id',
-                'quantity' => 'required|integer|min:1'
+                'quantity' => 'required|integer|min:1',
+                'variation_id' => 'nullable|exists:book_variations,id'
             ], [
                 'book_id.required' => 'ID sách là bắt buộc.',
                 'book_id.exists' => 'Sách không tồn tại.',
                 'quantity.required' => 'Số lượng là bắt buộc.',
                 'quantity.integer' => 'Số lượng phải là số nguyên.',
-                'quantity.min' => 'Số lượng phải lớn hơn 0.'
+                'quantity.min' => 'Số lượng phải lớn hơn 0.',
+                'variation_id.exists' => 'Biến thể sản phẩm không tồn tại.'
             ]);
 
             if ($validator->fails()) {
@@ -87,6 +92,17 @@ class CartController extends Controller
                     'message' => 'Xác thực thất bại',
                     'errors' => $validator->errors()
                 ], 422);
+            }
+
+            // Validate that variation belongs to the book if variation_id is provided
+            if ($request->variation_id) {
+                $variation = \App\Models\BookVariation::find($request->variation_id);
+                if ($variation->book_id != $request->book_id) {
+                    return response()->json([
+                        'message' => 'Biến thể không thuộc về sách này',
+                        'error' => 'Variation does not belong to this book'
+                    ], 422);
+                }
             }
 
             $user = Auth::user();
@@ -125,13 +141,16 @@ class CartController extends Controller
 
             $itemResponse = [
                 'id' => $cartItem->book->id,
+                'book_id' => $cartItem->book->id, // Add explicit book_id field
                 'title' => $cartItem->book->title,
                 'price' => $cartItem->variation ? $cartItem->variation->price : $cartItem->book->price,
                 'image' => $cartItem->variation && $cartItem->variation->image ? $cartItem->variation->image : $cartItem->book->image,
                 'quantity' => $cartItem->quantity,
                 'subtotal' => $cartItem->subtotal,
                 'stock_quantity' => $cartItem->variation ? $cartItem->variation->stock_quantity : $cartItem->book->stock_quantity,
-                'author' => $cartItem->book->author
+                'author' => $cartItem->book->author,
+                'variation_id' => $cartItem->variation_id,
+                'sku' => $cartItem->variation ? $cartItem->variation->sku : $cartItem->book->sku
             ];
             
             // Add variation info if exists
@@ -141,7 +160,8 @@ class CartController extends Controller
                     'attributes' => $cartItem->variation->attributes,
                     'price' => $cartItem->variation->price,
                     'stock_quantity' => $cartItem->variation->stock_quantity,
-                    'image' => $cartItem->variation->image
+                    'image' => $cartItem->variation->image,
+                    'sku' => $cartItem->variation->sku
                 ];
             }
             

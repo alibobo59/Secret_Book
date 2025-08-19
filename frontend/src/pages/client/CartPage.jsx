@@ -161,7 +161,8 @@ const CartPage = () => {
               {/* Cart Items List */}
               <AnimatePresence>
                 {cartItems.map((item) => {
-                  const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                  // Use SKU as unique identifier
+                  const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
                   return (
                   <motion.div
                     key={itemKey}
@@ -185,16 +186,23 @@ const CartPage = () => {
                       {/* Book Image */}
                       <div className="w-20 h-28 flex-shrink-0">
                         <img
-                          src={item.image}
+                          src={
+                            (item.variation?.image || item.image)
+                              ? `http://127.0.0.1:8000/storage/${item.variation?.image || item.image}`
+                              : "/placeholder-book.svg"
+                          }
                           alt={item.title}
                           className="w-full h-full object-cover rounded-md"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-book.svg";
+                          }}
                         />
                       </div>
 
                       {/* Book Details */}
                       <div className="flex-1 min-w-0">
                         <Link
-                          to={`/books/${item.book_id}`}
+                          to={`/books/${item.id || item.book_id}`}
                           className="block hover:text-amber-600 transition-colors"
                         >
                           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-1 line-clamp-2">

@@ -13,7 +13,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'The Great Gatsby',
                 'sku' => 'BOOK-GAT-001',
-                'price' => 250000, // VND
+                'price' => 150000, // VND
                 'stock_quantity' => 100,
                 'category_id' => 1,
                 'author_id' => 1,
@@ -24,7 +24,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => '1984',
                 'sku' => 'BOOK-NIN-002',
-                'price' => 200000, // VND
+                'price' => 120000, // VND
                 'stock_quantity' => 80,
                 'category_id' => 2,
                 'author_id' => 2,
@@ -35,7 +35,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'To Kill a Mockingbird',
                 'sku' => 'BOOK-MOC-003',
-                'price' => 280000, // VND
+                'price' => 180000, // VND
                 'stock_quantity' => 60,
                 'category_id' => 3,
                 'author_id' => 3,
@@ -46,7 +46,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'Moby-Dick',
                 'sku' => 'BOOK-MOB-004',
-                'price' => 370000, // VND
+                'price' => 350000, // VND
                 'stock_quantity' => 50,
                 'category_id' => 4,
                 'author_id' => 4,
@@ -57,7 +57,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'War and Peace',
                 'sku' => 'BOOK-WAR-005',
-                'price' => 460000, // VND
+                'price' => 450000, // VND
                 'stock_quantity' => 30,
                 'category_id' => 5,
                 'author_id' => 5,
@@ -68,7 +68,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'Pride and Prejudice',
                 'sku' => 'BOOK-PRI-006',
-                'price' => 230000, // VND
+                'price' => 130000, // VND
                 'stock_quantity' => 90,
                 'category_id' => 1,
                 'author_id' => 6,
@@ -79,7 +79,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'The Catcher in the Rye',
                 'sku' => 'BOOK-CAT-007',
-                'price' => 280000, // VND
+                'price' => 200000, // VND
                 'stock_quantity' => 70,
                 'category_id' => 2,
                 'author_id' => 7,
@@ -90,7 +90,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'The Hobbit',
                 'sku' => 'BOOK-HOB-008',
-                'price' => 350000, // VND
+                'price' => 300000, // VND
                 'stock_quantity' => 40,
                 'category_id' => 3,
                 'author_id' => 8,
@@ -101,7 +101,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'Brave New World',
                 'sku' => 'BOOK-BRA-009',
-                'price' => 250000, // VND
+                'price' => 170000, // VND
                 'stock_quantity' => 85,
                 'category_id' => 4,
                 'author_id' => 9,
@@ -112,7 +112,7 @@ class BooksSeeder extends Seeder
             [
                 'title' => 'The Odyssey',
                 'sku' => 'BOOK-ODY-010',
-                'price' => 330000, // VND
+                'price' => 250000, // VND
                 'stock_quantity' => 55,
                 'category_id' => 5,
                 'author_id' => 10,

@@ -29,7 +29,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-        $query = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])
+        $query = Order::with(['items.book.author', 'items.variation', 'user', 'address.province', 'address.wardModel'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -56,7 +56,7 @@ class OrderController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Order::with(['items.book.author', 'user', 'address.province', 'address.wardModel'])
+        $query = Order::with(['items.book.author', 'items.variation', 'user', 'address.province', 'address.wardModel'])
             ->orderBy('created_at', 'desc');
 
         // Filter by status if provided

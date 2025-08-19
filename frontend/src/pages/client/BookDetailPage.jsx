@@ -147,9 +147,13 @@ const BookDetailPage = () => {
     if (selectedVariation) {
       return {
         ...book,
-        ...selectedVariation,
+        // Override specific variation properties without overriding book.id
+        price: selectedVariation.price,
+        image: selectedVariation.image || book.image,
+        stock_quantity: selectedVariation.stock_quantity,
         variation_id: selectedVariation.id,
-        variation_name: getVariationName(selectedVariation)
+        variation_name: getVariationName(selectedVariation),
+        sku: selectedVariation.sku // Ensure SKU is included for variations
       };
     }
     return book;
@@ -179,6 +183,14 @@ const BookDetailPage = () => {
       return parseInt(selectedVariation.price) || 0;
     }
     return parseInt(book?.price) || 0;
+  };
+
+  // Get current image (book or selected variation)
+  const getCurrentImage = () => {
+    if (selectedVariation && selectedVariation.image) {
+      return selectedVariation.image;
+    }
+    return book?.image;
   };
 
   // Check if book has variations
@@ -236,8 +248,8 @@ const BookDetailPage = () => {
           transition={{ duration: 0.5 }}>
           <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-lg">
             <img
-              src={`http://127.0.0.1:8000/storage/${book.image}`}
-              alt={book.title}
+              src={`http://127.0.0.1:8000/storage/${getCurrentImage()}`}
+              alt={selectedVariation ? `${book.title} - ${getVariationName(selectedVariation)}` : book.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
           </div>

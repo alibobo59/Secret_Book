@@ -53,19 +53,22 @@ const CartDropdown = ({ className = "" }) => {
     };
   }, []);
 
-  const handleQuantityChange = (itemId, newQuantity) => {
+  const handleQuantityChange = (itemKey, newQuantity) => {
     if (newQuantity <= 0) {
       const item = cartItems.find((item) => {
-        const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-        return itemKey === itemId || item.book_id === itemId;
+        // Use SKU as unique identifier
+        const sku =
+          item.sku ||
+          `fallback_${item.id || item.book_id}_${item.variation_id || ""}`;
+        return sku === itemKey;
       });
       setConfirmModal({
         isOpen: true,
-        productId: itemId,
+        productId: itemKey,
         productTitle: item?.title || "this item",
       });
     } else {
-      updateQuantity(itemId, newQuantity);
+      updateQuantity(itemKey, newQuantity);
     }
   };
 
@@ -184,115 +187,153 @@ const CartDropdown = ({ className = "" }) => {
               ) : (
                 <div className="p-2">
                   {cartItems.map((item) => {
-                    const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+                    // Use SKU as unique identifier
+                    const itemKey = item.sku;
                     return (
-                    <motion.div
-                      key={itemKey}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                      {/* Checkbox */}
-                      <div className="shrink-0 flex items-start pt-2">
-                        <button
-                          onClick={() => {
-                            const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-                            toggleItemSelection(itemKey);
-                          }}
-                          className="text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                          {(() => {
-                            const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-                            return selectedItems.has(itemKey) ? (
-                              <CheckSquare className="h-4 w-4" />
-                            ) : (
-                              <Square className="h-4 w-4" />
-                            );
-                          })()}
-                        </button>
-                      </div>
+                      <motion.div
+                        key={itemKey}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        {/* Checkbox */}
+                        <div className="shrink-0 flex items-start pt-2">
+                          <button
+                            onClick={() => {
+                              // Use SKU as unique identifier
+                              const itemKey =
+                                item.sku ||
+                                `fallback_${item.id || item.book_id}_${
+                                  item.variation_id || ""
+                                }`;
+                              toggleItemSelection(itemKey);
+                            }}
+                            className="text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
+                            {(() => {
+                              // Use SKU as unique identifier
+                              const itemKey =
+                                item.sku ||
+                                `fallback_${item.id || item.book_id}_${
+                                  item.variation_id || ""
+                                }`;
+                              return selectedItems.has(itemKey) ? (
+                                <CheckSquare className="h-4 w-4" />
+                              ) : (
+                                <Square className="h-4 w-4" />
+                              );
+                            })()}
+                          </button>
+                        </div>
 
-                      {/* Book Image */}
-                      <div className="shrink-0">
-                        <img
-                          src={
-                            item.image
-                              ? `http://127.0.0.1:8000/storage/${item.image}`
-                              : "/placeholder-book.svg"
-                          }
-                          alt={item.title}
-                          className="w-12 h-16 object-cover rounded"
-                          onError={(e) => {
-                            e.target.src = "/placeholder-book.svg";
-                          }}
-                        />
-                      </div>
+                        {/* Book Image */}
+                        <div className="shrink-0">
+                          <img
+                            src={
+                              item.variation?.image || item.image
+                                ? `http://127.0.0.1:8000/storage/${
+                                    item.variation?.image || item.image
+                                  }`
+                                : "/placeholder-book.svg"
+                            }
+                            alt={item.title}
+                            className="w-12 h-16 object-cover rounded"
+                            onError={(e) => {
+                              e.target.src = "/placeholder-book.svg";
+                            }}
+                          />
+                        </div>
 
-                      {/* Book Details */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-800 dark:text-white line-clamp-1">
-                          {item.title}
-                          {item.variation && (
-                            <span className="text-amber-600 dark:text-amber-400 ml-1">
-                              ({Object.entries(item.variation.attributes || {}).map(([key, value]) => 
-                                `${key}: ${value}`
-                              ).join(', ')})
-                            </span>
-                          )}
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {typeof item.author === "object"
-                            ? item.author?.name || "Tác giả không xác định"
-                            : item.author}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(parseInt(item.price) || 0).toLocaleString("vi-VN")}{" "}
-                          ₫
-                        </p>
+                        {/* Book Details */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-800 dark:text-white line-clamp-1">
+                            {item.title}
+                            {item.variation && (
+                              <span className="text-amber-600 dark:text-amber-400 ml-1">
+                                (
+                                {Object.entries(item.variation.attributes || {})
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join(", ")}
+                                )
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {typeof item.author === "object"
+                              ? item.author?.name || "Tác giả không xác định"
+                              : item.author}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {(parseInt(item.price) || 0).toLocaleString(
+                              "vi-VN"
+                            )}{" "}
+                            ₫
+                          </p>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-                                handleQuantityChange(itemKey, item.quantity - 1);
-                              }}
-                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 min-w-[20px] text-center">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => {
-                                const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-                                handleQuantityChange(itemKey, item.quantity + 1);
-                              }}
-                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
+                          {/* Quantity Controls */}
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  // Use SKU as unique identifier
+                                  const itemKey =
+                                    item.sku ||
+                                    `fallback_${item.id || item.book_id}_${
+                                      item.variation_id || ""
+                                    }`;
+                                  handleQuantityChange(
+                                    itemKey,
+                                    item.quantity - 1
+                                  );
+                                }}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 min-w-[20px] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  // Use SKU as unique identifier
+                                  const itemKey =
+                                    item.sku ||
+                                    `fallback_${item.id || item.book_id}_${
+                                      item.variation_id || ""
+                                    }`;
+                                  handleQuantityChange(
+                                    itemKey,
+                                    item.quantity + 1
+                                  );
+                                }}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
 
-                          {/* Price and Remove */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-800 dark:text-white">
-                              {(
-                                (parseInt(item.price) || 0) * item.quantity
-                              ).toLocaleString("vi-VN")}{" "}
-                              ₫
-                            </span>
-                            <button
-                              onClick={() => {
-                                const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-                                handleRemoveItem(itemKey);
-                              }}
-                              className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 rounded transition-colors"
-                              title="Remove item">
-                              <Trash2 className="h-3 w-3" />
-                            </button>
+                            {/* Price and Remove */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-800 dark:text-white">
+                                {(
+                                  (parseInt(item.price) || 0) * item.quantity
+                                ).toLocaleString("vi-VN")}{" "}
+                                ₫
+                              </span>
+                              <button
+                                onClick={() => {
+                                  // Use SKU as unique identifier
+                                  const itemKey =
+                                    item.sku ||
+                                    `fallback_${item.id || item.book_id}_${
+                                      item.variation_id || ""
+                                    }`;
+                                  handleRemoveItem(itemKey);
+                                }}
+                                className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 rounded transition-colors"
+                                title="Remove item">
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
                     );
                   })}
                 </div>

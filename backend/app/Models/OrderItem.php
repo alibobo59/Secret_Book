@@ -24,6 +24,8 @@ class OrderItem extends Model
         'category_name',
     ];
 
+    protected $appends = ['variation_attributes'];
+
     protected $casts = [
         'price' => 'integer',
     ];
@@ -41,5 +43,30 @@ class OrderItem extends Model
     public function variation()
     {
         return $this->belongsTo(BookVariation::class, 'variation_id');
+    }
+
+    public function getVariationAttributesAttribute()
+    {
+        if (!$this->variation || !$this->variation->attributes) {
+            return null;
+        }
+        
+        $attributes = $this->variation->attributes;
+        
+        // If attributes is a JSON string, decode it first
+        if (is_string($attributes)) {
+            $attributes = json_decode($attributes, true);
+        }
+        
+        if (is_array($attributes)) {
+            // Convert array to user-friendly string format
+            $formatted = [];
+            foreach ($attributes as $key => $value) {
+                $formatted[] = $key . ': ' . $value;
+            }
+            return implode(', ', $formatted);
+        }
+        
+        return $attributes;
     }
 }

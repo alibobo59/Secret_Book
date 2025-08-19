@@ -43,8 +43,16 @@ const UserProfileDropdown = ({ className = "" }) => {
         onClick={toggleDropdown}
         className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
         aria-label="Menu hồ sơ người dùng">
-        <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase">
-          {user.name.charAt(0)}
+        <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase overflow-hidden">
+          {user.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            user.name.charAt(0)
+          )}
         </div>
       </button>
 
@@ -60,8 +68,16 @@ const UserProfileDropdown = ({ className = "" }) => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase text-xs">
-                  {user.name.charAt(0)}
+                <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium uppercase text-xs overflow-hidden">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user.name.charAt(0)
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-800 dark:text-white text-sm truncate">

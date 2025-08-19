@@ -411,20 +411,7 @@ const OrderDetail = () => {
                                   {(item.variation_id || item.variation_attributes) && (
                                     <div className="mt-1">
                                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                        {item.variation_attributes ? 
-                                          (() => {
-                                            try {
-                                              const attrs = typeof item.variation_attributes === 'string' ? 
-                                                JSON.parse(item.variation_attributes) : item.variation_attributes;
-                                              return `${attrs.type}: ${attrs.value}`;
-                                            } catch {
-                                              return 'Biến thể đặc biệt';
-                                            }
-                                          })() :
-                                          item.bookVariation ? 
-                                            `${item.bookVariation.variation_type}: ${item.bookVariation.variation_value}` :
-                                            'Biến thể đặc biệt'
-                                        }
+                                        {item.variation_attributes || 'Biến thể'}
                                       </span>
                                     </div>
                                   )}

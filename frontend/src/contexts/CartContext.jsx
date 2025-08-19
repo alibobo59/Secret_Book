@@ -26,22 +26,16 @@ export const CartProvider = ({ children }) => {
           const serverCart = await cartService.getCart();
           const items = serverCart.items || [];
           setCartItems(items);
-          // Create unique keys for items with variations
-          const itemKeys = items.map(item => {
-            return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-          });
-          setSelectedItems(new Set(itemKeys));
+          // Don't auto-select all items, let user choose
+          setSelectedItems(new Set());
         } else {
           // Load from localStorage for guests
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
             const items = JSON.parse(storedCart);
             setCartItems(items);
-            // Create unique keys for items with variations
-            const itemKeys = items.map(item => {
-              return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-            });
-            setSelectedItems(new Set(itemKeys));
+            // Don't auto-select all items, let user choose
+            setSelectedItems(new Set());
           }
         }
       } catch (error) {
@@ -52,11 +46,8 @@ export const CartProvider = ({ children }) => {
           if (storedCart) {
             const items = JSON.parse(storedCart);
             setCartItems(items);
-            // Create unique keys for items with variations
-            const itemKeys = items.map(item => {
-              return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-            });
-            setSelectedItems(new Set(itemKeys));
+            // Don't auto-select all items, let user choose
+            setSelectedItems(new Set());
           }
         }
       } finally {
@@ -111,20 +102,17 @@ export const CartProvider = ({ children }) => {
         const serverCart = await cartService.getCart();
         const items = serverCart.items || [];
         setCartItems(items);
-        // Update selectedItems with unique keys
-        const itemKeys = items.map(item => {
-          return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-        });
-        setSelectedItems(new Set(itemKeys));
+        // Keep existing selectedItems, don't auto-select all
       } else {
         // Add to local cart with variation support
         setCartItems((prevItems) => {
-          // Create unique identifier for cart item (book_id + variation_id)
-          const itemKey = book.variation_id ? `${book.id}_${book.variation_id}` : book.id.toString();
+          // Create unique identifier for cart item using SKU
+          const itemKey = book.sku || `fallback_${book.id}_${book.variation_id || ''}`;
           
           const existingItemIndex = prevItems.findIndex(
             (item) => {
-              const existingKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+              // Use SKU as unique identifier
+              const existingKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
               return existingKey === itemKey;
             }
           );
@@ -140,10 +128,10 @@ export const CartProvider = ({ children }) => {
             const cartItem = {
               ...book,
               quantity,
-              cart_item_key: itemKey // Add unique key for identification
+              sku: itemKey // Ensure SKU is set for identification
             };
             
-            setSelectedItems((prev) => new Set([...prev, itemKey]));
+            // Don't auto-select new item, let user choose
             return [...prevItems, cartItem];
           }
         });
@@ -168,16 +156,13 @@ export const CartProvider = ({ children }) => {
         const serverCart = await cartService.getCart();
         const items = serverCart.items || [];
         setCartItems(items);
-        // Update selectedItems with unique keys
-        const itemKeys = items.map(item => {
-          return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
-        });
-        setSelectedItems(new Set(itemKeys));
+        // Keep existing selectedItems, don't auto-select all
       } else {
         // Update local cart - match by itemKey
         setCartItems((prevItems) =>
           prevItems.map((item) => {
-            const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            // Use SKU as unique identifier
+            const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
             return currentItemKey === itemKey ? { ...item, quantity } : item;
           })
         );
@@ -199,7 +184,8 @@ export const CartProvider = ({ children }) => {
       } else {
         // Remove from local cart - match by itemKey
         setCartItems((prevItems) => prevItems.filter((item) => {
-          const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+          // Use SKU as unique identifier
+          const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
           return currentItemKey !== itemKey;
         }));
       }
@@ -234,7 +220,8 @@ export const CartProvider = ({ children }) => {
         // For guests, filter items from local state by matching itemKeys
         setCartItems((prevItems) =>
           prevItems.filter((item) => {
-            const currentItemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+            // Use SKU as unique identifier
+            const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
             return !itemKeys.includes(currentItemKey);
           })
         );
@@ -298,7 +285,8 @@ export const CartProvider = ({ children }) => {
 
   const selectAllItems = () => {
     const itemKeys = cartItems.map((item) => {
-      return item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+      // Use SKU as unique identifier - it's unique for both books and variations
+      return item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
     });
     setSelectedItems(new Set(itemKeys));
   };
@@ -309,7 +297,8 @@ export const CartProvider = ({ children }) => {
 
   const getSelectedItems = () => {
     return cartItems.filter((item) => {
-      const itemKey = item.variation_id ? `${item.book_id}_${item.variation_id}` : item.book_id.toString();
+      // Use SKU as unique identifier
+      const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
       return selectedItems.has(itemKey);
     });
   };
@@ -341,7 +330,11 @@ export const CartProvider = ({ children }) => {
       } else {
         // Remove from local cart
         setCartItems((prevItems) =>
-          prevItems.filter((item) => !selectedItemIds.includes(item.book_id))
+          prevItems.filter((item) => {
+            // Use SKU as unique identifier
+            const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
+            return !selectedItemIds.includes(itemKey);
+          })
         );
       }
       

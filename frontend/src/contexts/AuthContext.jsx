@@ -121,6 +121,21 @@ export const AuthProvider = ({ children }) => {
     return user && user.role === "mod";
   };
 
+  // Add this updateUser function to update user data (e.g., after profile update)
+  const updateUser = (updatedUserData) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updatedUserData
+    }));
+    
+    // Also update localStorage if needed
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...updatedUserData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -131,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isMod,
     getToken, // Add this to the exported value
+    updateUser, // Add this to update user data
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

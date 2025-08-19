@@ -14,11 +14,15 @@ import {
   Save,
   X,
   Package,
+  Lock,
+  Eye,
+  EyeOff,
+  Camera,
 } from "lucide-react";
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   // Removed tab functionality - only profile section remains
   const [isEditing, setIsEditing] = useState(false);
@@ -31,6 +35,25 @@ const ProfilePage = () => {
     address: "",
     bio: "",
   });
+
+  // Password change states
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(null);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    password: "",
+    password_confirmation: "",
+  });
+
+  // Avatar preview state
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
 
 
@@ -93,6 +116,12 @@ const ProfilePage = () => {
       if (response.success) {
         setProfileData(response.data);
         setIsEditing(false);
+        
+        // Update user in AuthContext to refresh header avatar
+        updateUser({
+          name: response.data.name,
+          avatar: response.data.avatar
+        });
         // Show success message (you can add a toast notification here)
       }
     } catch (err) {
@@ -121,6 +150,106 @@ const ProfilePage = () => {
     }
     setIsEditing(false);
     setError(null);
+    setAvatarPreview(null);
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    try {
+      setPasswordLoading(true);
+      setPasswordError(null);
+      setPasswordSuccess(null);
+
+      // Validate passwords match
+      if (passwordData.password !== passwordData.password_confirmation) {
+        setPasswordError("Mật khẩu xác nhận không khớp");
+        return;
+      }
+
+      const response = await profileService.updatePassword(passwordData);
+      
+      if (response.success) {
+        setPasswordSuccess("Đổi mật khẩu thành công!");
+        setPasswordData({
+          current_password: "",
+          password: "",
+          password_confirmation: "",
+        });
+        setShowPasswordForm(false);
+        
+        // Auto hide success message after 3 seconds
+        setTimeout(() => setPasswordSuccess(null), 3000);
+      }
+    } catch (err) {
+      if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        setPasswordError(errorMessages.join(", "));
+      } else {
+        setPasswordError(err.response?.data?.message || "Không thể đổi mật khẩu");
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  // Handle avatar file selection
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setError("Kích thước file không được vượt quá 2MB");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Chỉ chấp nhận file ảnh định dạng JPEG, PNG, JPG, GIF");
+        return;
+      }
+
+      setEditedUser({ ...editedUser, avatar: file });
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => setAvatarPreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle delete avatar
+  const handleDeleteAvatar = async () => {
+    try {
+      setLoading(true);
+      await profileService.deleteAvatar();
+      
+      // Refresh profile data
+      const response = await profileService.getProfile();
+      if (response.success) {
+        setProfileData(response.data);
+        setAvatarPreview(null);
+        
+        // Update user in AuthContext to refresh header avatar
+        updateUser({
+          avatar: response.data.avatar
+        });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Không thể xóa ảnh đại diện");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
 
@@ -163,21 +292,50 @@ const ProfilePage = () => {
           </motion.div>
         )}
 
+        {/* Success Message */}
+        {passwordSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded mb-4">
+            {passwordSuccess}
+          </motion.div>
+        )}
+
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
-              {profileData?.avatar ? (
-                <img
-                  src={profileData.avatar}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                profileData?.name?.charAt(0) || user?.name?.charAt(0) || "N"
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : profileData?.avatar ? (
+                  <img
+                    src={profileData.avatar}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  profileData?.name?.charAt(0) || user?.name?.charAt(0) || "N"
+                )}
+              </div>
+              {isEditing && (
+                <label className="absolute -bottom-2 -right-2 bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg">
+                  <Camera className="w-4 h-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
               )}
             </div>
             <div className="flex-grow text-center md:text-left">
@@ -215,23 +373,37 @@ const ProfilePage = () => {
                     Thông Tin Cá Nhân
                   </h2>
                   {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors">
-                      <Edit3 className="h-4 w-4" />
-                      Chỉnh Sửa
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowPasswordForm(!showPasswordForm)}
+                        className="flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors">
+                        <Lock className="h-4 w-4" />
+                        Đổi Mật Khẩu
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors">
+                        <Edit3 className="h-4 w-4" />
+                        Chỉnh Sửa
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex gap-2">
                       <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
-                        <Save className="h-4 w-4" />
-                        Lưu
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:opacity-50">
+                        {loading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                        {loading ? "Đang lưu..." : "Lưu"}
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-50">
                         <X className="h-4 w-4" />
                         Hủy
                       </button>
@@ -337,7 +509,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Avatar Upload Section */}
+                {/* Avatar Management Section */}
                 {isEditing && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -345,7 +517,13 @@ const ProfilePage = () => {
                     </label>
                     <div className="flex items-center gap-4">
                       <div className="w-20 h-20 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
-                        {profileData?.avatar ? (
+                        {avatarPreview ? (
+                          <img
+                            src={avatarPreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : profileData?.avatar ? (
                           <img
                             src={profileData.avatar}
                             alt="Profile"
@@ -361,38 +539,19 @@ const ProfilePage = () => {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              setEditedUser({ ...editedUser, avatar: file });
-                            }
-                          }}
+                          onChange={handleAvatarChange}
                           className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 dark:file:bg-amber-900/20 dark:file:text-amber-400"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           PNG, JPG, GIF tối đa 2MB
                         </p>
                       </div>
-                      {profileData?.avatar && (
+                      {(profileData?.avatar || avatarPreview) && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            try {
-                              await profileService.deleteAvatar();
-                              // Refresh profile data
-                              const response =
-                                await profileService.getProfile();
-                              if (response.success) {
-                                setProfileData(response.data);
-                              }
-                            } catch (err) {
-                              setError(
-                                err.response?.data?.message ||
-                                  "Không thể xóa ảnh đại diện"
-                              );
-                            }
-                          }}
-                          className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors text-sm">
+                          onClick={handleDeleteAvatar}
+                          disabled={loading}
+                          className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors text-sm disabled:opacity-50">
                           Xóa
                         </button>
                       )}
@@ -425,6 +584,170 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+
+        {/* Password Change Form */}
+        {showPasswordForm && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-8">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                  Đổi Mật Khẩu
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setPasswordError(null);
+                    setPasswordData({
+                      current_password: "",
+                      password: "",
+                      password_confirmation: "",
+                    });
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Password Error Message */}
+              {passwordError && (
+                <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4">
+                  {passwordError}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                {/* Current Password */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mật khẩu hiện tại <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.current ? "text" : "password"}
+                      value={passwordData.current_password}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          current_password: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      placeholder="Nhập mật khẩu hiện tại"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('current')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      {showPasswords.current ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* New Password */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mật khẩu mới <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.new ? "text" : "password"}
+                      value={passwordData.password}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          password: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                      minLength={8}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('new')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      {showPasswords.new ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm New Password */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Xác nhận mật khẩu mới <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.confirm ? "text" : "password"}
+                      value={passwordData.password_confirmation}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          password_confirmation: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      placeholder="Nhập lại mật khẩu mới"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('confirm')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      {showPasswords.confirm ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setPasswordError(null);
+                      setPasswordData({
+                        current_password: "",
+                        password: "",
+                        password_confirmation: "",
+                      });
+                    }}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+                    {passwordLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                    {passwordLoading ? "Đang cập nhật..." : "Đổi Mật Khẩu"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

@@ -70,10 +70,12 @@ const OrderManagementPage = () => {
     // Tải đơn hàng của người dùng từ API
     const loadOrders = async () => {
       try {
+        
         setIsLoadingOrders(true);
         const userOrders = await getUserOrders(); // Xóa tham số userId
         setOrders(userOrders || []);
         setFilteredOrders(userOrders || []);
+        console.log(orders)
 
         // Kiểm tra tính đủ điều kiện đánh giá cho các đơn hàng đã giao
         await checkReviewEligibility(userOrders || []);
@@ -467,9 +469,9 @@ const OrderManagementPage = () => {
 
                   {/* Order Items Preview */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {order.items?.slice(0, 3).map((item) => (
+                    {order.items?.slice(0, 3).map((item, index) => (
                       <div
-                        key={item.book_id || item.id}
+                        key={`${order.id}-${item.id || item.book_id}-${index}`}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <img
                           src={
@@ -492,20 +494,7 @@ const OrderManagementPage = () => {
                           {(item.variation_id || item.variation_attributes) && (
                             <div className="mt-1">
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                {item.variation_attributes ? 
-                                  (() => {
-                                    try {
-                                      const attrs = typeof item.variation_attributes === 'string' ? 
-                                        JSON.parse(item.variation_attributes) : item.variation_attributes;
-                                      return `${attrs.type}: ${attrs.value}`;
-                                    } catch {
-                                      return 'Biến thể';
-                                    }
-                                  })() :
-                                  item.bookVariation ? 
-                                    `${item.bookVariation.variation_type}: ${item.bookVariation.variation_value}` :
-                                    'Biến thể'
-                                }
+                                {item.variation_attributes || 'Biến thể'}
                               </span>
                             </div>
                           )}
@@ -730,9 +719,9 @@ const OrderManagementPage = () => {
                       Sản Phẩm Trong Đơn Hàng
                     </h3>
                     <div className="space-y-3">
-                      {selectedOrder.items?.map((item) => (
+                      {selectedOrder.items?.map((item, index) => (
                         <div
-                          key={item.book_id || item.id}
+                          key={`${selectedOrder.id}-item-${item.id || item.book_id}-${index}`}
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
                             src={
@@ -755,20 +744,7 @@ const OrderManagementPage = () => {
                             {(item.variation_id || item.variation_attributes) && (
                               <div className="mt-1">
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                  {item.variation_attributes ? 
-                                    (() => {
-                                      try {
-                                        const attrs = typeof item.variation_attributes === 'string' ? 
-                                          JSON.parse(item.variation_attributes) : item.variation_attributes;
-                                        return `${attrs.type}: ${attrs.value}`;
-                                      } catch {
-                                        return 'Biến thể đặc biệt';
-                                      }
-                                    })() :
-                                    item.bookVariation ? 
-                                      `${item.bookVariation.variation_type}: ${item.bookVariation.variation_value}` :
-                                      'Biến thể đặc biệt'
-                                  }
+                                  {item.variation_attributes || 'Biến thể'}
                                 </span>
                               </div>
                             )}

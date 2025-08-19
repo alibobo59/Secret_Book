@@ -152,7 +152,14 @@ const BookEdit = () => {
     const attrValues = Object.values(attributes)
       .map((value) => value.toString().replace(/\s+/g, ""))
       .join("-");
-    return attrValues ? `${parentSku}-${attrValues}` : `${parentSku}-NEW`;
+    if (attrValues) {
+      return `${parentSku}-${attrValues}`;
+    } else {
+      // Use timestamp + random number to ensure uniqueness
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 100);
+      return `${parentSku}-${timestamp}${random}`;
+    }
   };
 
   const generateVariationsForm = () => {
@@ -205,7 +212,7 @@ const BookEdit = () => {
           attributes: {},
           price: "",
           stock_quantity: "",
-          sku: form.sku ? `${form.sku}-NEW` : "",
+          sku: generateVariationSku({}),
           image: null,
         },
       ],
@@ -293,7 +300,7 @@ const BookEdit = () => {
       formData.append("title", form.title);
       formData.append("sku", form.sku);
       formData.append("description", form.description);
-      formData.append("price", form.price);
+      if (!isVariableProduct) formData.append("price", form.price);
       formData.append("category_id", form.category_id);
       formData.append("author_id", form.author_id);
       formData.append("publisher_id", form.publisher_id);

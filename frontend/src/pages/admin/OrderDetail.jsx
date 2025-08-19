@@ -18,6 +18,7 @@ import {
 import { api } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { getImageUrl } from "../../utils/imageUtils";
 import Loading from "../../components/admin/Loading";
 import AuditLogTable from "../../components/admin/AuditLogTable";
 
@@ -443,9 +444,12 @@ const OrderDetail = () => {
                                   <img
                                     className="h-10 w-10 rounded-lg object-cover mr-4"
                                     src={
-                                      item.book_image || item.book?.cover_image || item.book?.image
+                                      getImageUrl(item.book_image || item.book?.cover_image || item.book?.image)
                                     }
                                     alt={item.book_title || item.book?.title}
+                                    onError={(e) => {
+                                      e.target.src = "/placeholder-book.svg";
+                                    }}
                                   />
                                 )}
                                 <div>

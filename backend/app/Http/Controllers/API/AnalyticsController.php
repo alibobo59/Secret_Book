@@ -390,7 +390,7 @@ class AnalyticsController extends Controller
         $startDate = now()->subDays(30);
         
         // Get books with highest sales quantity in last 30 days
-        $featuredBooks = DB::table('order_items')
+        $featuredBooksData = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->join('books', 'books.id', '=', 'order_items.book_id')
             ->leftJoin('categories', 'categories.id', '=', 'books.category_id')
@@ -414,9 +414,24 @@ class AnalyticsController extends Controller
                 DB::raw('SUM(order_items.quantity) as monthly_sales')
             ]);
 
+        // Load variations for featured books
+        if (!$featuredBooksData->isEmpty()) {
+            $bookIds = $featuredBooksData->pluck('id');
+            $booksWithVariations = Book::with('variations')->whereIn('id', $bookIds)->get()->keyBy('id');
+            
+            $featuredBooks = $featuredBooksData->map(function($book) use ($booksWithVariations) {
+                $bookModel = $booksWithVariations->get($book->id);
+                return (object) array_merge((array) $book, [
+                    'variations' => $bookModel ? $bookModel->variations : collect()
+                ]);
+            });
+        } else {
+            $featuredBooks = collect();
+        }
+
         // If no books have sales in last 30 days, fallback to latest books
         if ($featuredBooks->isEmpty()) {
-            $featuredBooks = Book::with(['category', 'author', 'publisher'])
+            $featuredBooks = Book::with(['category', 'author', 'publisher', 'variations'])
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get()
@@ -430,6 +445,7 @@ class AnalyticsController extends Controller
                         'category_name' => $book->category->name ?? null,
                         'author_name' => $book->author->name ?? null,
                         'publisher_name' => $book->publisher->name ?? null,
+                        'variations' => $book->variations,
                         'monthly_revenue' => 0,
                         'monthly_sales' => 0
                     ];

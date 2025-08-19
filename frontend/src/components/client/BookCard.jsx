@@ -20,6 +20,38 @@ const BookCard = ({ book }) => {
   // Use utility function instead of hardcoded URL
   const imageUrl = getImageUrl(book.image);
 
+  // Get stock quantity - for variable products, check if any variation has stock
+  const getStockQuantity = () => {
+    if (book.variations && book.variations.length > 0) {
+      // For variable products, return total stock of all variations
+      const totalStock = book.variations.reduce((total, variation) => {
+        return total + (parseInt(variation.stock_quantity) || 0);
+      }, 0);
+      return totalStock;
+    }
+    return parseInt(book.stock_quantity || book.stock) || 0;
+  };
+
+  const stockQuantity = getStockQuantity();
+
+  // Get price display - for variable products, show price range from variations
+  const getPriceDisplay = () => {
+    if (book.variations && book.variations.length > 0) {
+      const prices = book.variations.map(variation => parseInt(variation.price) || 0).filter(price => price > 0);
+      if (prices.length === 0) return "Liên hệ";
+      
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      
+      if (minPrice === maxPrice) {
+        return `${minPrice.toLocaleString('vi-VN')} ₫`;
+      } else {
+        return `${minPrice.toLocaleString('vi-VN')} - ${maxPrice.toLocaleString('vi-VN')} ₫`;
+      }
+    }
+    return `${(parseInt(book.price) || 0).toLocaleString('vi-VN')} ₫`;
+  };
+
   return (
     <Link to={`/books/${book.id}`}>
       <motion.div
@@ -69,20 +101,20 @@ const BookCard = ({ book }) => {
           </div>
           <div className="flex justify-between items-center">
             <span className="font-bold text-gray-800 dark:text-white">
-              {(parseInt(book.price) || 0).toLocaleString('vi-VN')} ₫
+              {getPriceDisplay()}
             </span>
             <span
               className={`text-xs px-2 py-1 rounded ${
-                (book.stock_quantity || book.stock) > 10
+                stockQuantity > 10
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : (book.stock_quantity || book.stock) > 0
+                  : stockQuantity > 0
                   ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                   : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}>
-              {(book.stock_quantity || book.stock) > 10
+              {stockQuantity > 10
                 ? "Còn hàng"
-                : (book.stock_quantity || book.stock) > 0
-                ? `Chỉ còn ${book.stock_quantity || book.stock} cuốn`
+                : stockQuantity > 0
+                ? `Chỉ còn ${stockQuantity} cuốn`
                 : "Hết hàng"}
             </span>
           </div>

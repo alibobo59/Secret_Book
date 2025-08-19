@@ -48,6 +48,7 @@ const HomePage = () => {
           category: { name: book.category_name },
           author: { name: book.author_name },
           publisher: { name: book.publisher_name },
+          variations: book.variations || [],
           monthly_revenue: book.monthly_revenue,
           monthly_sales: book.monthly_sales
         }));

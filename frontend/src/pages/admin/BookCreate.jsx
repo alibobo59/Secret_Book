@@ -121,7 +121,7 @@ const BookCreate = () => {
     const variations = [];
     const generateCombinations = (attrIndex = 0, current = {}) => {
       if (attrIndex >= attributeValues.length) {
-        const variationSku = generateVariationSku(current);
+        const variationSku = generateVariationSku(current, form.sku, variations.length);
         variations.push({
           attributes: { ...current },
           price: "",
@@ -143,12 +143,20 @@ const BookCreate = () => {
   };
 
   // Tạo SKU biến thể động
-  const generateVariationSku = (attributes, parentSku = form.sku) => {
+  const generateVariationSku = (attributes, parentSku = form.sku, index = null) => {
     if (!parentSku) return "";
     const attrValues = Object.values(attributes)
       .map((value) => value.replace(/\s+/g, ""))
       .join("-");
-    return attrValues ? `${parentSku}-${attrValues}` : `${parentSku}-NEW`;
+    if (attrValues) {
+      return `${parentSku}-${attrValues}`;
+    } else {
+      // Use timestamp + random number + index to ensure uniqueness
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000);
+      const indexSuffix = index !== null ? `-${index}` : '';
+      return `${parentSku}-${timestamp}${random}${indexSuffix}`;
+    }
   };
 
   // Thêm biến thể mới thủ công
@@ -161,7 +169,7 @@ const BookCreate = () => {
           attributes: {},
           price: "",
           stock_quantity: "",
-          sku: form.sku ? `${form.sku}-NEW` : "",
+          sku: generateVariationSku({}, form.sku, form.variations.length),
           image: null,
         },
       ],
@@ -229,7 +237,7 @@ const BookCreate = () => {
 
     // Update SKU if attributes change
     const variation = updatedVariations[index];
-    variation.sku = generateVariationSku(variation.attributes);
+    variation.sku = generateVariationSku(variation.attributes, form.sku, index);
     setForm({ ...form, variations: updatedVariations });
   };
 
@@ -326,7 +334,7 @@ const BookCreate = () => {
       formData.append("title", form.title);
       formData.append("sku", form.sku);
       if (form.description) formData.append("description", form.description);
-      formData.append("price", form.price);
+      if (!isVariableProduct && form.price) formData.append("price", form.price);
       if (!isVariableProduct && form.stock_quantity)
         formData.append("stock_quantity", form.stock_quantity);
       if (form.category_id) formData.append("category_id", form.category_id);
@@ -664,45 +672,47 @@ const BookCreate = () => {
                         Giá & Tồn Kho
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Giá
-                            <span className="text-red-500 ml-1">*</span>
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                ₫
-                              </span>
+                        {!isVariableProduct && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Giá
+                              <span className="text-red-500 ml-1">*</span>
+                            </label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  ₫
+                                </span>
+                              </div>
+                              <input
+                                type="number"
+                                value={form.price}
+                                onChange={(e) =>
+                                  setForm({ ...form, price: e.target.value })
+                                }
+                                placeholder="0.00"
+                                className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-200 transition-all duration-200"
+                                min="0"
+                                step="0.01"
+                              />
                             </div>
-                            <input
-                              type="number"
-                              value={form.price}
-                              onChange={(e) =>
-                                setForm({ ...form, price: e.target.value })
-                              }
-                              placeholder="0.00"
-                              className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-200 transition-all duration-200"
-                              min="0"
-                              step="0.01"
-                            />
+                            {validationErrors.price && (
+                              <p className="text-red-500 text-sm mt-2 flex items-center">
+                                <svg
+                                  className="w-4 h-4 mr-1"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                {validationErrors.price[0]}
+                              </p>
+                            )}
                           </div>
-                          {validationErrors.price && (
-                            <p className="text-red-500 text-sm mt-2 flex items-center">
-                              <svg
-                                className="w-4 h-4 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path
-                                  fillRule="evenodd"
-                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              {validationErrors.price[0]}
-                            </p>
-                          )}
-                        </div>
+                        )}
                         {!isVariableProduct && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

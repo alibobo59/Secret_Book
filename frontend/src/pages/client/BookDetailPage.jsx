@@ -172,8 +172,12 @@ const BookDetailPage = () => {
 
   // Get current stock and price
   const getCurrentStock = () => {
-    if (selectedVariation) {
-      return parseInt(selectedVariation.stock_quantity) || 0;
+    if (hasVariations) {
+      if (selectedVariation) {
+        return parseInt(selectedVariation.stock_quantity) || 0;
+      }
+      // If has variations but no variation selected, return null to indicate no stock info
+      return null;
     }
     return parseInt(book?.stock_quantity || book?.stock) || 0;
   };
@@ -385,20 +389,27 @@ const BookDetailPage = () => {
                   ({getVariationName(selectedVariation)})
                 </span>
               )}
-              <span
-                className={`ml-4 px-3 py-1 rounded-full text-sm ${
-                  getCurrentStock() > 10
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+              {getCurrentStock() !== null && (
+                <span
+                  className={`ml-4 px-3 py-1 rounded-full text-sm ${
+                    getCurrentStock() > 10
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : getCurrentStock() > 0
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  }`}>
+                  {getCurrentStock() > 10
+                    ? "Còn hàng"
                     : getCurrentStock() > 0
-                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                }`}>
-                {getCurrentStock() > 10
-                  ? "Còn hàng"
-                  : getCurrentStock() > 0
-                  ? `Chỉ còn ${getCurrentStock()} cuốn`
-                  : "Hết hàng"}
-              </span>
+                    ? `Chỉ còn ${getCurrentStock()} cuốn`
+                    : "Hết hàng"}
+                </span>
+              )}
+              {hasVariations && !selectedVariation && (
+                <span className="ml-4 px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  Vui lòng chọn biến thể
+                </span>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
@@ -418,7 +429,7 @@ const BookDetailPage = () => {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={getCurrentStock() === 0 || (hasVariations && !selectedVariation)}
+                disabled={getCurrentStock() === null || getCurrentStock() === 0 || (hasVariations && !selectedVariation)}
                 className="flex-1 flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Thêm Vào Giỏ

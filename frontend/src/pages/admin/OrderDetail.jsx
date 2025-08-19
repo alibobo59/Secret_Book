@@ -41,6 +41,64 @@ const OrderDetail = () => {
     fetchOrder();
   }, [id]);
 
+  // Hàm định dạng thuộc tính biến thể
+  const formatVariationAttributes = (attributes) => {
+    if (!attributes) return 'N/A';
+    
+    try {
+      // Nếu attributes là chuỗi JSON
+      if (typeof attributes === 'string') {
+        // Thử parse trực tiếp nếu là JSON
+        try {
+          const parsed = JSON.parse(attributes);
+          if (parsed && typeof parsed === 'object') {
+            // Nếu có thuộc tính 'attributes' bên trong
+            if (parsed.attributes && typeof parsed.attributes === 'object') {
+              return Object.entries(parsed.attributes)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+            // Nếu chính nó là object attributes
+            return Object.entries(parsed)
+              .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+              .join(', ');
+          }
+        } catch (parseError) {
+          // Nếu không parse được, tìm pattern trong chuỗi
+          if (attributes.includes('attributes:')) {
+            const attributesMatch = attributes.match(/attributes:\s*({[^}]+})/);
+            if (attributesMatch && attributesMatch[1]) {
+              const attributesObj = JSON.parse(attributesMatch[1]);
+              return Object.entries(attributesObj)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+          }
+        }
+      }
+      
+      // Nếu attributes đã là object
+      if (typeof attributes === 'object') {
+        // Nếu có thuộc tính 'attributes' bên trong
+        if (attributes.attributes && typeof attributes.attributes === 'object') {
+          return Object.entries(attributes.attributes)
+            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+            .join(', ');
+        }
+        // Nếu chính nó là object attributes
+        return Object.entries(attributes)
+          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+          .join(', ');
+      }
+      
+      // Trả về giá trị gốc nếu không thể xử lý
+      return attributes;
+    } catch (error) {
+      console.error('Error parsing variation attributes:', error);
+      return attributes;
+    }
+  };
+
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -411,7 +469,7 @@ const OrderDetail = () => {
                                   {(item.variation_id || item.variation_attributes) && (
                                     <div className="mt-1">
                                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                        {item.variation_attributes || 'Biến thể'}
+                                        {formatVariationAttributes(item.variation_attributes) || 'Biến thể'}
                                       </span>
                                     </div>
                                   )}

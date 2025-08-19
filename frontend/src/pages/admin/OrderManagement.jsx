@@ -83,6 +83,64 @@ const OrderManagement = () => {
     navigate(`/admin/orders/${order.id}`);
   };
 
+  // Hàm định dạng thuộc tính biến thể
+  const formatVariationAttributes = (attributes) => {
+    if (!attributes) return 'N/A';
+    
+    try {
+      // Nếu attributes là chuỗi JSON
+      if (typeof attributes === 'string') {
+        // Thử parse trực tiếp nếu là JSON
+        try {
+          const parsed = JSON.parse(attributes);
+          if (parsed && typeof parsed === 'object') {
+            // Nếu có thuộc tính 'attributes' bên trong
+            if (parsed.attributes && typeof parsed.attributes === 'object') {
+              return Object.entries(parsed.attributes)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+            // Nếu chính nó là object attributes
+            return Object.entries(parsed)
+              .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+              .join(', ');
+          }
+        } catch (parseError) {
+          // Nếu không parse được, tìm pattern trong chuỗi
+          if (attributes.includes('attributes:')) {
+            const attributesMatch = attributes.match(/attributes:\s*({[^}]+})/);
+            if (attributesMatch && attributesMatch[1]) {
+              const attributesObj = JSON.parse(attributesMatch[1]);
+              return Object.entries(attributesObj)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+          }
+        }
+      }
+      
+      // Nếu attributes đã là object
+      if (typeof attributes === 'object') {
+        // Nếu có thuộc tính 'attributes' bên trong
+        if (attributes.attributes && typeof attributes.attributes === 'object') {
+          return Object.entries(attributes.attributes)
+            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+            .join(', ');
+        }
+        // Nếu chính nó là object attributes
+        return Object.entries(attributes)
+          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+          .join(', ');
+      }
+      
+      // Trả về giá trị gốc nếu không thể xử lý
+      return attributes;
+    } catch (error) {
+      console.error('Error parsing variation attributes:', error);
+      return attributes;
+    }
+  };
+
   // Hàm xác định trạng thái được phép dựa trên logic nghiệp vụ
   const getValidNextStatuses = (currentStatus) => {
     const statusFlow = {

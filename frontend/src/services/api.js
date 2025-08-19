@@ -17,36 +17,36 @@ const api = axios.create({
 // Add request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
-    console.log('%c API Request Config:', 'background: #0066cc; color: white; padding: 2px 5px; border-radius: 3px;');
-    console.log('URL:', config.url);
-    console.log('Method:', config.method.toUpperCase());
-    console.log('Base URL:', config.baseURL);
-    console.log('Full URL:', config.baseURL + config.url);
+    // console.log('%c API Request Config:', 'background: #0066cc; color: white; padding: 2px 5px; border-radius: 3px;');
+    // console.log('URL:', config.url);
+    // console.log('Method:', config.method.toUpperCase());
+    // console.log('Base URL:', config.baseURL);
+    // console.log('Full URL:', config.baseURL + config.url);
     
-    // Log headers in detail
-    console.log('Headers:', config.headers);
+    // // Log headers in detail
+    // console.log('Headers:', config.headers);
     
-    // Log data in detail
-    if (config.data) {
-      if (config.data instanceof FormData) {
-        console.log('FormData Contents:');
-        for (let [key, value] of config.data.entries()) {
-          console.log(`  ${key}:`, value instanceof File ? `File: ${value.name} (${value.type}, ${value.size} bytes)` : value);
-        }
-      } else {
-        console.log('Data:', config.data);
-      }
-    }
+    // // Log data in detail
+    // if (config.data) {
+    //   if (config.data instanceof FormData) {
+    //     console.log('FormData Contents:');
+    //     for (let [key, value] of config.data.entries()) {
+    //       console.log(`  ${key}:`, value instanceof File ? `File: ${value.name} (${value.type}, ${value.size} bytes)` : value);
+    //     }
+    //   } else {
+    //     console.log('Data:', config.data);
+    //   }
+    // }
     
-    // Log params if any
-    if (config.params) {
-      console.log('Params:', config.params);
-    }
+    // // Log params if any
+    // if (config.params) {
+    //   console.log('Params:', config.params);
+    // }
     
     return config;
   },
   (error) => {
-    console.error('API Request Interceptor Error:', error);
+    // console.error('API Request Interceptor Error:', error);
     return Promise.reject(error);
   }
 );
@@ -54,90 +54,90 @@ api.interceptors.request.use(
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
-    console.log('%c API Response Success:', 'background: #00cc66; color: white; padding: 2px 5px; border-radius: 3px;');
-    console.log('Status:', response.status, response.statusText);
-    console.log('URL:', response.config.url);
-    console.log('Method:', response.config.method.toUpperCase());
-    console.log('Headers:', response.headers);
-    console.log('Data:', response.data);
+    // console.log('%c API Response Success:', 'background: #00cc66; color: white; padding: 2px 5px; border-radius: 3px;');
+    // console.log('Status:', response.status, response.statusText);
+    // console.log('URL:', response.config.url);
+    // console.log('Method:', response.config.method.toUpperCase());
+    // console.log('Headers:', response.headers);
+    // console.log('Data:', response.data);
     
-    // Log request details that generated this response
-    console.log('Request that generated this response:');
-    console.log('  URL:', response.config.url);
-    console.log('  Method:', response.config.method.toUpperCase());
-    console.log('  Headers:', response.config.headers);
+    // // Log request details that generated this response
+    // console.log('Request that generated this response:');
+    // console.log('  URL:', response.config.url);
+    // console.log('  Method:', response.config.method.toUpperCase());
+    // console.log('  Headers:', response.config.headers);
     
-    if (response.config.data) {
-      if (typeof response.config.data === 'string') {
-        try {
-          // Try to parse if it's JSON string
-          const parsedData = JSON.parse(response.config.data);
-          console.log('  Request Data (parsed):', parsedData);
-        } catch (e) {
-          // If not JSON, show as is
-          console.log('  Request Data (raw):', response.config.data);
-        }
-      } else {
-        console.log('  Request Data:', response.config.data);
-      }
-    }
+    // if (response.config.data) {
+    //   if (typeof response.config.data === 'string') {
+    //     try {
+    //       // Try to parse if it's JSON string
+    //       const parsedData = JSON.parse(response.config.data);
+    //       console.log('  Request Data (parsed):', parsedData);
+    //     } catch (e) {
+    //       // If not JSON, show as is
+    //       console.log('  Request Data (raw):', response.config.data);
+    //     }
+    //   } else {
+    //     console.log('  Request Data:', response.config.data);
+    //   }
+    // }
     
     return response;
   },
   (error) => {
-    console.log('%c API Response Error:', 'background: #cc0000; color: white; padding: 2px 5px; border-radius: 3px;');
-    console.log('Error Message:', error.message);
-    console.log('Error Code:', error.code);
+    // console.log('%c API Response Error:', 'background: #cc0000; color: white; padding: 2px 5px; border-radius: 3px;');
+    // console.log('Error Message:', error.message);
+    // console.log('Error Code:', error.code);
     
-    if (error.response) {
-      console.log('Status:', error.response.status, error.response.statusText);
-      console.log('Headers:', error.response.headers);
-      console.log('Data:', error.response.data);
+    // if (error.response) {
+    //   console.log('Status:', error.response.status, error.response.statusText);
+    //   console.log('Headers:', error.response.headers);
+    //   console.log('Data:', error.response.data);
       
-      // Log validation errors in detail if present
-      if (error.response.data && error.response.data.errors) {
-        console.log('Validation Errors:');
-        for (const [field, messages] of Object.entries(error.response.data.errors)) {
-          console.log(`  ${field}:`, messages);
-        }
-      }
+    //   // Log validation errors in detail if present
+    //   if (error.response.data && error.response.data.errors) {
+    //     console.log('Validation Errors:');
+    //     for (const [field, messages] of Object.entries(error.response.data.errors)) {
+    //       console.log(`  ${field}:`, messages);
+    //     }
+    //   }
       
-      // Log request that caused the error
-      if (error.config) {
-        console.log('Request that caused error:');
-        console.log('  URL:', error.config.url);
-        console.log('  Method:', error.config.method.toUpperCase());
-        console.log('  Headers:', error.config.headers);
+    //   // Log request that caused the error
+    //   if (error.config) {
+    //     console.log('Request that caused error:');
+    //     console.log('  URL:', error.config.url);
+    //     console.log('  Method:', error.config.method.toUpperCase());
+    //     console.log('  Headers:', error.config.headers);
         
-        if (error.config.data) {
-          if (error.config.data instanceof FormData) {
-            console.log('  FormData Contents:');
-            try {
-              for (let [key, value] of error.config.data.entries()) {
-                console.log(`    ${key}:`, value instanceof File ? `File: ${value.name}` : value);
-              }
-            } catch (e) {
-              console.log('  Could not iterate FormData:', e.message);
-            }
-          } else if (typeof error.config.data === 'string') {
-            try {
-              // Try to parse if it's JSON string
-              const parsedData = JSON.parse(error.config.data);
-              console.log('  Request Data (parsed):', parsedData);
-            } catch (e) {
-              // If not JSON, show as is
-              console.log('  Request Data (raw):', error.config.data);
-            }
-          } else {
-            console.log('  Request Data:', error.config.data);
-          }
-        }
-      }
-    } else if (error.request) {
-      console.log('No Response Received:', error.request);
-    } else {
-      console.log('Request Setup Error');
-    }
+    //     if (error.config.data) {
+    //       if (error.config.data instanceof FormData) {
+    //         console.log('  FormData Contents:');
+    //         try {
+    //           for (let [key, value] of error.config.data.entries()) {
+    //             console.log(`    ${key}:`, value instanceof File ? `File: ${value.name}` : value);
+    //           }
+    //         } catch (e) {
+    //           console.log('  Could not iterate FormData:', e.message);
+    //         }
+    //       } else if (typeof error.config.data === 'string') {
+    //         try {
+    //           // Try to parse if it's JSON string
+    //           const parsedData = JSON.parse(error.config.data);
+    //           console.log('  Request Data (parsed):', parsedData);
+    //         } catch (e) {
+    //           // If not JSON, show as is
+    //           console.log('  Request Data (raw):', error.config.data);
+    //         }
+    //       } else {
+    //         console.log('  Request Data:', error.config.data);
+    //       }
+    //     }
+    //   }
+    // } else if (error.request) {
+    //   console.log('No Response Received:', error.request);
+    // } else {
+    //   console.log('Request Setup Error');
+    // }
     
     return Promise.reject(error);
   }
@@ -157,11 +157,11 @@ const fetchCsrfToken = async () => {
     // });
     return true;
   } catch (error) {
-    console.error("CSRF token fetch failed:", {
-      status: error.response?.status,
-      message: error.message,
-      response: error.response?.data,
-    });
+    // console.error("CSRF token fetch failed:", {
+    //   status: error.response?.status,
+    //   message: error.message,
+    //   response: error.response?.data,
+    // });
     return false;
   }
 };
@@ -213,15 +213,15 @@ api.interceptors.request.use(
 api.interceptors.request.use(
   (config) => {
     // Log timezone info cho debug
-    if (config.url.includes("vnpay")) {
-      console.log("Frontend Timezone Info:", {
-        browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        current_time: new Date().toISOString(),
-        vietnam_time: new Date().toLocaleString("vi-VN", {
-          timeZone: "Asia/Ho_Chi_Minh",
-        }),
-      });
-    }
+    // if (config.url.includes("vnpay")) {
+    //   console.log("Frontend Timezone Info:", {
+    //     browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    //     current_time: new Date().toISOString(),
+    //     vietnam_time: new Date().toLocaleString("vi-VN", {
+    //       timeZone: "Asia/Ho_Chi_Minh",
+    //     }),
+    //   });
+    // }
     return config;
   },
   (error) => Promise.reject(error)
@@ -256,14 +256,14 @@ api.interceptors.response.use(
 
     // If all retries failed, handle the error
     if (error.code === "ECONNABORTED") {
-      console.error("Request timeout:", error.message);
+      // console.error("Request timeout:", error.message);
       return Promise.reject(
         new Error("The request timed out. Please try again.")
       );
     }
 
     if (!error.response) {
-      console.error("Network error:", error.message);
+      // console.error("Network error:", error.message);
       return Promise.reject(
         new Error(
           "Unable to connect to the server. Please check your connection."
@@ -272,7 +272,7 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 419) {
-      console.error("CSRF token mismatch:", error.response?.data);
+      // console.error("CSRF token mismatch:", error.response?.data);
       return Promise.reject(new Error("CSRF token mismatch"));
     }
 
@@ -296,11 +296,11 @@ api.interceptors.response.use(
       }
     }
 
-    console.error("API Error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-    });
+    // console.error("API Error:", {
+    //   status: error.response?.status,
+    //   data: error.response?.data,
+    //   url: error.config?.url,
+    // });
 
     return Promise.reject(error);
   }

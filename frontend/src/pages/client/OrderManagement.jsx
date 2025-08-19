@@ -26,8 +26,6 @@ import {
   Mail,
 } from "lucide-react";
 
-// Dữ liệu đơn hàng giả để kiểm tra
-
 const OrderManagementPage = () => {
   const { user } = useAuth();
   const { getUserOrders, cancelOrder, loading, error } = useOrder();
@@ -45,7 +43,65 @@ const OrderManagementPage = () => {
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [reviewEligibility, setReviewEligibility] = useState({});
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vnpay');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("vnpay");
+
+  // Hàm để định dạng các thuộc tính biến thể từ backend
+  const formatVariationAttributes = (attributes) => {
+    if (!attributes) return "";
+    
+    try {
+      // Nếu attributes là chuỗi JSON
+      if (typeof attributes === 'string') {
+        // Thử parse trực tiếp nếu là JSON
+        try {
+          const parsed = JSON.parse(attributes);
+          if (parsed && typeof parsed === 'object') {
+            // Nếu có thuộc tính 'attributes' bên trong
+            if (parsed.attributes && typeof parsed.attributes === 'object') {
+              return Object.entries(parsed.attributes)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+            // Nếu chính nó là object attributes
+            return Object.entries(parsed)
+              .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+              .join(', ');
+          }
+        } catch (parseError) {
+          // Nếu không parse được, tìm pattern trong chuỗi
+          if (attributes.includes('attributes:')) {
+            const attributesMatch = attributes.match(/attributes:\s*({[^}]+})/);
+            if (attributesMatch && attributesMatch[1]) {
+              const attributesObj = JSON.parse(attributesMatch[1]);
+              return Object.entries(attributesObj)
+                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+                .join(', ');
+            }
+          }
+        }
+      }
+      
+      // Nếu attributes đã là object
+      if (typeof attributes === 'object') {
+        // Nếu có thuộc tính 'attributes' bên trong
+        if (attributes.attributes && typeof attributes.attributes === 'object') {
+          return Object.entries(attributes.attributes)
+            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+            .join(', ');
+        }
+        // Nếu chính nó là object attributes
+        return Object.entries(attributes)
+          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
+          .join(', ');
+      }
+      
+      // Fallback: trả về chuỗi gốc
+      return attributes;
+    } catch (error) {
+      console.error('Error parsing variation attributes:', error);
+      return attributes || "";
+    }
+  };
 
   // Hàm kiểm tra xem đơn hàng có sản phẩm nào có thể đánh giá không
   const hasReviewableItems = (order) => {
@@ -60,7 +116,6 @@ const OrderManagementPage = () => {
     return result;
   };
 
-  // In the useEffect where orders are loaded:
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -70,12 +125,43 @@ const OrderManagementPage = () => {
     // Tải đơn hàng của người dùng từ API
     const loadOrders = async () => {
       try {
-        
         setIsLoadingOrders(true);
         const userOrders = await getUserOrders(); // Xóa tham số userId
         setOrders(userOrders || []);
         setFilteredOrders(userOrders || []);
-        console.log(orders)
+        console.log("Loaded orders:", userOrders); // Kiểm tra dữ liệu đơn hàng
+        console.log("DEBUG - All orders data:", JSON.stringify(userOrders, null, 2));
+        console.log("DEBUG - Number of orders:", userOrders?.length || 0);
+        
+        // Debug từng order
+        if (userOrders && userOrders.length > 0) {
+          userOrders.forEach((order, index) => {
+            console.log(`DEBUG - Order ${index + 1}:`, {
+              id: order.id,
+              order_number: order.order_number,
+              status: order.status,
+              total: order.total,
+              created_at: order.created_at,
+              items_count: order.items?.length || 0,
+              items: order.items
+            });
+            
+            // Debug từng item trong order
+            if (order.items && order.items.length > 0) {
+              order.items.forEach((item, itemIndex) => {
+                console.log(`DEBUG - Order ${index + 1} Item ${itemIndex + 1}:`, {
+                  id: item.id,
+                  book_id: item.book_id,
+                  book_title: item.book_title,
+                  variation_id: item.variation_id,
+                  variation_attributes: item.variation_attributes,
+                  quantity: item.quantity,
+                  price: item.price
+                });
+              });
+            }
+          });
+        }
 
         // Kiểm tra tính đủ điều kiện đánh giá cho các đơn hàng đã giao
         await checkReviewEligibility(userOrders || []);
@@ -116,7 +202,7 @@ const OrderManagementPage = () => {
     };
 
     loadOrders();
-  }, [user, navigate]); // Đã xóa getUserOrders khỏi dependencies để tránh vòng lặp vô hạn
+  }, [user, navigate, getUserOrders]); // Đã thêm getUserOrders vào dependencies
 
   useEffect(() => {
     // Lọc và tìm kiếm đơn hàng
@@ -144,9 +230,14 @@ const OrderManagementPage = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          // Sắp xếp theo created_at nếu có, nếu không thì theo updatedAt
+          const dateA = new Date(a.created_at || a.createdAt);
+          const dateB = new Date(b.created_at || b.createdAt);
+          return dateB.getTime() - dateA.getTime();
         case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
+          const dateAOld = new Date(a.created_at || a.createdAt);
+          const dateBOld = new Date(b.created_at || b.createdAt);
+          return dateAOld.getTime() - dateBOld.getTime();
         case "highest":
           return b.total - a.total;
         case "lowest":
@@ -169,22 +260,6 @@ const OrderManagementPage = () => {
     setIsCancelModalOpen(true);
   };
 
-  const handleRetryPayment = async (order) => {
-    try {
-      const response = await api.post(`/payment/vnpay/retry/${order.id}`);
-      
-      if (response.data.success) {
-        // Redirect to VNPay payment URL
-        window.location.href = response.data.payment_url;
-      } else {
-        alert(response.data.message || "Không thể tạo thanh toán mới");
-      }
-    } catch (error) {
-      console.error("Retry payment error:", error);
-      alert("Có lỗi xảy ra khi tạo thanh toán mới");
-    }
-  };
-
   const confirmCancelOrder = async (cancellationReason) => {
     if (!selectedOrder) return;
 
@@ -198,7 +273,7 @@ const OrderManagementPage = () => {
           ? {
               ...order,
               status: "cancelled",
-              updatedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(), // Cập nhật thời gian hủy
             }
           : order
       );
@@ -454,12 +529,18 @@ const OrderManagementPage = () => {
                           order.status
                         )}`}>
                         {getStatusIcon(order.status)}
-                        {order.status === 'pending' ? 'Chờ xử lý' :
-                         order.status === 'processing' ? 'Đang xử lý' :
-                         order.status === 'shipped' ? 'Đã gửi' :
-                         order.status === 'delivered' ? 'Đã giao' :
-                         order.status === 'cancelled' ? 'Đã hủy' :
-                         order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        {order.status === "pending"
+                          ? "Chờ xử lý"
+                          : order.status === "processing"
+                          ? "Đang xử lý"
+                          : order.status === "shipped"
+                          ? "Đã gửi"
+                          : order.status === "delivered"
+                          ? "Đã giao"
+                          : order.status === "cancelled"
+                          ? "Đã hủy"
+                          : order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
                       </span>
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
                         {formatCurrency(order.total)}
@@ -473,14 +554,20 @@ const OrderManagementPage = () => {
                       <div
                         key={`${order.id}-${item.id || item.book_id}-${index}`}
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        {/* HÃY KIỂM TRA LẠI DƯỚI ĐÂY NẾU CÓ DÒNG NÀO HIỂN THỊ TOÀN BỘ 'item' */}
                         <img
                           src={
-                            item.book_image ? `http://127.0.0.1:8000/storage/${item.book_image}` :
-                            item.book?.image ? `http://127.0.0.1:8000/storage/${item.book.image}` :
-                            item.coverImage ? `http://127.0.0.1:8000/storage/${item.coverImage}` :
-                            "/placeholder-book.svg"
+                            item.book_image
+                              ? `http://127.0.0.1:8000/storage/${item.book_image}`
+                              : item.book?.image
+                              ? `http://127.0.0.1:8000/storage/${item.book.image}`
+                              : item.coverImage
+                              ? `http://127.0.0.1:8000/storage/${item.coverImage}`
+                              : "/placeholder-book.svg"
                           }
-                          alt={item.book_title || item.book?.title || item.title}
+                          alt={
+                            item.book_title || item.book?.title || item.title
+                          }
                           className="w-12 h-16 object-cover rounded"
                         />
                         <div className="flex-grow min-w-0">
@@ -488,13 +575,19 @@ const OrderManagementPage = () => {
                             {item.book_title || item.book?.title || item.title}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                            của {item.book?.author?.name || item.author_name || item.author || 'Không rõ tác giả'}
+                            của{" "}
+                            {item.book?.author?.name ||
+                              item.author_name ||
+                              item.author ||
+                              "Không rõ tác giả"}
                           </p>
                           {/* Display variation information if available */}
                           {(item.variation_id || item.variation_attributes) && (
                             <div className="mt-1">
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                {item.variation_attributes || 'Biến thể'}
+                                {formatVariationAttributes(
+                                  item.variation_attributes
+                                ) || "Biến thể"}
                               </span>
                             </div>
                           )}
@@ -527,7 +620,7 @@ const OrderManagementPage = () => {
                       Xem Chi Tiết
                     </button>
 
-                    {order.payment_status === 'failed' && (
+                    {order.payment_status === "failed" && (
                       <button
                         onClick={() => {
                           setSelectedOrder(order);
@@ -603,12 +696,18 @@ const OrderManagementPage = () => {
                           selectedOrder.status
                         )}`}>
                         {getStatusIcon(selectedOrder.status)}
-                        {selectedOrder.status === 'pending' ? 'Chờ xử lý' :
-                         selectedOrder.status === 'processing' ? 'Đang xử lý' :
-                         selectedOrder.status === 'shipped' ? 'Đã gửi' :
-                         selectedOrder.status === 'delivered' ? 'Đã giao' :
-                         selectedOrder.status === 'cancelled' ? 'Đã hủy' :
-                         selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                        {selectedOrder.status === "pending"
+                          ? "Chờ xử lý"
+                          : selectedOrder.status === "processing"
+                          ? "Đang xử lý"
+                          : selectedOrder.status === "shipped"
+                          ? "Đã gửi"
+                          : selectedOrder.status === "delivered"
+                          ? "Đã giao"
+                          : selectedOrder.status === "cancelled"
+                          ? "Đã hủy"
+                          : selectedOrder.status.charAt(0).toUpperCase() +
+                            selectedOrder.status.slice(1)}
                       </span>
                     </div>
                     <div>
@@ -657,7 +756,7 @@ const OrderManagementPage = () => {
                         <p className="text-gray-800 dark:text-white">
                           {selectedOrder.address?.province?.name ||
                             selectedOrder.shippingAddress?.province?.name ||
-                            'Chưa có thông tin'}
+                            "Chưa có thông tin"}
                         </p>
                       </div>
 
@@ -668,7 +767,7 @@ const OrderManagementPage = () => {
                         <p className="text-gray-800 dark:text-white">
                           {selectedOrder.address?.ward_model?.name ||
                             selectedOrder.shippingAddress?.ward_model?.name ||
-                            'Chưa có thông tin'}
+                            "Chưa có thông tin"}
                         </p>
                       </div>
 
@@ -692,7 +791,7 @@ const OrderManagementPage = () => {
                             selectedOrder.customer_phone ||
                             selectedOrder.phone ||
                             selectedOrder.user?.phone ||
-                            'Chưa có thông tin'}
+                            "Chưa có thông tin"}
                         </p>
                       </div>
 
@@ -706,10 +805,9 @@ const OrderManagementPage = () => {
                             selectedOrder.contactInfo?.email ||
                             selectedOrder.customer_email ||
                             selectedOrder.email ||
-                            'Chưa có thông tin'}
+                            "Chưa có thông tin"}
                         </p>
                       </div>
-
                     </div>
                   </div>
 
@@ -721,30 +819,46 @@ const OrderManagementPage = () => {
                     <div className="space-y-3">
                       {selectedOrder.items?.map((item, index) => (
                         <div
-                          key={`${selectedOrder.id}-item-${item.id || item.book_id}-${index}`}
+                          key={`${selectedOrder.id}-item-${
+                            item.id || item.book_id
+                          }-${index}`}
                           className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                           <img
                             src={
-                              item.book_image ? `http://127.0.0.1:8000/storage/${item.book_image}` :
-                              item.book?.image ? `http://127.0.0.1:8000/storage/${item.book.image}` :
-                              item.coverImage ? `http://127.0.0.1:8000/storage/${item.coverImage}` :
-                              "/placeholder-book.svg"
+                              item.book_image
+                                ? `http://127.0.0.1:8000/storage/${item.book_image}`
+                                : item.book?.image
+                                ? `http://127.0.0.1:8000/storage/${item.book.image}`
+                                : item.coverImage
+                                ? `http://127.0.0.1:8000/storage/${item.coverImage}`
+                                : "/placeholder-book.svg"
                             }
-                            alt={item.book_title || item.book?.title || item.title}
+                            alt={
+                              item.book_title || item.book?.title || item.title
+                            }
                             className="w-16 h-20 object-cover rounded"
                           />
                           <div className="flex-grow">
                             <h4 className="font-medium text-gray-800 dark:text-white">
-                              {item.book_title || item.book?.title || item.title}
+                              {item.book_title ||
+                                item.book?.title ||
+                                item.title}
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              của {item.book?.author?.name || item.author_name || item.author || 'Không rõ tác giả'}
+                              của{" "}
+                              {item.book?.author?.name ||
+                                item.author_name ||
+                                item.author ||
+                                "Không rõ tác giả"}
                             </p>
                             {/* Display variation information if available */}
-                            {(item.variation_id || item.variation_attributes) && (
+                            {(item.variation_id ||
+                              item.variation_attributes) && (
                               <div className="mt-1">
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                                  {item.variation_attributes || 'Biến thể'}
+                                  {formatVariationAttributes(
+                                    item.variation_attributes
+                                  ) || "Biến thể"}
                                 </span>
                               </div>
                             )}
@@ -775,29 +889,56 @@ const OrderManagementPage = () => {
                         <CreditCard className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="font-medium text-gray-800 dark:text-white">
-                            {selectedOrder.payment_method === 'credit_card' ? 'Thẻ tín dụng' :
-                             selectedOrder.payment_method === 'debit_card' ? 'Thẻ ghi nợ' :
-                             selectedOrder.payment_method === 'paypal' ? 'PayPal' :
-                             selectedOrder.payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
-                             selectedOrder.payment_method === 'cash_on_delivery' ? 'Thanh toán khi nhận hàng (COD)' :
-                             selectedOrder.paymentMethod?.type === 'credit_card' ? 'Thẻ tín dụng' :
-                             selectedOrder.paymentMethod?.type === 'debit_card' ? 'Thẻ ghi nợ' :
-                             selectedOrder.paymentMethod?.type === 'paypal' ? 'PayPal' :
-                             selectedOrder.paymentMethod?.type === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
-                             selectedOrder.paymentMethod?.type === 'cash_on_delivery' ? 'Thanh toán khi nhận hàng (COD)' :
-                             selectedOrder.payment_method || selectedOrder.paymentMethod?.type || "Thanh toán khi nhận hàng (COD)"}
+                            {selectedOrder.payment_method === "credit_card"
+                              ? "Thẻ tín dụng"
+                              : selectedOrder.payment_method === "debit_card"
+                              ? "Thẻ ghi nợ"
+                              : selectedOrder.payment_method === "paypal"
+                              ? "PayPal"
+                              : selectedOrder.payment_method === "bank_transfer"
+                              ? "Chuyển khoản ngân hàng"
+                              : selectedOrder.payment_method ===
+                                "cash_on_delivery"
+                              ? "Thanh toán khi nhận hàng (COD)"
+                              : selectedOrder.paymentMethod?.type ===
+                                "credit_card"
+                              ? "Thẻ tín dụng"
+                              : selectedOrder.paymentMethod?.type ===
+                                "debit_card"
+                              ? "Thẻ ghi nợ"
+                              : selectedOrder.paymentMethod?.type === "paypal"
+                              ? "PayPal"
+                              : selectedOrder.paymentMethod?.type ===
+                                "bank_transfer"
+                              ? "Chuyển khoản ngân hàng"
+                              : selectedOrder.paymentMethod?.type ===
+                                "cash_on_delivery"
+                              ? "Thanh toán khi nhận hàng (COD)"
+                              : selectedOrder.payment_method ||
+                                selectedOrder.paymentMethod?.type ||
+                                "Thanh toán khi nhận hàng (COD)"}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Trạng thái:{" "}
-                            {selectedOrder.payment_status === 'pending' ? 'Đang chờ' :
-                             selectedOrder.payment_status === 'paid' ? 'Đã thanh toán' :
-                             selectedOrder.payment_status === 'failed' ? 'Thanh toán thất bại' :
-                             selectedOrder.payment_status === 'refunded' ? 'Đã hoàn tiền' :
-                             selectedOrder.paymentStatus === 'pending' ? 'Đang chờ' :
-                             selectedOrder.paymentStatus === 'paid' ? 'Đã thanh toán' :
-                             selectedOrder.paymentStatus === 'failed' ? 'Thanh toán thất bại' :
-                             selectedOrder.paymentStatus === 'refunded' ? 'Đã hoàn tiền' :
-                             selectedOrder.payment_status || selectedOrder.paymentStatus || "Đang chờ"}
+                            {selectedOrder.payment_status === "pending"
+                              ? "Đang chờ"
+                              : selectedOrder.payment_status === "paid"
+                              ? "Đã thanh toán"
+                              : selectedOrder.payment_status === "failed"
+                              ? "Thanh toán thất bại"
+                              : selectedOrder.payment_status === "refunded"
+                              ? "Đã hoàn tiền"
+                              : selectedOrder.paymentStatus === "pending"
+                              ? "Đang chờ"
+                              : selectedOrder.paymentStatus === "paid"
+                              ? "Đã thanh toán"
+                              : selectedOrder.paymentStatus === "failed"
+                              ? "Thanh toán thất bại"
+                              : selectedOrder.paymentStatus === "refunded"
+                              ? "Đã hoàn tiền"
+                              : selectedOrder.payment_status ||
+                                selectedOrder.paymentStatus ||
+                                "Đang chờ"}
                           </p>
                         </div>
                       </div>
@@ -868,44 +1009,56 @@ const OrderManagementPage = () => {
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Đơn hàng: {selectedOrder.order_number || selectedOrder.id}
                   </div>
-                  
-                  <div className="space-y-3">
-                     <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                       <input
-                         type="radio"
-                         name="paymentMethod"
-                         value="vnpay"
-                         checked={selectedPaymentMethod === 'vnpay'}
-                         onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                         className="mr-3"
-                       />
-                       <div className="flex items-center gap-3">
-                         <CreditCard className="h-5 w-5 text-blue-600" />
-                         <div>
-                           <div className="font-medium text-gray-800 dark:text-white">VNPay</div>
-                           <div className="text-sm text-gray-600 dark:text-gray-400">Thanh toán online qua VNPay</div>
-                         </div>
-                       </div>
-                     </label>
 
-                     <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                       <input
-                         type="radio"
-                         name="paymentMethod"
-                         value="cod"
-                         checked={selectedPaymentMethod === 'cod'}
-                         onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                         className="mr-3"
-                       />
-                       <div className="flex items-center gap-3">
-                         <Package className="h-5 w-5 text-green-600" />
-                         <div>
-                           <div className="font-medium text-gray-800 dark:text-white">COD</div>
-                           <div className="text-sm text-gray-600 dark:text-gray-400">Thanh toán khi nhận hàng</div>
-                         </div>
-                       </div>
-                     </label>
-                   </div>
+                  <div className="space-y-3">
+                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="vnpay"
+                        checked={selectedPaymentMethod === "vnpay"}
+                        onChange={(e) =>
+                          setSelectedPaymentMethod(e.target.value)
+                        }
+                        className="mr-3"
+                      />
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <div className="font-medium text-gray-800 dark:text-white">
+                            VNPay
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Thanh toán online qua VNPay
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={selectedPaymentMethod === "cod"}
+                        onChange={(e) =>
+                          setSelectedPaymentMethod(e.target.value)
+                        }
+                        className="mr-3"
+                      />
+                      <div className="flex items-center gap-3">
+                        <Package className="h-5 w-5 text-green-600" />
+                        <div>
+                          <div className="font-medium text-gray-800 dark:text-white">
+                            COD
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Thanh toán khi nhận hàng
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -919,35 +1072,59 @@ const OrderManagementPage = () => {
                   </button>
                   <button
                     onClick={async () => {
-                       try {
-                         const response = await api.post(`/payment/change-method/${selectedOrder.id}`, {
-                           payment_method: selectedPaymentMethod
-                         });
-                         
-                         if (response.data.success) {
-                           if (selectedPaymentMethod === 'cod') {
-                             alert(response.data.message);
-                             // Update local state instead of reloading
-                             setOrders(prevOrders => 
-                               prevOrders.map(order => 
-                                 order.id === selectedOrder.id 
-                                   ? { ...order, payment_method: 'cod', payment_status: 'pending' }
-                                   : order
-                               )
-                             );
-                           } else {
-                             window.location.href = response.data.payment_url;
-                           }
-                         } else {
-                           alert(response.data.message || "Không thể thay đổi phương thức thanh toán");
-                         }
-                       } catch (error) {
-                         console.error("Change payment method error:", error);
-                         alert("Có lỗi xảy ra khi thay đổi phương thức thanh toán");
-                       }
-                       setShowPaymentMethodModal(false);
-                       setSelectedOrder(null);
-                     }}
+                      try {
+                        const response = await api.post(
+                          `/payment/change-method/${selectedOrder.id}`,
+                          {
+                            payment_method: selectedPaymentMethod,
+                          }
+                        );
+
+                        if (response.data.success) {
+                          if (selectedPaymentMethod === "cod") {
+                            alert(response.data.message);
+                            // Update local state instead of reloading
+                            setOrders((prevOrders) =>
+                              prevOrders.map((order) =>
+                                order.id === selectedOrder.id
+                                  ? {
+                                      ...order,
+                                      payment_method: "cod",
+                                      payment_status: "pending",
+                                    }
+                                  : order
+                              )
+                            );
+                            // Also update filtered orders to reflect the change immediately
+                            setFilteredOrders((prevFilteredOrders) =>
+                              prevFilteredOrders.map((order) =>
+                                order.id === selectedOrder.id
+                                  ? {
+                                      ...order,
+                                      payment_method: "cod",
+                                      payment_status: "pending",
+                                    }
+                                  : order
+                              )
+                            );
+                          } else {
+                            window.location.href = response.data.payment_url;
+                          }
+                        } else {
+                          alert(
+                            response.data.message ||
+                              "Không thể thay đổi phương thức thanh toán"
+                          );
+                        }
+                      } catch (error) {
+                        console.error("Change payment method error:", error);
+                        alert(
+                          "Có lỗi xảy ra khi thay đổi phương thức thanh toán"
+                        );
+                      }
+                      setShowPaymentMethodModal(false);
+                      setSelectedOrder(null);
+                    }}
                     className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                     Thanh Toán
                   </button>

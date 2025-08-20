@@ -24,6 +24,7 @@ import {
   CreditCard,
   Phone,
   Mail,
+  RotateCcw,
 } from "lucide-react";
 
 const OrderManagementPage = () => {
@@ -44,6 +45,10 @@ const OrderManagementPage = () => {
   const [reviewEligibility, setReviewEligibility] = useState({});
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("vnpay");
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
 
   // Hàm để định dạng các thuộc tính biến thể từ backend
   const formatVariationAttributes = (attributes) => {
@@ -289,6 +294,38 @@ const OrderManagementPage = () => {
     }
   };
 
+  const handleRefundSubmit = async () => {
+    if (!selectedOrder || !refundReason.trim()) {
+      alert("Vui lòng nhập lý do hoàn tiền");
+      return;
+    }
+
+    setIsSubmittingRefund(true);
+    try {
+      const response = await api.post('/refunds/request', {
+        order_id: selectedOrder.id,
+        reason: refundReason,
+      });
+
+      if (response.data.success) {
+        alert("Yêu cầu hoàn tiền đã được gửi thành công!");
+        setIsRefundModalOpen(false);
+        setRefundReason("");
+
+        setSelectedOrder(null);
+        // Reload orders to get updated status
+        window.location.reload();
+      } else {
+        alert(response.data.message || "Có lỗi xảy ra khi gửi yêu cầu hoàn tiền");
+      }
+    } catch (error) {
+      console.error("Error submitting refund request:", error);
+      alert("Không thể gửi yêu cầu hoàn tiền. Vui lòng thử lại sau.");
+    } finally {
+      setIsSubmittingRefund(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -325,6 +362,27 @@ const OrderManagementPage = () => {
 
   const canCancelOrder = (order) => {
     return order.status === "pending" || order.status === "processing";
+  };
+
+  const canRequestRefund = (order) => {
+    // Kiểm tra trạng thái đơn hàng là delivered và đã thanh toán
+    const isDelivered = order.status === "delivered";
+    // Tạm thời cho phép test với các trạng thái khác để dễ kiểm tra
+    const isPaid = order.payment_status === "paid" || order.paymentStatus === "paid" || 
+                   order.payment_status === "success" || order.paymentStatus === "success" ||
+                   order.status === "processing" || order.status === "shipped"; // Tạm thời cho test
+    
+    console.log(`DEBUG - canRequestRefund for order ${order.id}:`, {
+      status: order.status,
+      payment_status: order.payment_status,
+      paymentStatus: order.paymentStatus,
+      isDelivered,
+      isPaid,
+      canRefund: isDelivered || (order.status === "processing" || order.status === "shipped") // Tạm thời cho test
+    });
+    
+    // Tạm thời cho phép hoàn tiền với các trạng thái khác để test
+    return isDelivered || (order.status === "processing" || order.status === "shipped");
   };
 
   const statusOptions = [
@@ -405,6 +463,7 @@ const OrderManagementPage = () => {
                 Theo dõi và quản lý đơn hàng sách của bạn
               </p>
             </div>
+
             <button
               onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
@@ -638,6 +697,19 @@ const OrderManagementPage = () => {
                         className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <XCircle className="h-4 w-4" />
                         Hủy Đơn Hàng
+                      </button>
+                    )}
+
+                    {canRequestRefund(order) && (
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                  
+                          setIsRefundModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 border border-orange-300 text-orange-600 dark:text-orange-400 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
+                        <RotateCcw className="h-4 w-4" />
+                        Yêu Cầu Hoàn Tiền
                       </button>
                     )}
 
@@ -1127,6 +1199,128 @@ const OrderManagementPage = () => {
                     }}
                     className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
                     Thanh Toán
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal Yêu Cầu Hoàn Tiền */}
+        <AnimatePresence>
+          {isRefundModalOpen && selectedOrder && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                    Yêu Cầu Hoàn Tiền
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setIsRefundModalOpen(false);
+                      setRefundReason("");
+              
+                      setSelectedOrder(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-4">
+                  {/* Thông tin đơn hàng */}
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-800 dark:text-white mb-2">
+                      Thông Tin Đơn Hàng
+                    </h3>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Mã đơn hàng: <span className="font-medium">{selectedOrder.order_number || selectedOrder.id}</span>
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Tổng tiền: <span className="font-medium text-green-600">{formatCurrency(selectedOrder.total)}</span>
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Ngày đặt: <span className="font-medium">{new Date(selectedOrder.created_at).toLocaleDateString()}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Thông báo hoàn tiền toàn phần */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Lưu ý:</strong> Yêu cầu hoàn tiền sẽ được xử lý toàn phần với số tiền {formatCurrency(selectedOrder.total)}.
+                    </p>
+                  </div>
+
+                  {/* Lý do hoàn tiền */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Lý Do Hoàn Tiền *
+                    </label>
+                    <textarea
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Vui lòng mô tả lý do bạn muốn hoàn tiền..."
+                      required
+                    />
+                  </div>
+
+                  {/* Lưu ý */}
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <p className="font-medium mb-1">Lưu ý quan trọng:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Yêu cầu hoàn tiền sẽ được xem xét trong 1-3 ngày làm việc</li>
+                          <li>Tiền sẽ được hoàn về tài khoản thanh toán gốc</li>
+                          <li>Thời gian hoàn tiền: 5-10 ngày làm việc</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => {
+                      setIsRefundModalOpen(false);
+                      setRefundReason("");
+              
+                      setSelectedOrder(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleRefundSubmit}
+                    disabled={isSubmittingRefund || !refundReason.trim()}
+                    className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+                    {isSubmittingRefund ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Đang Gửi...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="h-4 w-4" />
+                        Gửi Yêu Cầu
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.div>

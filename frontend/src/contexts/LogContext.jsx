@@ -135,14 +135,7 @@ export const LogProvider = ({ children }) => {
 
   const getRandomBookTitle = () => {
     const titles = [
-      'The Great Gatsby',
-      'To Kill a Mockingbird',
-      'Pride and Prejudice',
-      '1984',
-      'The Hobbit',
-      'Harry Potter',
-      'The Catcher in the Rye',
-      'Lord of the Rings'
+      "Tam Mính   "
     ];
     return titles[Math.floor(Math.random() * titles.length)];
   };

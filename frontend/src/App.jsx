@@ -7,6 +7,7 @@ import { ReviewManagementProvider } from "./contexts/ReviewManagementContext";
 import { OrderManagementProvider } from "./contexts/OrderManagementContext";
 import { AnalyticsProvider } from "./contexts/AnalyticsContext";
 import { LogProvider } from "./contexts/LogContext";
+import { RefundProvider } from "./contexts/RefundContext";
 import { ClientLayout, AdminLayout } from "./layouts";
 import {
   OrderManagement as OrderManagementClient,
@@ -22,6 +23,9 @@ import {
   OrderFailedPage,
   OrderConfirmationPage,
   PaymentVNPayReturn,
+  RefundRequestPage,
+  RefundListPage,
+  RefundDetailPage,
 } from "./pages/client";
 import ForgotPasswordPage from "./pages/client/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/client/ResetPasswordPage";
@@ -44,6 +48,9 @@ import {
   BookDetail,
   LogManagement,
   ReviewManagement,
+  RefundManagement,
+  RefundDetail,
+  RefundStats,
 } from "./pages/admin";
 import BulkUpdateBooks from "./pages/admin/BulkUpdateBooks";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
@@ -74,6 +81,7 @@ function App() {
           <OrderManagementProvider>
             <AnalyticsProvider>
               <LogProvider>
+                <RefundProvider>
                 <Routes>
                   <Route element={<ClientLayout />}>
                     <Route path="/" element={<HomePage />} />
@@ -111,6 +119,18 @@ function App() {
                     <Route
                       path="/payment/vnpay/return"
                       element={<PaymentVNPayReturn />}
+                    />
+                    <Route
+                      path="/profile/refunds"
+                      element={<RefundListPage />}
+                    />
+                    <Route
+                      path="/profile/refunds/:id"
+                      element={<RefundDetailPage />}
+                    />
+                    <Route
+                      path="/orders/:orderId/refund"
+                      element={<RefundRequestPage />}
                     />
                   </Route>
 
@@ -157,9 +177,13 @@ function App() {
                     <Route path="coupons/edit/:id" element={<CouponEdit />} />
                     <Route path="reviews" element={<ReviewManagement />} />
                     <Route path="analytics" element={<AnalyticsDashboard />} />
+                    <Route path="refunds" element={<RefundManagement />} />
+                    <Route path="refunds/:id" element={<RefundDetail />} />
+                    <Route path="refunds/stats" element={<RefundStats />} />
                   </Route>
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
+                </RefundProvider>
               </LogProvider>
             </AnalyticsProvider>
           </OrderManagementProvider>

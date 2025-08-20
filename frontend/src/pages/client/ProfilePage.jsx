@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import profileService from "../../services/profileService";
 
@@ -13,11 +13,10 @@ import {
   Edit3,
   Save,
   X,
-  Package,
+  Camera,
   Lock,
   Eye,
   EyeOff,
-  Camera,
 } from "lucide-react";
 
 const ProfilePage = () => {

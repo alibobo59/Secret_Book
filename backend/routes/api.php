@@ -18,6 +18,7 @@ use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ImageUploadController;
+use App\Http\Controllers\RefundController;
 
 // Root route
 Route::get('/', function () {
@@ -120,6 +121,15 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings', [SettingsController::class, 'store'])->name('admin.settings.store');
     Route::get('/admin/settings/shipping', [SettingsController::class, 'getShippingSettings'])->name('admin.settings.shipping');
+
+    // Refund Management (Admin)
+    Route::get('/admin/refunds', [RefundController::class, 'index'])->name('admin.refunds.index');
+    Route::get('/admin/refunds/stats', [RefundController::class, 'getRefundStats'])->name('admin.refunds.stats');
+    Route::get('/admin/refunds/{refund}', [RefundController::class, 'show'])->name('admin.refunds.show');
+    Route::post('/admin/refunds/full', [RefundController::class, 'createFullRefund'])->name('admin.refunds.create-full');
+    Route::post('/admin/refunds/partial', [RefundController::class, 'createPartialRefund'])->name('admin.refunds.create-partial');
+    Route::patch('/admin/refunds/{refund}/status', [RefundController::class, 'updateStatus'])->name('admin.refunds.update-status');
+    Route::get('/admin/refunds/{refund}/vnpay-status', [RefundController::class, 'checkVNPayStatus'])->name('admin.refunds.vnpay-status');
 });
 
 // Authenticated user routes
@@ -159,6 +169,10 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
+
+    // Refund routes for customers
+    Route::get('/refunds', [RefundController::class, 'getCustomerRefunds'])->name('refunds.customer');
+    Route::post('/refunds/request', [RefundController::class, 'requestRefund'])->name('refunds.request');
 });
 
 // Location routes (public)

@@ -44,29 +44,44 @@ const PaymentVNPayReturn = () => {
           setOrderNumber(vnp_TxnRef);
           setTransactionId(vnp_TransactionNo || "");
 
-          if (vnp_ResponseCode === "00") {
-            setStatus("success");
-            setPaymentData({
-              orderNumber: vnp_TxnRef,
-              transactionId: vnp_TransactionNo,
-              amount: vnpayParams.vnp_Amount
-                ? parseInt(vnpayParams.vnp_Amount) / 100
-                : 0,
-              payDate: vnpayParams.vnp_PayDate,
-            });
-          } else {
-            setStatus("failed");
+          // Always call the return endpoint to update database
+          try {
+            const returnResponse = await api.post("/payment/vnpay/return", vnpayParams);
             
-            // Try to get order ID from the backend response
-            try {
-              const returnResponse = await api.post("/payment/vnpay/return", vnpayParams);
+            if (vnp_ResponseCode === "00") {
+              setStatus("success");
+              setPaymentData({
+                orderNumber: vnp_TxnRef,
+                transactionId: vnp_TransactionNo,
+                amount: vnpayParams.vnp_Amount
+                  ? parseInt(vnpayParams.vnp_Amount) / 100
+                  : 0,
+                payDate: vnpayParams.vnp_PayDate,
+              });
+            } else {
+              setStatus("failed");
               setPaymentData({
                 orderNumber: vnp_TxnRef,
                 orderId: returnResponse.data.order_id,
                 responseCode: vnp_ResponseCode,
                 message: getVNPayErrorMessage(vnp_ResponseCode),
               });
-            } catch (error) {
+            }
+          } catch (error) {
+            console.error("Payment return API error:", error);
+            // Fallback to display basic info even if return API fails
+            if (vnp_ResponseCode === "00") {
+              setStatus("success");
+              setPaymentData({
+                orderNumber: vnp_TxnRef,
+                transactionId: vnp_TransactionNo,
+                amount: vnpayParams.vnp_Amount
+                  ? parseInt(vnpayParams.vnp_Amount) / 100
+                  : 0,
+                payDate: vnpayParams.vnp_PayDate,
+              });
+            } else {
+              setStatus("failed");
               setPaymentData({
                 orderNumber: vnp_TxnRef,
                 responseCode: vnp_ResponseCode,

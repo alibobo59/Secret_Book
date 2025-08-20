@@ -65,6 +65,11 @@ class Order extends Model
                     ->withTimestamps();
     }
 
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class);
+    }
+
     /**
      * Định nghĩa trình tự trạng thái hợp lệ
      * Trình tự bắt buộc: pending -> processing -> shipped -> delivered

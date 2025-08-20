@@ -15,6 +15,7 @@ import {
   Percent,
   BarChart3,
   Star,
+  RefreshCw,
 } from "lucide-react";
 
 function AdminSidebar({
@@ -69,6 +70,12 @@ function AdminSidebar({
       label: "Đơn Hàng",
       icon: <ShoppingCart size={20} />,
       path: "/admin/orders",
+    },
+    {
+      id: "refunds",
+      label: "Hoàn Tiền",
+      icon: <RefreshCw size={20} />,
+      path: "/admin/refunds",
     },
     {
       id: "audit-logs",

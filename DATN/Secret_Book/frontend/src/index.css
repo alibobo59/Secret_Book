@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Image Resize Styles */
+.image-resizer {
+  display: inline-flex;
+  position: relative;
+  flex-grow: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.image-resizer img {
+  max-width: 100% !important;
+  max-height: 300px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain;
+}
+
+.image-resizer .resize-trigger {
+  position: absolute;
+  right: -6px;
+  bottom: -9px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: #3259a5;
+  cursor: se-resize;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+.image-resizer:hover .resize-trigger {
+  opacity: 1;
+}
+
+/* Dark theme support for image resizer */
+.dark .image-resizer .resize-trigger {
+  background: rgba(31, 41, 55, 0.9);
+  border-color: #4b5563;
+  color: #60a5fa;
+}
+
+/* Ensure editor container doesn't overflow */
+.ProseMirror {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.ProseMirror img {
+  max-width: 100% !important;
+  height: auto !important;
+}

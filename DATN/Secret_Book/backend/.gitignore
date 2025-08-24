@@ -1,3 +1,10 @@
+*.zip
+*.patch
+*.diff
+Secret_Book*/
+Banner*.jpg
+Banner*.png
+
 /.phpunit.cache
 /node_modules
 /public/build

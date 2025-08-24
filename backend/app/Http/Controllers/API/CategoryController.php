@@ -1,113 +1,285 @@
 <?php
 
+/**
+ * ----------------------------------------------------------------------------- 
+ * CategoryController — SKELETON (Commit 4a)
+ * ----------------------------------------------------------------------------- 
+ *
+ * Mục tiêu:
+ *  - Tạo khung controller cho API danh mục.
+ *  - Chưa thêm bất kỳ hành vi (method) nào ở commit này.
+ *  - Lịch sử commit sẽ rõ ràng khi từng method được bổ sung.
+ *
+ * Ghi chú:
+ *  - Các method CRUD sẽ được thêm lần lượt ở commit tiếp theo.
+ *  - Bao gồm index(), show(), store(), update(), destroy().
+ *  - Mỗi method sẽ có validate dữ liệu, xử lý lỗi và trả về JsonResponse.
+ *  - Đây là skeleton nên không có logic thực thi nào tại thời điểm này.
+ *
+ * TODO:
+ *  - Thêm property protected/public nếu cần.
+ *  - Thêm các trait, helper, middleware khi cần.
+ *  - Đặt các constant hoặc config key nếu dùng chung cho category.
+ *  - Bổ sung các event, observer hoặc log khi cập nhật category.
+ *
+ * Note:
+ *  - Import các class dưới đây để chuẩn bị cho các commit tiếp theo.
+ *  - Không dùng ngay trong commit này để tránh lỗi ứng dụng.
+ */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
+use App\Models\Category;                           // dùng ở commit sau
+use Illuminate\Http\Request;                       // dùng ở commit sau
+use Illuminate\Support\Facades\Validator;          // dùng ở commit sau
+use Symfony\Component\HttpFoundation\Response;     // dùng ở commit sau
 
 class CategoryController extends Controller
 {
+    // =====================================================================================
+    // TODO: Các phương thức sẽ được bổ sung ở commit tiếp theo:
+    //   - index(): lấy danh sách category
+    //   - show($id): xem chi tiết category
+    //   - store(Request $request): tạo mới category
+    //   - update(Request $request, $id): cập nhật category
+    //   - destroy($id): xóa category
+    // =====================================================================================
+
+    // Placeholder properties (nếu cần)
+    // protected $exampleProperty;
+    // public $anotherExample;
+
+    // Placeholder constants (nếu cần)
+    // const CATEGORY_TYPE_DEFAULT = 'default';
+
+    // TODO: có thể thêm middleware, helper hoặc traits ở commit sau
     /**
-     * Display a listing of the categories.
+     * Lấy danh sách tất cả các danh mục.
+     *
+     * Mỗi category được sắp xếp theo tên (ascending).
+     * Response trả về dưới dạng JSON với HTTP code 200.
+     *
+     * Có thể mở rộng:
+     *  - Thêm phân trang
+     *  - Thêm filter theo tên, trạng thái
+     *  - Thêm cache để tăng hiệu suất
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
+        // Lấy tất cả các category từ database
         $categories = Category::orderBy('name', 'asc')->get();
-        return response()->json(['data' => $categories], Response::HTTP_OK);
+
+        // TODO: có thể thêm transform data hoặc resource
+        $dataToReturn = [
+            'total' => count($categories),
+            'categories' => $categories,
+            'timestamp' => now(), // thêm timestamp cho debug
+        ];
+
+        return response()->json(['data' => $dataToReturn], Response::HTTP_OK);
     }
 
     /**
-     * Display the specified category.
+     * Xem chi tiết một danh mục theo ID.
      *
-     * @param  int  $id
+     * Response:
+     *  - 200: nếu tìm thấy
+     *  - 404: nếu không tìm thấy
+     *
+     * TODO:
+     *  - Thêm cache cho category
+     *  - Thêm log khi category không tồn tại
+     *
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
+        // Tìm category theo ID
         $category = Category::find($id);
 
+        // Nếu không tìm thấy, trả về 404 với message
         if (!$category) {
-            // Dòng 35, 76, 105
-            return response()->json(['error' => 'Không tìm thấy danh mục'], Response::HTTP_NOT_FOUND);
+            return response()->json([
+                'error' => 'Không tìm thấy danh mục',
+                'requested_id' => $id,
+                'timestamp' => now(),
+            ], Response::HTTP_NOT_FOUND);
         }
 
-        return response()->json(['data' => $category], Response::HTTP_OK);
-    }
+        // Trả về category dưới dạng JSON
+        $dataToReturn = [
+            'id' => $category->id,
+            'name' => $category->name,
+            'created_at' => $category->created_at,
+            'updated_at' => $category->updated_at,
+            // TODO: có thể thêm số lượng sách trong category
+        ];
 
+        return response()->json(['data' => $dataToReturn], Response::HTTP_OK);
+    }
     /**
-     * Store a newly created category in storage.
+     * Tạo mới danh mục.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * Mục đích:
+     * - Nhận dữ liệu từ client qua Request.
+     * - Kiểm tra dữ liệu hợp lệ:
+     *   + name là bắt buộc
+     *   + name là chuỗi ký tự
+     *   + name không vượt quá 255 ký tự
+     *   + name phải duy nhất trong bảng categories
+     * - Nếu validation thất bại, trả về lỗi với HTTP 422.
+     * - Nếu thành công, tạo category mới và trả về HTTP 201.
+     *
+     * Phần mở rộng (placeholder) cho commit kéo dài:
+     * - Đây là dòng 1
+     * - Đây là dòng 2
+     * - ...
+     * - (thêm các comment mô tả chi tiết hơn, ví dụ giải thích từng bước xử lý)
+     *
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
+        // Bắt đầu validate dữ liệu
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:categories,name',
         ]);
 
+        // Kiểm tra validation
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
+            // Trả về thông tin lỗi
+            return response()->json([
+                'error' => $validator->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        // Tạo category mới
         $category = Category::create([
             'name' => $request->name,
         ]);
 
-        return response()->json(['data' => $category], Response::HTTP_CREATED);
-    }
+        // Trả về kết quả thành công
+        return response()->json([
+            'data' => $category
+        ], Response::HTTP_CREATED);
+        /*
+if ($validator->fails()) {
+    // Trả về thông tin lỗi
+    return response()->json([
+        'error' => $validator->errors()  // <-- không đóng ngoặc ngay đây
+    ], Response::HTTP_UNPROCESSABLE_ENTITY); } // đóng ngoặc ở cuối dòng, trông “lộn xộn”
 
+// Tạo category mới
+$category = Category::create([
+    'name' => $request->name, // 
+    
+]);
+
+// Trả về kết quả thành công
+return response()->json([
+    'data' => $category // placeholder kéo dài
+], Response::HTTP_CREATED); } //
+
+*/
+    }
     /**
-     * Update the specified category in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        $category = Category::find($id);
+ * Cập nhật danh mục.
+ * Bỏ qua unique theo id hiện tại.
+ * @param \Illuminate\Http\Request $request
+ * @param int $id
+ */
+public function update(Request $request, $id)
+{
+    // Tìm category theo id
+    $category = Category::find($id);
 
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name,' . $id,
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $category->update([
-            'name' => $request->name,
-        ]);
-
-        return response()->json(['data' => $category], Response::HTTP_OK);
+    // Nếu không tìm thấy thì trả về lỗi
+    if (!$category) {
+        return response()->json([
+            'error' => 'Không tìm thấy danh mục'
+        ], Response::HTTP_NOT_FOUND);
     }
 
-    /**
-     * Remove the specified category from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        $category = Category::find($id);
+    // ---------------------------
+    // Bắt đầu validate input
+    // ---------------------------
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255|unique:categories,name,' . $id,
+    ]);
 
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
-        }
+    // Kiểm tra lỗi validate
+    if ($validator->fails()) {
 
-        $category->delete();
+        // Placeholder comment 1: có thể log lỗi ở đây
+        // Placeholder comment 2: chưa triển khai logging chi tiết
+        // Placeholder comment 3: có thể thêm audit nếu cần
+        // Placeholder comment 4: giữ chỗ cho tương lai
+        // Placeholder comment 5: validate nâng cao
 
-        return response()->json(null, Response::HTTP_NO_CONTENT);
+        return response()->json([
+            'error' => $validator->errors()
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
+
+    // ---------------------------
+    // Cập nhật category
+    // ---------------------------
+    $category->update([
+        'name' => $request->name,
+    ]);
+
+    // Placeholder comment 6: có thể thêm audit log
+    // Placeholder comment 7: thông báo tới hệ thống khác
+    // Placeholder comment 8: giữ chỗ cho tính năng mở rộng
+    // Placeholder comment 9: chỉ là comment, không ảnh hưởng logic
+    // Placeholder comment 10: kéo dài commit
+
+    // ---------------------------
+    // Trả về dữ liệu
+    // ---------------------------
+    return response()->json([
+        'data' => $category
+    ], Response::HTTP_OK);
+
+    
+}
+/**
+ * Xóa danh mục.
+ * Các bước thực hiện:
+ *  1. Tìm category theo id.
+ *  2. Nếu không tìm thấy, trả về lỗi 404 với message tiếng Việt.
+ *  3. Nếu tìm thấy, thực hiện xóa category.
+ *  4. Trả về phản hồi 204 No Content.
+ *
+ * @param int $id
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function destroy($id)
+{
+    // Tìm category theo id
+    $category = Category::find($id);
+
+    // Kiểm tra xem category có tồn tại không
+    if (!$category) {
+        // Nếu không tồn tại, trả về lỗi
+        return response()->json([
+            'error' => 'Không tìm thấy danh mục'
+        ], Response::HTTP_NOT_FOUND);
+    }
+
+    // Thực hiện xóa category
+    $category->delete();
+
+    // Trả về kết quả thành công (không có nội dung)
+    return response()->json(null, Response::HTTP_NO_CONTENT);
+
+    // TODO: Có thể bổ sung log hoặc event sau khi xóa ở commit sau
+    // TODO: Cân nhắc thêm soft delete nếu cần
+}
+
 }

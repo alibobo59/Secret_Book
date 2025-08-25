@@ -33,7 +33,10 @@ class Book extends Model
     {
         return $this->belongsTo(Author::class);
     }
-
+public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'book_category');
+    }
     public function publisher()
     {
         return $this->belongsTo(Publisher::class);
@@ -56,7 +59,11 @@ class Book extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? url('storage/' . $this->image) : null;
+        if (!$this->image) return url('/images/placeholder-book.jpg');
+        // Nếu đã là URL tuyệt đối thì trả lại luôn
+        if (preg_match('~^https?://~', $this->image)) return $this->image;
+        // Nếu bạn lưu storage/app/public/books/...
+        return url('storage/'.$this->image);
     }
 
     // Calculate average rating from verified reviews only

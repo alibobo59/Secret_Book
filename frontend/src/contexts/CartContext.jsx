@@ -1,14 +1,16 @@
 // frontend/src/contexts/CartContext.jsx
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import cartService from "../services/cartService";
 
 const CartContext = createContext();
+export const useCart = () => useContext(CartContext);
 
-export const useCart = () => {
-  return useContext(CartContext);
-};
+// helper: sinh key hiển thị/selection cho item local
+const localKeyOf = (item) =>
+  item.clientKey ||
+  item.sku ||
+  `fallback_${item.id || item.book_id}_${item.variation_id || ""}`;
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
@@ -16,37 +18,44 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  // Load cart based on user authentication status
+  // Chuẩn hóa cart server -> thêm clientKey cho từng item
+  const normalizeServerItems = (serverItems = []) =>
+    serverItems.map((it) => ({
+      ...it,
+      clientKey: it.sku || it.variant_sku || `server_${it.id}`,
+    }));
+
+  // Load cart
   useEffect(() => {
     const loadCart = async () => {
       setLoading(true);
       try {
         if (user) {
-          // Load from server for authenticated users
           const serverCart = await cartService.getCart();
-          const items = serverCart.items || [];
+          const items = normalizeServerItems(serverCart.items || []);
           setCartItems(items);
-          // Don't auto-select all items, let user choose
           setSelectedItems(new Set());
         } else {
-          // Load from localStorage for guests
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
-            const items = JSON.parse(storedCart);
+            const items = JSON.parse(storedCart).map((it) => ({
+              ...it,
+              clientKey: localKeyOf(it),
+            }));
             setCartItems(items);
-            // Don't auto-select all items, let user choose
             setSelectedItems(new Set());
           }
         }
       } catch (error) {
         console.error("Failed to load cart:", error);
-        // Fallback to localStorage if server fails
         if (user) {
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
-            const items = JSON.parse(storedCart);
+            const items = JSON.parse(storedCart).map((it) => ({
+              ...it,
+              clientKey: localKeyOf(it),
+            }));
             setCartItems(items);
-            // Don't auto-select all items, let user choose
             setSelectedItems(new Set());
           }
         }
@@ -54,27 +63,26 @@ export const CartProvider = ({ children }) => {
         setLoading(false);
       }
     };
-
     loadCart();
   }, [user]);
 
-  // Save cart to localStorage for guests only
+  // Save cart local cho guest
   useEffect(() => {
     if (!loading && !user) {
       localStorage.setItem("cart", JSON.stringify(cartItems));
     }
   }, [cartItems, loading, user]);
 
-  // Merge guest cart with user cart after login
+  // Merge guest cart sau login
   const mergeGuestCart = async () => {
     try {
       const guestCart = localStorage.getItem("cart");
       if (guestCart && user) {
         const guestCartItems = JSON.parse(guestCart);
         if (guestCartItems.length > 0) {
-          const mergeResult = await cartService.mergeCart(guestCartItems);
-          setCartItems(mergeResult.cart.items || []);
-          // Clear guest cart from localStorage after successful merge
+          const merged = await cartService.mergeCart(guestCartItems);
+          const items = normalizeServerItems(merged.items || merged.cart?.items || []);
+          setCartItems(items);
           localStorage.removeItem("cart");
         }
       }
@@ -83,57 +91,36 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Add to cart
   const addToCart = async (book, quantity = 1) => {
     try {
       if (user) {
-        // Add to server cart with variation support
-        const itemData = {
-          book_id: book.id,
-          quantity: quantity
-        };
-        
-        // Add variation_id if it exists
-        if (book.variation_id) {
-          itemData.variation_id = book.variation_id;
-        }
-        
-        await cartService.addItem(itemData.book_id, itemData.quantity, itemData.variation_id);
-        // Reload cart from server
-        const serverCart = await cartService.getCart();
-        const items = serverCart.items || [];
-        setCartItems(items);
-        // Keep existing selectedItems, don't auto-select all
-      } else {
-        // Add to local cart with variation support
-        setCartItems((prevItems) => {
-          // Create unique identifier for cart item using SKU
-          const itemKey = book.sku || `fallback_${book.id}_${book.variation_id || ''}`;
-          
-          const existingItemIndex = prevItems.findIndex(
-            (item) => {
-              // Use SKU as unique identifier
-              const existingKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-              return existingKey === itemKey;
-            }
-          );
+        const payload = { book_id: book.id, quantity };
+        if (book.variation_id) payload.variation_id = book.variation_id;
 
-          if (existingItemIndex >= 0) {
-            const updatedItems = [...prevItems];
-            updatedItems[existingItemIndex] = {
-              ...updatedItems[existingItemIndex],
-              quantity: updatedItems[existingItemIndex].quantity + quantity,
-            };
-            return updatedItems;
-          } else {
-            const cartItem = {
-              ...book,
-              quantity,
-              sku: itemKey // Ensure SKU is set for identification
-            };
-            
-            // Don't auto-select new item, let user choose
-            return [...prevItems, cartItem];
+        await cartService.addItem(payload.book_id, payload.quantity, payload.variation_id);
+
+        const serverCart = await cartService.getCart();
+        const items = normalizeServerItems(serverCart.items || []);
+        setCartItems(items);
+      } else {
+        setCartItems((prev) => {
+          const itemKey = book.sku || `fallback_${book.id}_${book.variation_id || ""}`;
+          const idx = prev.findIndex(
+            (item) => localKeyOf(item) === itemKey
+          );
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + quantity };
+            return updated;
           }
+          const cartItem = {
+            ...book,
+            quantity,
+            sku: itemKey,
+            clientKey: itemKey,
+          };
+          return [...prev, cartItem];
         });
       }
     } catch (error) {
@@ -142,29 +129,24 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Update quantity
   const updateQuantity = async (itemKey, quantity) => {
-    if (quantity <= 0) {
-      await removeFromCart(itemKey);
-      return;
-    }
+    if (quantity <= 0) return await removeFromCart(itemKey);
 
     try {
       if (user) {
-        // Update on server - use itemKey directly
-        await cartService.updateItem(itemKey, quantity);
-        // Reload cart from server
+        const item = cartItems.find((i) => (i.clientKey || i.sku) === itemKey);
+        if (!item) throw new Error("Cart item not found in state");
+        await cartService.updateItem(item.id, quantity); // dùng cartItemId
+
         const serverCart = await cartService.getCart();
-        const items = serverCart.items || [];
+        const items = normalizeServerItems(serverCart.items || []);
         setCartItems(items);
-        // Keep existing selectedItems, don't auto-select all
       } else {
-        // Update local cart - match by itemKey
-        setCartItems((prevItems) =>
-          prevItems.map((item) => {
-            // Use SKU as unique identifier
-            const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-            return currentItemKey === itemKey ? { ...item, quantity } : item;
-          })
+        setCartItems((prev) =>
+          prev.map((i) =>
+            (i.clientKey || i.sku) === itemKey ? { ...i, quantity } : i
+          )
         );
       }
     } catch (error) {
@@ -173,28 +155,25 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Remove single
   const removeFromCart = async (itemKey) => {
     try {
       if (user) {
-        // Remove from server - use itemKey directly
-        await cartService.removeItem(itemKey);
-        // Reload cart from server
+        const item = cartItems.find((i) => (i.clientKey || i.sku) === itemKey);
+        if (!item) throw new Error("Cart item not found in state");
+        await cartService.removeItem(item.id); // dùng cartItemId
+
         const serverCart = await cartService.getCart();
-        setCartItems(serverCart.items || []);
+        const items = normalizeServerItems(serverCart.items || []);
+        setCartItems(items);
       } else {
-        // Remove from local cart - match by itemKey
-        setCartItems((prevItems) => prevItems.filter((item) => {
-          // Use SKU as unique identifier
-          const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-          return currentItemKey !== itemKey;
-        }));
+        setCartItems((prev) => prev.filter((i) => (i.clientKey || i.sku) !== itemKey));
       }
-      
-      // Also remove from selected items
+
       setSelectedItems((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(itemKey);
-        return newSet;
+        const ns = new Set(prev);
+        ns.delete(itemKey);
+        return ns;
       });
     } catch (error) {
       console.error("Failed to remove from cart:", error);
@@ -202,37 +181,28 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Remove many
   const removeItemsFromCart = async (itemKeys) => {
-    console.log('🔍 removeItemsFromCart called with itemKeys:', itemKeys);
-    console.log('🛒 Current cart items before removal:', cartItems.map(item => ({ id: item.id, title: item.title, variation_id: item.variation_id })));
-    console.log('✅ Current selected items:', Array.from(selectedItems));
-    
     try {
       if (user) {
-        console.log('👤 User authenticated, calling cartService.removeItems with:', itemKeys);
-        await cartService.removeItems(itemKeys);
-        // Reload cart from server to ensure consistency
+        // map clientKey -> cartItemId
+        const ids = cartItems
+          .filter((i) => itemKeys.includes(i.clientKey || i.sku))
+          .map((i) => i.id);
+
+        await cartService.removeItems(ids);
+
         const serverCart = await cartService.getCart();
-        console.log('📦 Server cart after removal:', serverCart.items?.map(item => ({ id: item.id, title: item.title, variation_id: item.variation_id })));
-        setCartItems(serverCart.items || []);
+        const items = normalizeServerItems(serverCart.items || []);
+        setCartItems(items);
       } else {
-        console.log('👤 Guest user, filtering local cart');
-        // For guests, filter items from local state by matching itemKeys
-        setCartItems((prevItems) =>
-          prevItems.filter((item) => {
-            // Use SKU as unique identifier
-            const currentItemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-            return !itemKeys.includes(currentItemKey);
-          })
-        );
+        setCartItems((prev) => prev.filter((i) => !itemKeys.includes(i.clientKey || i.sku)));
       }
 
-      // Update selected items
       setSelectedItems((prev) => {
-        const newSet = new Set(prev);
-        itemKeys.forEach((key) => newSet.delete(key));
-        console.log('✅ Updated selected items after removal:', Array.from(newSet));
-        return newSet;
+        const ns = new Set(prev);
+        itemKeys.forEach((k) => ns.delete(k));
+        return ns;
       });
     } catch (error) {
       console.error("Failed to remove items from cart:", error);
@@ -240,16 +210,14 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Clear all
   const clearCart = async () => {
     try {
       if (user) {
-        // Clear server cart
         await cartService.clearCart();
       } else {
-        // Clear local storage
         localStorage.removeItem("cart");
       }
-      
       setCartItems([]);
       setSelectedItems(new Set());
     } catch (error) {
@@ -258,86 +226,59 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => {
+  const getCartTotal = () =>
+    cartItems.reduce((total, item) => {
       const price = parseInt(item.price) || 0;
       const quantity = parseInt(item.quantity) || 0;
       return total + price * quantity;
     }, 0);
-  };
 
-  const getItemCount = () => {
-    return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
+  const getItemCount = () =>
+    cartItems.reduce((count, item) => count + (parseInt(item.quantity) || 0), 0);
 
-  // Selection functions (unchanged)
-  const toggleItemSelection = (itemId) => {
+  // Selection
+  const toggleItemSelection = (clientKey) => {
     setSelectedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
+      const ns = new Set(prev);
+      ns.has(clientKey) ? ns.delete(clientKey) : ns.add(clientKey);
+      return ns;
     });
   };
 
   const selectAllItems = () => {
-    const itemKeys = cartItems.map((item) => {
-      // Use SKU as unique identifier - it's unique for both books and variations
-      return item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-    });
-    setSelectedItems(new Set(itemKeys));
+    const keys = cartItems.map((i) => i.clientKey || i.sku || localKeyOf(i));
+    setSelectedItems(new Set(keys));
   };
 
-  const deselectAllItems = () => {
-    setSelectedItems(new Set());
-  };
+  const deselectAllItems = () => setSelectedItems(new Set());
 
-  const getSelectedItems = () => {
-    return cartItems.filter((item) => {
-      // Use SKU as unique identifier
-      const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-      return selectedItems.has(itemKey);
-    });
-  };
+  const getSelectedItems = () =>
+    cartItems.filter((i) => selectedItems.has(i.clientKey || i.sku || localKeyOf(i)));
 
-  const getSelectedTotal = () => {
-    return getSelectedItems().reduce((total, item) => {
+  const getSelectedTotal = () =>
+    getSelectedItems().reduce((total, item) => {
       const price = parseInt(item.price) || 0;
       const quantity = parseInt(item.quantity) || 0;
       return total + price * quantity;
     }, 0);
-  };
 
-  const getSelectedItemsCount = () => {
-    return selectedItems.size;
-  };
+  const getSelectedItemsCount = () => selectedItems.size;
 
   const clearSelectedItems = async () => {
-    const selectedItemIds = Array.from(selectedItems);
-    
+    const keys = Array.from(selectedItems);
     try {
       if (user) {
-        // Remove selected items from server
-        for (const itemId of selectedItemIds) {
-          await cartService.removeItem(itemId);
-        }
-        // Reload cart from server
+        const ids = cartItems
+          .filter((i) => keys.includes(i.clientKey || i.sku || localKeyOf(i)))
+          .map((i) => i.id);
+        for (const id of ids) await cartService.removeItem(id);
+
         const serverCart = await cartService.getCart();
-        setCartItems(serverCart.items || []);
+        const items = normalizeServerItems(serverCart.items || []);
+        setCartItems(items);
       } else {
-        // Remove from local cart
-        setCartItems((prevItems) =>
-          prevItems.filter((item) => {
-            // Use SKU as unique identifier
-            const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
-            return !selectedItemIds.includes(itemKey);
-          })
-        );
+        setCartItems((prev) => prev.filter((i) => !keys.includes(i.clientKey || i.sku || localKeyOf(i))));
       }
-      
       setSelectedItems(new Set());
     } catch (error) {
       console.error("Failed to clear selected items:", error);
@@ -354,9 +295,9 @@ export const CartProvider = ({ children }) => {
         addToCart,
         updateQuantity,
         removeFromCart,
-        removeItemsFromCart, // Use this instead of clearCart for specific items
-    clearCart, // Keep for clearing the whole cart if needed
-    getCartTotal,
+        removeItemsFromCart,
+        clearCart,
+        getCartTotal,
         getItemCount,
         toggleItemSelection,
         selectAllItems,
@@ -365,8 +306,9 @@ export const CartProvider = ({ children }) => {
         getSelectedTotal,
         getSelectedItemsCount,
         clearSelectedItems,
-        mergeGuestCart, // Expose merge function
-      }}>
+        mergeGuestCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

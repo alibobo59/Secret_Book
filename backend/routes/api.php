@@ -19,11 +19,11 @@ use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ImageUploadController;
 use App\Http\Controllers\RefundController;
-
 // Root route
 Route::get('/', function () {
     return 'API';
 });
+
 
 // Authentication routes
 Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
@@ -65,7 +65,7 @@ Route::middleware(['auth:sanctum', 'check.user.status', 'admin.or.mod'])->group(
     Route::post('/books', [BookController::class, 'store'])->name('books.store');
     Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update');
     Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
-    
+
     // Bulk Operations for Books
     Route::post('/books/bulk-delete', [BookController::class, 'bulkDelete'])->name('books.bulk-delete');
     Route::post('/books/bulk-update', [BookController::class, 'bulkUpdate'])->name('books.bulk-update');
@@ -154,7 +154,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     // Coupon routes for authenticated users
     Route::get('/active-coupons', [CouponController::class, 'getActiveCoupons'])->name('coupons.active');
     Route::post('/coupons/validate', [CouponController::class, 'validate'])->name('coupons.validate');
-    
+
     // Cart routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add-item');
@@ -163,7 +163,7 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
     Route::post('/cart/items/remove-multiple', [CartController::class, 'removeItems'])->name('cart.remove-items');
     Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/merge', [CartController::class, 'merge'])->name('cart.merge');
-    
+
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -178,3 +178,52 @@ Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
 // Location routes (public)
 Route::get('/provinces', [App\Http\Controllers\Api\LocationController::class, 'getProvinces'])->name('provinces.index');
 Route::get('/provinces/{provinceId}/wards', [App\Http\Controllers\Api\LocationController::class, 'getWards'])->name('wards.index');
+
+
+use App\Http\Controllers\ChatBotSupportController;
+
+Route::prefix('chatbot')->group(function () {
+    Route::get('/faqs', [ChatBotSupportController::class, 'faqs']);
+    Route::post('/feedback', [ChatBotSupportController::class, 'feedback']);
+    Route::post('/contact', [ChatBotSupportController::class, 'contact']);
+    Route::post('/log', [ChatBotSupportController::class, 'log']);
+});
+Route::get('/orders/search', [OrderController::class, 'searchByCode'])
+    ->middleware(['auth:sanctum']);
+Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])
+    ->name('reviews.can-review');
+
+use App\Http\Controllers\API\AiChatController;
+// routes/api.php
+Route::prefix('chat')->group(function () {
+    Route::get('/authors',           [AiChatController::class, 'searchAuthors']);
+    Route::get('/authors/{id}/books', [AiChatController::class, 'booksByAuthor']);
+    Route::get('/genres',            [AiChatController::class, 'searchGenres']);
+    Route::get('/genres/{id}/books', [AiChatController::class, 'booksByGenre']);
+    Route::get('/trending',          [AiChatController::class, 'trendingBooks']);
+});
+
+// (tuỳ chọn) tìm đơn theo mã
+Route::get('/orders/search', [\App\Http\Controllers\API\OrderController::class, 'searchByCode'])
+    ->middleware('auth:sanctum');
+
+
+
+// (Public) xem review của 1 sách
+Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+
+// YÊU CẦU ĐĂNG NHẬP
+Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {
+    // Kiểm tra được review không
+    Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])->name('reviews.can-review');
+
+    // CRUD review của user
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // Admin
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+    Route::patch('/admin/reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
+    Route::get('/admin/reviews/stats', [ReviewController::class, 'getStats'])->name('admin.reviews.stats');
+});

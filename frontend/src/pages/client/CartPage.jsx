@@ -1,3 +1,4 @@
+// frontend/src/pages/cart/CartPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
@@ -12,7 +13,6 @@ import {
   CheckSquare,
   Square,
   ShoppingBag,
-  Heart,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +20,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+
   const {
     cartItems,
     selectedItems,
@@ -29,19 +30,18 @@ const CartPage = () => {
     selectAllItems,
     deselectAllItems,
     getSelectedTotal,
-    getSelectedItems,
     getSelectedItemsCount,
   } = useCart();
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleQuantityChange = (itemId, newQuantity) => {
+  const handleQuantityChange = (itemKey, newQuantity) => {
     if (newQuantity < 1) return;
-    updateQuantity(itemId, newQuantity);
+    updateQuantity(itemKey, newQuantity);
   };
 
-  const handleRemoveItem = (itemId) => {
-    removeFromCart(itemId);
+  const handleRemoveItem = (itemKey) => {
+    removeFromCart(itemKey);
   };
 
   const handleSelectAll = () => {
@@ -57,22 +57,22 @@ const CartPage = () => {
       toast?.showError('Không có sản phẩm nào được chọn', 'Vui lòng chọn ít nhất một sản phẩm để tiếp tục');
       return;
     }
-
     if (!user) {
       toast?.showError('Vui lòng đăng nhập', 'Bạn cần đăng nhập để thanh toán');
       navigate('/login');
       return;
     }
-
     navigate('/checkout');
   };
 
-  const selectedTotal = getSelectedTotal(); // in cents
+  // Tính toán tổng theo các item đã chọn
+  const selectedTotal = getSelectedTotal(); // số tiền (VND)
   const selectedCount = getSelectedItemsCount();
-  const tax = Math.round(selectedTotal * 0.08); // 8% tax in cents
-  const shipping = selectedTotal > 1200000 ? 0 : 120000; // 1,200,000 VND threshold, 120,000 VND shipping
-  const finalTotal = selectedTotal + tax + shipping; // all in cents
+  const tax = Math.round(selectedTotal * 0.08); // VAT 8% (ví dụ)
+  const shipping = selectedTotal > 1_200_000 ? 0 : 120_000; // freeship > 1.200.000đ
+  const finalTotal = selectedTotal + tax + shipping;
 
+  // Nếu chưa đăng nhập
   if (!user) {
     return (
       <div className="min-h-screen bg-amber-50 dark:bg-gray-900 flex items-center justify-center">
@@ -95,6 +95,7 @@ const CartPage = () => {
     );
   }
 
+  // Giỏ rỗng
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-amber-50 dark:bg-gray-900 py-12">
@@ -133,10 +134,10 @@ const CartPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
+          {/* Danh sách sản phẩm */}
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              {/* Select All Header */}
+              {/* Chọn tất cả */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <button
@@ -158,126 +159,143 @@ const CartPage = () => {
                 </div>
               </div>
 
-              {/* Cart Items List */}
+              {/* Items */}
               <AnimatePresence>
                 {cartItems.map((item) => {
-                  // Use SKU as unique identifier
-                  const itemKey = item.sku || `fallback_${item.id || item.book_id}_${item.variation_id || ''}`;
+                  // ✅ Ưu tiên clientKey (đã gán ở CartContext khi load từ server)
+                  const itemKey =
+                    item.clientKey ||
+                    item.sku ||
+                    `fallback_${item.book_id || item.id}_${item.variation_id || ''}`;
+
+                  const imagePath = item.variation?.image || item.image;
+                  const imageUrl = imagePath
+                    ? `http://127.0.0.1:8000/storage/${imagePath}`
+                    : '/placeholder-book.svg';
+
+                  const authorName =
+                    item.author?.name ||
+                    item.author_name ||
+                    item.book?.author?.name ||
+                    'Tác giả không xác định';
+
                   return (
-                  <motion.div
-                    key={itemKey}
-                    initial={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Selection Checkbox */}
-                      <button
-                        onClick={() => toggleItemSelection(itemKey)}
-                        className="mt-2 text-gray-400 hover:text-amber-600 transition-colors"
-                      >
-                        {selectedItems.has(itemKey) ? (
-                          <CheckSquare className="h-5 w-5 text-amber-600" />
-                        ) : (
-                          <Square className="h-5 w-5" />
-                        )}
-                      </button>
-
-                      {/* Book Image */}
-                      <div className="w-20 h-28 flex-shrink-0">
-                        <img
-                          src={
-                            (item.variation?.image || item.image)
-                              ? `http://127.0.0.1:8000/storage/${item.variation?.image || item.image}`
-                              : "/placeholder-book.svg"
-                          }
-                          alt={item.title}
-                          className="w-full h-full object-cover rounded-md"
-                          onError={(e) => {
-                            e.target.src = "/placeholder-book.svg";
-                          }}
-                        />
-                      </div>
-
-                      {/* Book Details */}
-                      <div className="flex-1 min-w-0">
-                        <Link
-                          to={`/books/${item.id || item.book_id}`}
-                          className="block hover:text-amber-600 transition-colors"
-                        >
-                          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-1 line-clamp-2">
-                            {item.title}
-                            {item.variation && (
-                              <span className="text-amber-600 dark:text-amber-400 ml-1">
-                                ({Object.entries(item.variation.attributes || {}).map(([key, value]) => 
-                                  `${key}: ${value}`
-                                ).join(', ')})
-                              </span>
-                            )}
-                          </h3>
-                        </Link>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                          của {typeof item.author === 'object' ? item.author?.name || 'Tác giả không xác định' : item.author || 'Tác giả không xác định'}
-                        </p>
-                        <div className="flex items-center gap-4">
-                          <span className="text-lg font-bold text-gray-800 dark:text-white">
-                            {(parseInt(item.price) || 0).toLocaleString('vi-VN')} ₫
-                          </span>
-                          {item.original_price && parseInt(item.original_price) > parseInt(item.price) && (
-                            <span className="text-sm text-gray-500 line-through">
-                              {(parseInt(item.original_price) || 0).toLocaleString('vi-VN')} ₫
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
-                          <button
-                            onClick={() => handleQuantityChange(itemKey, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="px-4 py-2 text-center min-w-[3rem] text-gray-800 dark:text-white">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => handleQuantityChange(itemKey, item.quantity + 1)}
-                            disabled={item.quantity >= (item.stock_quantity || item.stock)}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        {/* Remove Button */}
+                    <motion.div
+                      key={itemKey}
+                      initial={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Checkbox */}
                         <button
-                          onClick={() => handleRemoveItem(itemKey)}
-                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                          aria-label="Xóa sản phẩm"
+                          onClick={() => toggleItemSelection(itemKey)}
+                          className="mt-2 text-gray-400 hover:text-amber-600 transition-colors"
+                          aria-label="Chọn sản phẩm"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          {selectedItems.has(itemKey) ? (
+                            <CheckSquare className="h-5 w-5 text-amber-600" />
+                          ) : (
+                            <Square className="h-5 w-5" />
+                          )}
                         </button>
-                      </div>
-                    </div>
 
-                    {/* Stock Warning */}
-                    {(item.stock_quantity || item.stock) < 5 && (
-                      <div className="mt-3 text-sm text-amber-600 dark:text-amber-400">
-                        Chỉ còn {item.stock_quantity || item.stock} sản phẩm trong kho
+                        {/* Ảnh */}
+                        <div className="w-20 h-28 flex-shrink-0">
+                          <img
+                            src={imageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover rounded-md"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-book.svg';
+                            }}
+                          />
+                        </div>
+
+                        {/* Thông tin */}
+                        <div className="flex-1 min-w-0">
+                          {/* Link theo book_id (không dùng item.id vì đó là cartItemId) */}
+                          <Link
+                            to={`/books/${item.book_id || item.book?.id}`}
+                            className="block hover:text-amber-600 transition-colors"
+                          >
+                            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-1 line-clamp-2">
+                              {item.title}
+                              {item.variation && (
+                                <span className="text-amber-600 dark:text-amber-400 ml-1">
+                                  (
+                                  {Object.entries(item.variation.attributes || {})
+                                    .map(([k, v]) => `${k}: ${v}`)
+                                    .join(', ')}
+                                  )
+                                </span>
+                              )}
+                            </h3>
+                          </Link>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                            của {authorName}
+                          </p>
+                          <div className="flex items-center gap-4">
+                            <span className="text-lg font-bold text-gray-800 dark:text-white">
+                              {(parseInt(item.price) || 0).toLocaleString('vi-VN')} ₫
+                            </span>
+                            {item.original_price &&
+                              parseInt(item.original_price) > parseInt(item.price) && (
+                                <span className="text-sm text-gray-500 line-through">
+                                  {(parseInt(item.original_price) || 0).toLocaleString('vi-VN')} ₫
+                                </span>
+                              )}
+                          </div>
+                        </div>
+
+                        {/* Điều khiển số lượng + xóa */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
+                            <button
+                              onClick={() => handleQuantityChange(itemKey, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              aria-label="Giảm số lượng"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="px-4 py-2 text-center min-w-[3rem] text-gray-800 dark:text-white">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => handleQuantityChange(itemKey, item.quantity + 1)}
+                              disabled={item.quantity >= (item.stock_quantity || item.stock || Infinity)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              aria-label="Tăng số lượng"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => handleRemoveItem(itemKey)}
+                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                            aria-label="Xóa sản phẩm"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </motion.div>
+
+                      {/* Cảnh báo tồn kho thấp */}
+                      {(item.stock_quantity || item.stock) < 5 && (
+                        <div className="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                          Chỉ còn {item.stock_quantity || item.stock} sản phẩm trong kho
+                        </div>
+                      )}
+                    </motion.div>
                   );
                 })}
               </AnimatePresence>
             </div>
           </div>
 
-          {/* Order Summary */}
+          {/* Tóm tắt đơn hàng */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-6">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">

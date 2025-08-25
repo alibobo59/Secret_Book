@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Header from "../components/client/Header";
 import Footer from "../components/client/Footer";
+import ChatBot from "../components/ChatBot";
 
 const ClientLayout = () => {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +37,7 @@ const ClientLayout = () => {
         <Outlet />
       </main>
       <Footer />
+      <ChatBot />
     </div>
   );
 };

@@ -17,8 +17,8 @@ class VNPayRefundService
 
     public function __construct()
     {
-        $this->vnp_TmnCode = config('services.vnpay.tmn_code');
-        $this->vnp_HashSecret = config('services.vnpay.hash_secret');
+        $this->vnp_TmnCode = config('services.vnpay.vnp_TmnCode');
+        $this->vnp_HashSecret = config('services.vnpay.vnp_HashSecret');
         $this->vnp_ApiUrl = config('services.vnpay.vnp_ApiUrl', 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction');
         $this->vnp_Api_Version = '2.1.0';
     }
@@ -37,7 +37,7 @@ class VNPayRefundService
 
             // Gọi API VNPay để hoàn tiền
             $vnpayResponse = $this->callVNPayRefundAPI(
-                $order,
+                $order->payment_transaction_id,
                 $order->payment_amount,
                 $refund->refund_number,
                 $reason
@@ -83,7 +83,7 @@ class VNPayRefundService
 
             // Gọi API VNPay để hoàn tiền
             $vnpayResponse = $this->callVNPayRefundAPI(
-                $order,
+                $order->payment_transaction_id,
                 $refundAmount,
                 $refund->refund_number,
                 $reason
@@ -129,7 +129,7 @@ class VNPayRefundService
                 'vnp_TxnRef' => $refundTransactionId,
                 'vnp_OrderInfo' => 'Truy van ket qua hoan tien',
                 'vnp_TransactionNo' => $vnpayTransactionId,
-                'vnp_TransactionDate' => date('YmdHis'),
+                'vnp_TransDate' => date('YmdHis'),
                 'vnp_CreateDate' => date('YmdHis'),
                 'vnp_IpAddr' => request()->ip() ?? '127.0.0.1'
             ];
@@ -173,7 +173,7 @@ class VNPayRefundService
     /**
      * Gọi API VNPay để thực hiện hoàn tiền
      */
-    private function callVNPayRefundAPI(Order $order, float $amount, string $refundRef, string $reason): array
+    private function callVNPayRefundAPI(string $transactionId, float $amount, string $refundRef, string $reason): array
     {
         $requestData = [
             'vnp_RequestId' => $this->generateRequestId(),
@@ -184,8 +184,8 @@ class VNPayRefundService
             'vnp_TxnRef' => $refundRef,
             'vnp_Amount' => intval($amount * 100), // VNPay yêu cầu số tiền tính bằng đồng
             'vnp_OrderInfo' => $reason ?: 'Hoan tien don hang',
-            'vnp_TransactionNo' => $order->payment_transaction_id,
-            'vnp_TransactionDate' => $order->created_at->format('YmdHis'),
+            'vnp_TransactionNo' => $transactionId,
+            'vnp_TransDate' => date('YmdHis'),
             'vnp_CreateDate' => date('YmdHis'),
             'vnp_CreateBy' => 'System',
             'vnp_IpAddr' => request()->ip() ?? '127.0.0.1'
@@ -196,7 +196,7 @@ class VNPayRefundService
 
         Log::info('VNPay Refund API Request', [
             'request_data' => $requestData,
-            'transaction_id' => $order->payment_transaction_id,
+            'transaction_id' => $transactionId,
             'amount' => $amount
         ]);
 
@@ -208,7 +208,7 @@ class VNPayRefundService
             
             Log::info('VNPay Refund API Response', [
                 'response_data' => $responseData,
-                'transaction_id' => $order->payment_transaction_id
+                'transaction_id' => $transactionId
             ]);
 
             return $responseData;
@@ -284,7 +284,7 @@ class VNPayRefundService
     }
 
     /**
-     * Tạo chữ ký bảo mật (sử dụng cùng phương pháp với VNPayService)
+     * Tạo chữ ký bảo mật
      */
     private function generateSecureHash(array $data): string
     {
@@ -294,19 +294,15 @@ class VNPayRefundService
         // Sắp xếp theo key
         ksort($data);
         
-        // Tạo chuỗi hash theo chuẩn VNPay (giống VNPayService)
-        $i = 0;
+        // Tạo chuỗi hash
         $hashData = "";
         foreach ($data as $key => $value) {
             if (strlen($value) > 0) {
-                if ($i == 1) {
-                    $hashData .= '&' . urlencode($key) . "=" . urlencode($value);
-                } else {
-                    $hashData .= urlencode($key) . "=" . urlencode($value);
-                    $i = 1;
-                }
+                $hashData .= $key . "=" . $value . "&";
             }
         }
+        
+        $hashData = rtrim($hashData, '&');
         
         return hash_hmac('sha512', $hashData, $this->vnp_HashSecret);
     }

@@ -25,6 +25,26 @@ class OrderController extends Controller
     /**
      * Display a listing of orders for the authenticated user
      */
+    // app/Http/Controllers/API/OrderController.php (bổ sung)
+public function searchByCode(Request $req)
+{
+    $code = strtoupper(trim($req->query('code','')));
+    $user = $req->user();
+
+    $order = $user->orders()
+        ->where(function($qr) use ($code){
+            $qr->where('order_number',$code)
+               ->orWhere('code',$code)
+               ->orWhere('reference',$code);
+        })
+        ->with('items') // nếu muốn kèm items
+        ->first();
+
+    if (!$order) return response()->json(['message'=>'Not found'], 404);
+    return response()->json($order);
+}
+
+
     public function index(Request $request)
     {
         $user = Auth::user();

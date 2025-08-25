@@ -82,12 +82,13 @@ class User extends Authenticatable
      */
     public function hasPurchased(int $bookId): bool
     {
-        return $this->orders()
-            ->where('status', 'delivered')
-            ->whereHas('items', function($query) use ($bookId) {
-                $query->where('book_id', $bookId);
-            })
-            ->exists();
+        return \App\Models\OrderItem::query()
+        ->where('book_id', $bookId)
+        ->whereHas('order', function ($q) {
+            $q->where('user_id', $this->id)
+              ->whereIn('status', ['completed', 'delivered']);
+        })
+        ->exists();
     }
 
     /**

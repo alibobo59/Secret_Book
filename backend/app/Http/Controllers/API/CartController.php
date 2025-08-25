@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Book;
+use App\Models\BookVariation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -32,33 +33,32 @@ class CartController extends Controller
             return response()->json([
                 'cart' => $cart,
                 'items' => $cart->items->map(function ($item) {
-                    $itemData = [
-                        'id' => $item->book->id,
-                        'book_id' => $item->book->id, // Add explicit book_id field
+                    $price = $item->variation ? $item->variation->price : $item->book->price;
+
+                    return [
+                        // 🔁 Trả về cartItemId để FE dùng khi PUT/DELETE
+                        'id' => $item->id,                   // cartItemId
+                        'cart_item_id' => $item->id,         // alias cho rõ
+                        'book_id' => $item->book->id,
                         'title' => $item->book->title,
-                        'price' => $item->variation ? $item->variation->price : $item->book->price,
+                        'price' => $price,
                         'image' => $item->variation && $item->variation->image ? $item->variation->image : $item->book->image,
                         'quantity' => $item->quantity,
                         'subtotal' => $item->subtotal,
                         'stock_quantity' => $item->variation ? $item->variation->stock_quantity : $item->book->stock_quantity,
                         'author' => $item->book->author,
                         'variation_id' => $item->variation_id,
-                        'sku' => $item->variation ? $item->variation->sku : $item->book->sku
-                    ];
-                    
-                    // Add variation info if exists
-                    if ($item->variation) {
-                        $itemData['variation'] = [
+                        'sku' => $item->variation ? $item->variation->sku : $item->book->sku,
+                        'variant_sku' => $item->variation ? $item->variation->sku : null,
+                        'variation' => $item->variation ? [
                             'id' => $item->variation->id,
                             'attributes' => $item->variation->attributes,
                             'price' => $item->variation->price,
                             'stock_quantity' => $item->variation->stock_quantity,
                             'image' => $item->variation->image,
                             'sku' => $item->variation->sku
-                        ];
-                    }
-                    
-                    return $itemData;
+                        ] : null,
+                    ];
                 }),
                 'total' => $cart->total,
                 'item_count' => $cart->item_count
@@ -94,80 +94,72 @@ class CartController extends Controller
                 ], 422);
             }
 
-            // Validate that variation belongs to the book if variation_id is provided
+            // Validate variation belongs to book
             if ($request->variation_id) {
-                $variation = \App\Models\BookVariation::find($request->variation_id);
-                if ($variation->book_id != $request->book_id) {
+                $variation = BookVariation::find($request->variation_id);
+                if (!$variation || $variation->book_id != $request->book_id) {
                     return response()->json([
                         'message' => 'Biến thể không thuộc về sách này',
-                        'error' => 'Variation does not belong to this book'
                     ], 422);
                 }
             }
 
             $user = Auth::user();
-            $cart = $user->cart;
-            
-            if (!$cart) {
-                $cart = Cart::create(['user_id' => $user->id]);
-            }
+            $cart = $user->cart ?: Cart::create(['user_id' => $user->id]);
 
-            // Check for existing item with same book_id and variation_id
+            // merge theo (book_id, variation_id)
             $existingItem = $cart->items()
                 ->where('book_id', $request->book_id)
-                ->where('variation_id', $request->variation_id ?? null)
+                ->where(function ($q) use ($request) {
+                    if ($request->variation_id) {
+                        $q->where('variation_id', $request->variation_id);
+                    } else {
+                        $q->whereNull('variation_id');
+                    }
+                })
                 ->first();
 
             if ($existingItem) {
                 $existingItem->update([
                     'quantity' => $existingItem->quantity + $request->quantity
                 ]);
-                $cartItem = $existingItem;
+                $cartItem = $existingItem->fresh(['book.author', 'variation']);
             } else {
-                $cartItemData = [
+                $cartItem = $cart->items()->create([
                     'book_id' => $request->book_id,
-                    'quantity' => $request->quantity
-                ];
-                
-                // Add variation_id if provided
-                if ($request->variation_id) {
-                    $cartItemData['variation_id'] = $request->variation_id;
-                }
-                
-                $cartItem = $cart->items()->create($cartItemData);
+                    'variation_id' => $request->variation_id,
+                    'quantity' => $request->quantity,
+                ]);
+                $cartItem->load(['book.author', 'variation']);
             }
 
-            $cartItem->load(['book.author', 'variation']);
+            $price = $cartItem->variation ? $cartItem->variation->price : $cartItem->book->price;
 
-            $itemResponse = [
-                'id' => $cartItem->book->id,
-                'book_id' => $cartItem->book->id, // Add explicit book_id field
-                'title' => $cartItem->book->title,
-                'price' => $cartItem->variation ? $cartItem->variation->price : $cartItem->book->price,
-                'image' => $cartItem->variation && $cartItem->variation->image ? $cartItem->variation->image : $cartItem->book->image,
-                'quantity' => $cartItem->quantity,
-                'subtotal' => $cartItem->subtotal,
-                'stock_quantity' => $cartItem->variation ? $cartItem->variation->stock_quantity : $cartItem->book->stock_quantity,
-                'author' => $cartItem->book->author,
-                'variation_id' => $cartItem->variation_id,
-                'sku' => $cartItem->variation ? $cartItem->variation->sku : $cartItem->book->sku
-            ];
-            
-            // Add variation info if exists
-            if ($cartItem->variation) {
-                $itemResponse['variation'] = [
-                    'id' => $cartItem->variation->id,
-                    'attributes' => $cartItem->variation->attributes,
-                    'price' => $cartItem->variation->price,
-                    'stock_quantity' => $cartItem->variation->stock_quantity,
-                    'image' => $cartItem->variation->image,
-                    'sku' => $cartItem->variation->sku
-                ];
-            }
-            
             return response()->json([
                 'message' => 'Thêm sản phẩm vào giỏ hàng thành công',
-                'item' => $itemResponse
+                'item' => [
+                    'id' => $cartItem->id,              // 🔁 trả về cartItemId
+                    'cart_item_id' => $cartItem->id,
+                    'book_id' => $cartItem->book->id,
+                    'title' => $cartItem->book->title,
+                    'price' => $price,
+                    'image' => $cartItem->variation && $cartItem->variation->image ? $cartItem->variation->image : $cartItem->book->image,
+                    'quantity' => $cartItem->quantity,
+                    'subtotal' => $cartItem->subtotal,
+                    'stock_quantity' => $cartItem->variation ? $cartItem->variation->stock_quantity : $cartItem->book->stock_quantity,
+                    'author' => $cartItem->book->author,
+                    'variation_id' => $cartItem->variation_id,
+                    'sku' => $cartItem->variation ? $cartItem->variation->sku : $cartItem->book->sku,
+                    'variant_sku' => $cartItem->variation ? $cartItem->variation->sku : null,
+                    'variation' => $cartItem->variation ? [
+                        'id' => $cartItem->variation->id,
+                        'attributes' => $cartItem->variation->attributes,
+                        'price' => $cartItem->variation->price,
+                        'stock_quantity' => $cartItem->variation->stock_quantity,
+                        'image' => $cartItem->variation->image,
+                        'sku' => $cartItem->variation->sku
+                    ] : null,
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -177,15 +169,12 @@ class CartController extends Controller
         }
     }
 
-    public function updateItem(Request $request, $bookId)
+    // 🔁 Dùng cartItemId
+    public function updateItem(Request $request, $id)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'quantity' => 'required|integer|min:1'
-            ], [
-                'quantity.required' => 'Số lượng là bắt buộc.',
-                'quantity.integer' => 'Số lượng phải là số nguyên.',
-                'quantity.min' => 'Số lượng phải lớn hơn 0.'
             ]);
 
             if ($validator->fails()) {
@@ -202,26 +191,30 @@ class CartController extends Controller
                 return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
-            $cartItem = $cart->items()->where('book_id', $bookId)->first();
-
+            $cartItem = $cart->items()->where('id', $id)->first();
             if (!$cartItem) {
                 return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
             }
 
             $cartItem->update(['quantity' => $request->quantity]);
-            $cartItem->load('book.author');
+            $cartItem->load(['book.author', 'variation']);
+
+            $price = $cartItem->variation ? $cartItem->variation->price : $cartItem->book->price;
 
             return response()->json([
                 'message' => 'Cập nhật sản phẩm thành công',
                 'item' => [
-                    'id' => $cartItem->book->id,
+                    'id' => $cartItem->id, // cartItemId
+                    'cart_item_id' => $cartItem->id,
+                    'book_id' => $cartItem->book->id,
                     'title' => $cartItem->book->title,
-                    'price' => $cartItem->book->price,
-                    'image' => $cartItem->book->image,
+                    'price' => $price,
+                    'image' => $cartItem->variation && $cartItem->variation->image ? $cartItem->variation->image : $cartItem->book->image,
                     'quantity' => $cartItem->quantity,
                     'subtotal' => $cartItem->subtotal,
-                    'stock_quantity' => $cartItem->book->stock_quantity,
-                    'author' => $cartItem->book->author
+                    'stock_quantity' => $cartItem->variation ? $cartItem->variation->stock_quantity : $cartItem->book->stock_quantity,
+                    'author' => $cartItem->book->author,
+                    'variation_id' => $cartItem->variation_id,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -232,7 +225,8 @@ class CartController extends Controller
         }
     }
 
-    public function removeItem($bookId)
+    // 🔁 Dùng cartItemId
+    public function removeItem($id)
     {
         try {
             $user = Auth::user();
@@ -242,8 +236,7 @@ class CartController extends Controller
                 return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
-            $cartItem = $cart->items()->where('book_id', $bookId)->first();
-
+            $cartItem = $cart->items()->where('id', $id)->first();
             if (!$cartItem) {
                 return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ hàng'], 404);
             }
@@ -259,46 +252,37 @@ class CartController extends Controller
         }
     }
 
+    // 🔁 Bulk delete theo cartItemId
     public function removeItems(Request $request)
     {
-        Log::info('🔍 CartController::removeItems called with request data:', $request->all());
-        
+        Log::info('CartController::removeItems payload:', $request->all());
+
         $validator = Validator::make($request->all(), [
-            'book_ids' => 'required|array',
-            'book_ids.*' => 'integer|exists:books,id',
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:cart_items,id',
         ]);
 
         if ($validator->fails()) {
-            Log::error('❌ Validation failed:', $validator->errors()->toArray());
+            Log::error('Validation failed:', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
             $user = Auth::user();
             $cart = $user->cart;
-            
-            Log::info('👤 User ID: ' . $user->id . ', Cart ID: ' . ($cart ? $cart->id : 'null'));
-            Log::info('🔢 Book IDs to remove:', $request->book_ids);
 
-            if ($cart) {
-                $itemsBeforeDelete = $cart->items()->pluck('book_id')->toArray();
-                Log::info('📦 Cart items before deletion:', $itemsBeforeDelete);
-                
-                $deletedCount = $cart->items()->whereIn('book_id', $request->book_ids)->delete();
-                Log::info('🗑️ Number of items deleted: ' . $deletedCount);
-                
-                $itemsAfterDelete = $cart->items()->pluck('book_id')->toArray();
-                Log::info('📦 Cart items after deletion:', $itemsAfterDelete);
-            } else {
-                Log::warning('⚠️ No cart found for user');
+            if (!$cart) {
+                return response()->json(['message' => 'Không tìm thấy giỏ hàng'], 404);
             }
 
-            return response()->json(['message' => 'Các sản phẩm đã chọn đã được xóa khỏi giỏ hàng']);
-        } catch (\Exception $e) {
-            Log::error('❌ Exception in removeItems:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            $deleted = $cart->items()->whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'message' => 'Các sản phẩm đã chọn đã được xóa khỏi giỏ hàng',
+                'deleted' => $deleted
             ]);
+        } catch (\Exception $e) {
+            Log::error('Exception in removeItems:', ['message' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Xóa sản phẩm thất bại',
                 'error' => $e->getMessage(),
@@ -325,13 +309,29 @@ class CartController extends Controller
         }
     }
 
+    // Hỗ trợ merge theo format FE: { items: [{book_id, quantity, variation_id?}] }
     public function merge(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'guest_cart' => 'required|array',
-                'guest_cart.*.id' => 'required|exists:books,id',
-                'guest_cart.*.quantity' => 'required|integer|min:1'
+            // chấp nhận cả "items" (mới) hoặc "guest_cart" (cũ)
+            $payloadItems = $request->input('items');
+            if (!$payloadItems) {
+                // backward-compat
+                $guest = $request->input('guest_cart', []);
+                $payloadItems = array_map(function ($gi) {
+                    return [
+                        'book_id' => $gi['id'],
+                        'quantity' => $gi['quantity'],
+                        'variation_id' => $gi['variation_id'] ?? null,
+                    ];
+                }, $guest);
+            }
+
+            $validator = Validator::make(['items' => $payloadItems], [
+                'items' => 'required|array',
+                'items.*.book_id' => 'required|exists:books,id',
+                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.variation_id' => 'nullable|exists:book_variations,id',
             ]);
 
             if ($validator->fails()) {
@@ -342,49 +342,62 @@ class CartController extends Controller
             }
 
             $user = Auth::user();
-            $cart = $user->cart;
-            
-            if (!$cart) {
-                $cart = Cart::create(['user_id' => $user->id]);
-            }
-            
-            $guestCart = $request->guest_cart;
+            $cart = $user->cart ?: Cart::create(['user_id' => $user->id]);
 
-            DB::transaction(function () use ($cart, $guestCart) {
-                foreach ($guestCart as $guestItem) {
-                    $existingItem = $cart->items()->where('book_id', $guestItem['id'])->first();
+            DB::transaction(function () use ($cart, $payloadItems) {
+                foreach ($payloadItems as $it) {
+                    $existing = $cart->items()
+                        ->where('book_id', $it['book_id'])
+                        ->where(function ($q) use ($it) {
+                            if (!empty($it['variation_id'])) {
+                                $q->where('variation_id', $it['variation_id']);
+                            } else {
+                                $q->whereNull('variation_id');
+                            }
+                        })
+                        ->first();
 
-                    if ($existingItem) {
-                        // Merge quantities
-                        $existingItem->update([
-                            'quantity' => $existingItem->quantity + $guestItem['quantity']
-                        ]);
+                    if ($existing) {
+                        $existing->update(['quantity' => $existing->quantity + $it['quantity']]);
                     } else {
-                        // Add new item
                         $cart->items()->create([
-                            'book_id' => $guestItem['id'],
-                            'quantity' => $guestItem['quantity']
+                            'book_id' => $it['book_id'],
+                            'variation_id' => $it['variation_id'] ?? null,
+                            'quantity' => $it['quantity'],
                         ]);
                     }
                 }
             });
 
-            // Return updated cart
-            $cart->load(['items.book.author']);
+            $cart->load(['items.book.author', 'items.variation']);
 
             return response()->json([
                 'message' => 'Hợp nhất giỏ hàng thành công',
                 'cart' => [
                     'items' => $cart->items->map(function ($item) {
+                        $price = $item->variation ? $item->variation->price : $item->book->price;
                         return [
-                            'id' => $item->book->id,
+                            'id' => $item->id,
+                            'cart_item_id' => $item->id,
+                            'book_id' => $item->book->id,
                             'title' => $item->book->title,
-                            'price' => $item->book->price,
-                            'image' => $item->book->image,
+                            'price' => $price,
+                            'image' => $item->variation && $item->variation->image ? $item->variation->image : $item->book->image,
                             'quantity' => $item->quantity,
                             'subtotal' => $item->subtotal,
-                            'stock_quantity' => $item->book->stock_quantity,
-                            'author' => $item->book->author
+                            'stock_quantity' => $item->variation ? $item->variation->stock_quantity : $item->book->stock_quantity,
+                            'author' => $item->book->author,
+                            'variation_id' => $item->variation_id,
+                            'sku' => $item->variation ? $item->variation->sku : $item->book->sku,
+                            'variant_sku' => $item->variation ? $item->variation->sku : null,
+                            'variation' => $item->variation ? [
+                                'id' => $item->variation->id,
+                                'attributes' => $item->variation->attributes,
+                                'price' => $item->variation->price,
+                                'stock_quantity' => $item->variation->stock_quantity,
+                                'image' => $item->variation->image,
+                                'sku' => $item->variation->sku
+                            ] : null,
                         ];
                     }),
                     'total' => $cart->total,

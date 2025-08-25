@@ -2,285 +2,239 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use App\Models\Book;
+use App\Models\OrderItem;
 use App\Models\Review;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class ReviewController extends Controller
 {
     /**
-     * Display reviews for a specific book
+     * GET /books/{book}/can-review
+     * Trả về: { can_review, purchased, already }
+     */
+    public function canReview(Request $request, Book $book)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'can_review' => false,
+                'purchased'  => false,
+                'already'    => false,
+                'reason'     => 'Người dùng chưa xác thực',
+            ], 200);
+        }
+
+        // Đã từng mua & đơn đã hoàn tất?
+        $purchased = OrderItem::query()
+            ->where('book_id', $book->id)
+            ->whereHas('order', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  // Sửa cho khớp enum trạng thái đơn của bạn
+                  ->whereIn('status', ['completed', 'delivered']);
+            })
+            ->exists();
+
+        // Đã review rồi chưa?
+        $already = Review::query()
+            ->where('user_id', $user->id)
+            ->where('book_id', $book->id)
+            ->exists();
+
+        return response()->json([
+            'can_review' => $purchased && !$already,
+            'purchased'  => $purchased,
+            'already'    => $already,
+        ]);
+    }
+
+    /**
+     * GET /books/{book}/reviews
+     * Danh sách review (public)
      */
     public function index(Book $book)
     {
-        $reviews = $book->verifiedReviews()
+        $reviews = Review::query()
+            ->where('book_id', $book->id)
             ->where('is_hidden', false)
             ->with('user:id,name')
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('created_at')
             ->paginate(10);
 
         return response()->json($reviews);
     }
 
     /**
-     * Store a newly created review
+     * POST /reviews
+     * body: { book_id, rating(1..5), review? }
      */
     public function store(Request $request)
     {
         $request->validate([
             'book_id' => 'required|exists:books,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'review' => 'nullable|string|max:1000'
-        ], [
-            'book_id.required' => 'ID sách là bắt buộc.',
-            'book_id.exists' => 'Sách không tồn tại.',
-            'rating.required' => 'Đánh giá là bắt buộc.',
-            'rating.integer' => 'Đánh giá phải là số nguyên.',
-            'rating.min' => 'Đánh giá phải từ 1 đến 5 sao.',
-            'rating.max' => 'Đánh giá phải từ 1 đến 5 sao.',
-            'review.string' => 'Nội dung đánh giá phải là chuỗi ký tự.',
-            'review.max' => 'Nội dung đánh giá không được vượt quá 1000 ký tự.'
+            'rating'  => 'required|integer|min:1|max:5',
+            'review'  => 'nullable|string|max:1000',
         ]);
 
-        $user = Auth::user();
-        $bookId = $request->book_id;
+        $user   = Auth::user();
+        $bookId = (int) $request->book_id;
 
-        // Check if user has purchased the book
-        if (!$user->hasPurchased($bookId)) {
-            return response()->json([
-                'message' => 'Bạn phải mua sách này trước khi đánh giá.'
-            ], 403);
-        }
-
-        // Check if user already reviewed this book
-        $existingReview = Review::where('user_id', $user->id)
+        // Bắt buộc đã mua (đơn hoàn tất)
+        $purchased = OrderItem::query()
             ->where('book_id', $bookId)
-            ->first();
+            ->whereHas('order', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->whereIn('status', ['completed', 'delivered']);
+            })
+            ->exists();
 
-        if ($existingReview) {
-            return response()->json([
-                'message' => 'Bạn đã đánh giá sách này rồi.'
-            ], 409);
+        if (!$purchased) {
+            return response()->json(['message' => 'Bạn phải mua sách này trước khi đánh giá.'], 403);
         }
 
-        // Get the order that contains this book for verification
+        // Không cho review trùng
+        $exists = Review::query()
+            ->where('user_id', $user->id)
+            ->where('book_id', $bookId)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'Bạn đã đánh giá sách này rồi.'], 409);
+        }
+
+        // Lấy order đã giao gần nhất chứa quyển sách (để lưu order_id)
         $order = $user->orders()
-            ->where('status', 'delivered')
-            ->whereHas('items', function($query) use ($bookId) {
-                $query->where('book_id', $bookId);
-            })
+            ->whereIn('status', ['completed', 'delivered'])
+            ->whereHas('items', fn ($q) => $q->where('book_id', $bookId))
+            ->latest('created_at')
             ->first();
 
         $review = Review::create([
-            'user_id' => $user->id,
-            'book_id' => $bookId,
-            'order_id' => $order->id,
-            'rating' => $request->rating,
-            'review' => $request->review
-        ]);
-
-        $review->load('user:id,name');
+            'user_id'  => $user->id,
+            'book_id'  => $bookId,
+            'order_id' => optional($order)->id,
+            'rating'   => (int) $request->rating,
+            'review'   => $request->review,
+            'is_hidden'=> false,
+        ])->load('user:id,name');
 
         return response()->json([
             'message' => 'Gửi đánh giá thành công.',
-            'review' => $review
+            'review'  => $review,
         ], 201);
     }
 
     /**
-     * Update the specified review
+     * PUT /reviews/{review}
      */
     public function update(Request $request, Review $review)
     {
         $user = Auth::user();
-
-        // Check if user owns the review or is admin
-        if ($review->user_id !== $user->id && $user->role !== 'admin') {
-            return response()->json([
-                'message' => 'Không có quyền cập nhật đánh giá này.'
-            ], 403);
+        if ($review->user_id !== $user->id && (($user->role ?? null) !== 'admin')) {
+            return response()->json(['message' => 'Không có quyền cập nhật đánh giá này.'], 403);
         }
 
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
-            'review' => 'nullable|string|max:1000'
+            'review' => 'nullable|string|max:1000',
         ]);
 
         $review->update([
-            'rating' => $request->rating,
-            'review' => $request->review
+            'rating' => (int) $request->rating,
+            'review' => $request->review,
         ]);
-
-        $review->load('user:id,name');
 
         return response()->json([
             'message' => 'Cập nhật đánh giá thành công.',
-            'review' => $review
+            'review'  => $review->load('user:id,name'),
         ]);
     }
 
     /**
-     * Remove the specified review
+     * DELETE /reviews/{review}
      */
     public function destroy(Review $review)
     {
         $user = Auth::user();
-
-        // Check if user owns the review or is admin
-        if ($review->user_id !== $user->id && $user->role !== 'admin') {
-            return response()->json([
-                'message' => 'Không có quyền xóa đánh giá này.'
-            ], 403);
+        if ($review->user_id !== $user->id && (($user->role ?? null) !== 'admin')) {
+            return response()->json(['message' => 'Không có quyền xóa đánh giá này.'], 403);
         }
 
         $review->delete();
-
-        return response()->json([
-            'message' => 'Xóa đánh giá thành công.'
-        ]);
+        return response()->json(['message' => 'Xóa đánh giá thành công.']);
     }
 
     /**
-     * Check if user can review a specific book
-     */
-    public function canReview(Book $book)
-    {
-        $user = Auth::user();
-
-        if (!$user) {
-            return response()->json([
-                'can_review' => false,
-                'reason' => 'Người dùng chưa xác thực'
-            ]);
-        }
-
-        // Check if user has purchased the book
-        if (!$user->hasPurchased($book->id)) {
-            return response()->json([
-                'can_review' => false,
-                'reason' => 'Bạn phải mua sách này để đánh giá'
-            ]);
-        }
-
-        // Check if user already reviewed this book
-        $existingReview = Review::where('user_id', $user->id)
-            ->where('book_id', $book->id)
-            ->first();
-
-        if ($existingReview) {
-            return response()->json([
-                'can_review' => false,
-                'reason' => 'Bạn đã đánh giá sách này rồi',
-                'existing_review' => $existingReview
-            ]);
-        }
-
-        return response()->json([
-            'can_review' => true
-        ]);
-    }
-
-    /**
-     * Display all reviews for admin management
+     * Admin – GET /admin/reviews
      */
     public function adminIndex(Request $request)
     {
-        $query = Review::with(['user:id,name,email', 'book:id,title', 'order:id'])
-            ->orderBy('created_at', 'desc');
+        $q = Review::with(['user:id,name,email', 'book:id,title', 'order:id'])
+            ->orderByDesc('created_at');
 
-        // Filter by hidden status
-        if ($request->has('is_hidden')) {
-            $query->where('is_hidden', $request->boolean('is_hidden'));
-        }
+        if ($request->filled('is_hidden')) $q->where('is_hidden', $request->boolean('is_hidden'));
+        if ($request->filled('rating'))    $q->where('rating', (int) $request->rating);
+        if ($request->filled('book_id'))   $q->where('book_id', (int) $request->book_id);
 
-        // Filter by rating
-        if ($request->has('rating')) {
-            $query->where('rating', $request->rating);
-        }
-
-        // Filter by book
-        if ($request->has('book_id')) {
-            $query->where('book_id', $request->book_id);
-        }
-
-        // Search functionality
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('review', 'like', '%' . $searchTerm . '%')
-                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
-                      $userQuery->where('name', 'like', '%' . $searchTerm . '%')
-                               ->orWhere('email', 'like', '%' . $searchTerm . '%');
-                  })
-                  ->orWhereHas('book', function($bookQuery) use ($searchTerm) {
-                      $bookQuery->where('title', 'like', '%' . $searchTerm . '%');
-                  });
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $q->where(function ($sub) use ($search) {
+                $sub->where('review', 'like', "%$search%")
+                    ->orWhereHas('user', fn ($uq) =>
+                        $uq->where('name', 'like', "%$search%")
+                           ->orWhere('email', 'like', "%$search%"))
+                    ->orWhereHas('book', fn ($bq) =>
+                        $bq->where('title', 'like', "%$search%"));
             });
         }
 
-        $perPage = $request->get('per_page', 15);
-        $reviews = $query->paginate($perPage);
-
         return response()->json([
             'success' => true,
-            'data' => $reviews
+            'data'    => $q->paginate($request->integer('per_page', 15)),
         ]);
     }
 
     /**
-     * Toggle review visibility (hide/show)
+     * Admin – PATCH /admin/reviews/{review}/toggle-visibility
      */
     public function toggleVisibility(Review $review)
     {
-        $review->update([
-            'is_hidden' => !$review->is_hidden
-        ]);
-
-        $review->load(['user:id,name,email', 'book:id,title']);
+        $review->update(['is_hidden' => !$review->is_hidden]);
 
         return response()->json([
             'success' => true,
             'message' => $review->is_hidden ? 'Review đã được ẩn' : 'Review đã được hiển thị',
-            'data' => $review
+            'data'    => $review->load(['user:id,name,email', 'book:id,title']),
         ]);
     }
 
     /**
-     * Get review statistics for admin
+     * Admin – GET /admin/reviews/stats
      */
     public function getStats()
     {
         try {
             $stats = [
-                'total_reviews' => Review::count(),
+                'total_reviews'   => Review::count(),
                 'visible_reviews' => Review::where('is_hidden', false)->count(),
-                'hidden_reviews' => Review::where('is_hidden', true)->count(),
-                'average_rating' => Review::where('is_hidden', false)->avg('rating'),
+                'hidden_reviews'  => Review::where('is_hidden', true)->count(),
+                'average_rating'  => round((float) Review::where('is_hidden', false)->avg('rating'), 2),
                 'rating_distribution' => [
-                    '5_star' => Review::where('is_hidden', false)->where('rating', 5)->count(),
-                    '4_star' => Review::where('is_hidden', false)->where('rating', 4)->count(),
-                    '3_star' => Review::where('is_hidden', false)->where('rating', 3)->count(),
-                    '2_star' => Review::where('is_hidden', false)->where('rating', 2)->count(),
-                    '1_star' => Review::where('is_hidden', false)->where('rating', 1)->count(),
+                    '5' => Review::where('is_hidden', false)->where('rating', 5)->count(),
+                    '4' => Review::where('is_hidden', false)->where('rating', 4)->count(),
+                    '3' => Review::where('is_hidden', false)->where('rating', 3)->count(),
+                    '2' => Review::where('is_hidden', false)->where('rating', 2)->count(),
+                    '1' => Review::where('is_hidden', false)->where('rating', 1)->count(),
                 ],
-                'recent_reviews' => Review::with(['user:id,name', 'book:id,title'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get()
+                'recent_reviews'  => Review::with(['user:id,name', 'book:id,title'])
+                    ->orderByDesc('created_at')->limit(5)->get(),
             ];
 
-            return response()->json([
-                'success' => true,
-                'data' => $stats
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lấy thống kê đánh giá thất bại: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => true, 'data' => $stats]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi thống kê: '.$e->getMessage()], 500);
         }
     }
 }

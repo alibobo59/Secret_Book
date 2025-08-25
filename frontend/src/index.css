@@ -18,7 +18,13 @@
   height: auto !important;
   object-fit: contain;
 }
-
+img.book {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;  /* Cắt chứ không kéo giãn */
+  image-rendering: auto; /* Để trình duyệt xử lý tốt nhất cho ảnh chụp */
+}
 .image-resizer .resize-trigger {
   position: absolute;
   right: -6px;

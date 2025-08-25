@@ -26,7 +26,6 @@ const OrderManagement = () => {
     pagination,
     getAllOrders,
     updateOrderStatus,
-    getAllowedStatuses,
   } = useOrder();
 
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -50,9 +49,8 @@ const OrderManagement = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1); // Reset to first page when search changes
+      setCurrentPage(1);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -61,13 +59,12 @@ const OrderManagement = () => {
     const filters = {};
     if (statusFilter) filters.status = statusFilter;
     if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
-
     getAllOrders(currentPage, perPage, filters);
   }, [getAllOrders, currentPage, perPage, statusFilter, debouncedSearchTerm]);
 
   // Since backend handles filtering and pagination, we use orders directly
   useEffect(() => {
-    setFilteredOrders(orders);
+    setFilteredOrders(orders || []);
   }, [orders]);
 
   const handleSort = (field) => {
@@ -83,75 +80,87 @@ const OrderManagement = () => {
     navigate(`/admin/orders/${order.id}`);
   };
 
-  // Hàm định dạng thuộc tính biến thể
+  // (Giữ lại nếu bạn cần dùng hiển thị thuộc tính biến thể)
   const formatVariationAttributes = (attributes) => {
-    if (!attributes) return 'N/A';
-    
+    if (!attributes) return "N/A";
     try {
-      // Nếu attributes là chuỗi JSON
-      if (typeof attributes === 'string') {
-        // Thử parse trực tiếp nếu là JSON
+      if (typeof attributes === "string") {
         try {
           const parsed = JSON.parse(attributes);
-          if (parsed && typeof parsed === 'object') {
-            // Nếu có thuộc tính 'attributes' bên trong
-            if (parsed.attributes && typeof parsed.attributes === 'object') {
+          if (parsed && typeof parsed === "object") {
+            if (parsed.attributes && typeof parsed.attributes === "object") {
               return Object.entries(parsed.attributes)
-                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
-                .join(', ');
+                .map(
+                  ([k, v]) =>
+                    `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                      String(v).charAt(0).toUpperCase() + String(v).slice(1)
+                    }`
+                )
+                .join(", ");
             }
-            // Nếu chính nó là object attributes
             return Object.entries(parsed)
-              .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
-              .join(', ');
+              .map(
+                ([k, v]) =>
+                  `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                    String(v).charAt(0).toUpperCase() + String(v).slice(1)
+                  }`
+              )
+              .join(", ");
           }
-        } catch (parseError) {
-          // Nếu không parse được, tìm pattern trong chuỗi
-          if (attributes.includes('attributes:')) {
-            const attributesMatch = attributes.match(/attributes:\s*({[^}]+})/);
-            if (attributesMatch && attributesMatch[1]) {
-              const attributesObj = JSON.parse(attributesMatch[1]);
-              return Object.entries(attributesObj)
-                .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
-                .join(', ');
+        } catch {
+          if (attributes.includes("attributes:")) {
+            const m = attributes.match(/attributes:\s*({[^}]+})/);
+            if (m?.[1]) {
+              const obj = JSON.parse(m[1]);
+              return Object.entries(obj)
+                .map(
+                  ([k, v]) =>
+                    `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                      String(v).charAt(0).toUpperCase() + String(v).slice(1)
+                    }`
+                )
+                .join(", ");
             }
           }
         }
       }
-      
-      // Nếu attributes đã là object
-      if (typeof attributes === 'object') {
-        // Nếu có thuộc tính 'attributes' bên trong
-        if (attributes.attributes && typeof attributes.attributes === 'object') {
+      if (typeof attributes === "object") {
+        if (attributes.attributes && typeof attributes.attributes === "object") {
           return Object.entries(attributes.attributes)
-            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
-            .join(', ');
+            .map(
+              ([k, v]) =>
+                `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                  String(v).charAt(0).toUpperCase() + String(v).slice(1)
+                }`
+            )
+            .join(", ");
         }
-        // Nếu chính nó là object attributes
         return Object.entries(attributes)
-          .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1)}`)
-          .join(', ');
+          .map(
+            ([k, v]) =>
+              `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                String(v).charAt(0).toUpperCase() + String(v).slice(1)
+              }`
+          )
+          .join(", ");
       }
-      
-      // Trả về giá trị gốc nếu không thể xử lý
       return attributes;
-    } catch (error) {
-      console.error('Error parsing variation attributes:', error);
+    } catch (e) {
+      console.error("Error parsing variation attributes:", e);
       return attributes;
     }
   };
 
-  // Hàm xác định trạng thái được phép dựa trên logic nghiệp vụ
+  // Luồng trạng thái hợp lệ
   const getValidNextStatuses = (currentStatus) => {
-    const statusFlow = {
-      'pending': ['processing', 'cancelled'],
-      'processing': ['shipped', 'cancelled'], 
-      'shipped': ['delivered'],
-      'delivered': [], // Không thể thay đổi từ delivered
-      'cancelled': [] // Không thể thay đổi từ cancelled
+    const flow = {
+      pending: ["processing", "cancelled"],
+      processing: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: [],
     };
-    
-    return statusFlow[currentStatus] || [];
+    return flow[currentStatus] || [];
   };
 
   const handleUpdateStatus = async (order) => {
@@ -159,16 +168,18 @@ const OrderManagement = () => {
     setNewStatus(order.status);
     setIsStatusModalOpen(true);
 
-    // Sử dụng logic nghiệp vụ thay vì gọi API
     try {
       setLoadingAllowedStatuses(true);
       const allowedNextStatuses = getValidNextStatuses(order.status);
-      setAllowedStatuses(allowedNextStatuses.map(status => ({
-        value: status,
-        label: statusOptions.find(opt => opt.value === status)?.label || status
-      })));
-    } catch (error) {
-      console.error("Failed to set allowed statuses:", error);
+      setAllowedStatuses(
+        allowedNextStatuses.map((status) => ({
+          value: status,
+          label:
+            statusOptions.find((opt) => opt.value === status)?.label || status,
+        }))
+      );
+    } catch (e) {
+      console.error("Failed to set allowed statuses:", e);
       setAllowedStatuses([]);
     } finally {
       setLoadingAllowedStatuses(false);
@@ -178,23 +189,20 @@ const OrderManagement = () => {
   const handleStatusUpdate = async () => {
     if (!selectedOrder || !newStatus) return;
 
-    // Kiểm tra nếu trạng thái mới là 'cancelled' và chưa có lý do
-    if (newStatus === 'cancelled' && !cancellationReason.trim()) {
-      alert('Vui lòng nhập lý do hủy đơn hàng.');
+    if (newStatus === "cancelled" && !cancellationReason.trim()) {
+      alert("Vui lòng nhập lý do hủy đơn hàng.");
       return;
     }
 
     try {
       setStatusLoading(true);
-      
-      // Nếu là hủy đơn hàng, gửi kèm lý do
-      if (newStatus === 'cancelled') {
+      if (newStatus === "cancelled") {
         await updateOrderStatus(selectedOrder.id, newStatus, cancellationReason);
       } else {
         await updateOrderStatus(selectedOrder.id, newStatus);
       }
 
-      // Refresh orders after successful update with current filters
+      // refresh giữ nguyên bộ lọc hiện tại
       const filters = {};
       if (statusFilter) filters.status = statusFilter;
       if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
@@ -205,12 +213,10 @@ const OrderManagement = () => {
       setNewStatus("");
       setCancellationReason("");
       setAllowedStatuses([]);
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-
-      // Check if it's a validation error from our backend
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
+    } catch (e) {
+      console.error("Failed to update order status:", e);
+      if (e.response?.data?.message) {
+        alert(e.response.data.message);
       } else {
         alert("Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
       }
@@ -223,7 +229,6 @@ const OrderManagement = () => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-
       case "processing":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "shipped":
@@ -241,8 +246,7 @@ const OrderManagement = () => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4" />;
-
-      case "processing":
+    case "processing":
         return <Package className="h-4 w-4" />;
       case "shipped":
         return <Truck className="h-4 w-4" />;
@@ -265,7 +269,7 @@ const OrderManagement = () => {
 
   const columns = [
     { id: "id", label: "Mã Đơn Hàng", sortable: true },
-    { id: "customer_name", label: "Khách Hàng", sortable: false }, // Not directly sortable since it's in address table
+    { id: "customer_name", label: "Khách Hàng", sortable: false },
     { id: "created_at", label: "Ngày", sortable: true },
     { id: "total", label: "Tổng Tiền", sortable: true },
     { id: "status", label: "Trạng Thái", sortable: false },
@@ -277,7 +281,6 @@ const OrderManagement = () => {
     return (
       <div className="space-y-6">
         <PageHeader title="Quản Lý Đơn Hàng" hideAddButton />
-
         <SearchFilter
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -287,8 +290,7 @@ const OrderManagement = () => {
           filterOptions={statusOptions}
           filterPlaceholder="Tất Cả Trạng Thái"
         />
-
-        {/* Loading Skeleton */}
+        {/* Skeleton */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
@@ -310,7 +312,6 @@ const OrderManagement = () => {
           </div>
         </div>
 
-        {/* Loading Pagination Skeleton */}
         <div className="flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-lg">
           <div className="flex items-center gap-4">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32"></div>
@@ -320,7 +321,8 @@ const OrderManagement = () => {
             {Array.from({ length: 7 }, (_, i) => (
               <div
                 key={i}
-                className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -342,7 +344,8 @@ const OrderManagement = () => {
             </div>
             <button
               onClick={() => getAllOrders()}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
               Thử Lại
             </button>
           </div>
@@ -400,7 +403,8 @@ const OrderManagement = () => {
               <span
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                   order.status
-                )}`}>
+                )}`}
+              >
                 {getStatusIcon(order.status)}
                 {statusOptions.find((opt) => opt.value === order.status)
                   ?.label ||
@@ -413,18 +417,23 @@ const OrderManagement = () => {
                 {order.payment_method?.toUpperCase() || "COD"}
               </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+            <td
+              className="px-6 py-4 whitespace-nowrap text-sm font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleViewOrder(order)}
                   className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                  title="Xem Chi Tiết">
+                  title="Xem Chi Tiết"
+                >
                   <Eye className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(order)}
                   className="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
-                  title="Cập Nhật Trạng Thái">
+                  title="Cập Nhật Trạng Thái"
+                >
                   <Package className="h-5 w-5" />
                 </button>
               </div>
@@ -452,14 +461,15 @@ const OrderManagement = () => {
                 setStatusFilter("");
                 setCurrentPage(1);
               }}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+            >
               Xóa bộ lọc
             </button>
           )}
         </div>
       )}
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {!loading && filteredOrders.length > 0 && (
         <div className="flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-lg">
           <div className="flex items-center gap-4">
@@ -471,9 +481,10 @@ const OrderManagement = () => {
                 value={perPage}
                 onChange={(e) => {
                   setPerPage(Number(e.target.value));
-                  setCurrentPage(1); // Reset to first page when changing page size
+                  setCurrentPage(1);
                 }}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -485,8 +496,8 @@ const OrderManagement = () => {
             </div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              Hiển thị {pagination.from || 0} đến {pagination.to || 0} trong
-              tổng số {pagination.total || 0} mục
+              Hiển thị {pagination?.from || 0} đến {pagination?.to || 0} trong
+              tổng số {pagination?.total || 0} mục
             </div>
           </div>
 
@@ -494,31 +505,33 @@ const OrderManagement = () => {
             <button
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Đầu
             </button>
 
             <button
-              onClick={() => setCurrentPage(currentPage - 1)}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Trước
             </button>
 
             <div className="flex items-center gap-1">
               {Array.from(
-                { length: Math.min(5, pagination.last_page || 1) },
+                { length: Math.min(5, pagination?.last_page || 1) },
                 (_, i) => {
                   const pageNumber =
                     Math.max(
                       1,
                       Math.min(
-                        (pagination.last_page || 1) - 4,
+                        (pagination?.last_page || 1) - 4,
                         Math.max(1, currentPage - 2)
                       )
                     ) + i;
 
-                  if (pageNumber > (pagination.last_page || 1)) return null;
+                  if (pageNumber > (pagination?.last_page || 1)) return null;
 
                   return (
                     <button
@@ -528,7 +541,8 @@ const OrderManagement = () => {
                         currentPage === pageNumber
                           ? "bg-blue-600 text-white border-blue-600"
                           : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-                      }`}>
+                      }`}
+                    >
                       {pageNumber}
                     </button>
                   );
@@ -537,16 +551,22 @@ const OrderManagement = () => {
             </div>
 
             <button
-              onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === (pagination.last_page || 1)}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              onClick={() =>
+                setCurrentPage((p) =>
+                  Math.min(pagination?.last_page || 1, p + 1)
+                )
+              }
+              disabled={currentPage === (pagination?.last_page || 1)}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Tiếp
             </button>
 
             <button
-              onClick={() => setCurrentPage(pagination.last_page || 1)}
-              disabled={currentPage === (pagination.last_page || 1)}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              onClick={() => setCurrentPage(pagination?.last_page || 1)}
+              disabled={currentPage === (pagination?.last_page || 1)}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Cuối
             </button>
           </div>
@@ -557,7 +577,10 @@ const OrderManagement = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={`Chi Tiết Đơn Hàng - ${selectedOrder?.order_number || `#${selectedOrder?.id}`}`}>
+        title={`Chi Tiết Đơn Hàng - ${
+          selectedOrder?.order_number || `#${selectedOrder?.id}`
+        }`}
+      >
         {selectedOrder && (
           <div className="space-y-6">
             {/* Order Info */}
@@ -577,7 +600,8 @@ const OrderManagement = () => {
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                     selectedOrder.status
-                  )}`}>
+                  )}`}
+                >
                   {getStatusIcon(selectedOrder.status)}
                   {statusOptions.find(
                     (opt) => opt.value === selectedOrder.status
@@ -637,8 +661,14 @@ const OrderManagement = () => {
                 <div className="text-gray-700 dark:text-gray-300">
                   <p>{selectedOrder.address?.name || "N/A"}</p>
                   <p>{selectedOrder.address?.address || "N/A"}</p>
-                  <p>Tỉnh/Thành Phố: {selectedOrder.address?.province?.name || "Chưa có thông tin"}</p>
-                  <p>Phường/Xã: {selectedOrder.address?.ward_model?.name || "Chưa có thông tin"}</p>
+                  <p>
+                    Tỉnh/Thành Phố:{" "}
+                    {selectedOrder.address?.province?.name || "Chưa có thông tin"}
+                  </p>
+                  <p>
+                    Phường/Xã:{" "}
+                    {selectedOrder.address?.ward_model?.name || "Chưa có thông tin"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -652,9 +682,14 @@ const OrderManagement = () => {
                 {selectedOrder.items?.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800">
+                    className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800"
+                  >
                     <img
-                      src={item.book_image || item.book?.image_url || "/placeholder-book.jpg"}
+                      src={
+                        item.book_image ||
+                        item.book?.image_url ||
+                        "/placeholder-book.jpg"
+                      }
                       alt={item.book_title || item.book?.title || "Book"}
                       className="w-12 h-16 object-cover rounded"
                     />
@@ -664,14 +699,18 @@ const OrderManagement = () => {
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         bởi{" "}
-                        {item.author_name || item.book?.author?.name || "Tác giả không xác định"}
+                        {item.author_name ||
+                          item.book?.author?.name ||
+                          "Tác giả không xác định"}
                       </p>
                       <div className="flex justify-between items-center mt-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           SL: {item.quantity}
                         </span>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          {formatCurrency(parseFloat(item.price) * item.quantity)}
+                          {formatCurrency(
+                            Number(item.price || 0) * Number(item.quantity || 0)
+                          )}
                         </span>
                       </div>
                     </div>
@@ -714,7 +753,8 @@ const OrderManagement = () => {
                 setAllowedStatuses([]);
                 setNewStatus("");
                 setCancellationReason("");
-              }}>
+              }}
+            >
               Hủy
             </button>
             <button
@@ -724,8 +764,9 @@ const OrderManagement = () => {
                 statusLoading ||
                 loadingAllowedStatuses ||
                 allowedStatuses.length === 0 ||
-                (newStatus === 'cancelled' && !cancellationReason.trim())
-              }>
+                (newStatus === "cancelled" && !cancellationReason.trim())
+              }
+            >
               {statusLoading
                 ? "Đang Cập Nhật..."
                 : loadingAllowedStatuses
@@ -733,7 +774,8 @@ const OrderManagement = () => {
                 : "Cập Nhật Trạng Thái"}
             </button>
           </div>
-        }>
+        }
+      >
         {selectedOrder && (
           <div className="space-y-4">
             <div>
@@ -758,15 +800,13 @@ const OrderManagement = () => {
                 <select
                   value={newStatus}
                   onChange={(e) => {
-                    // Chỉ cho phép chọn trạng thái được phép
                     const isAllowed = allowedStatuses.some(
                       (allowed) => allowed.value === e.target.value
                     );
-                    if (isAllowed) {
-                      setNewStatus(e.target.value);
-                    }
+                    if (isAllowed) setNewStatus(e.target.value);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400 focus:border-transparent">
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400 focus:border-transparent"
+                >
                   <option value="">-- Chọn trạng thái mới --</option>
                   {statusOptions.map((status) => {
                     const isAllowed = allowedStatuses.some(
@@ -784,7 +824,8 @@ const OrderManagement = () => {
                           !isAllowed || isCurrentStatus
                             ? "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-700"
                             : "text-gray-800 dark:text-gray-200"
-                        }`}>
+                        }`}
+                      >
                         {status.label} {isCurrentStatus ? "(Hiện tại)" : ""}{" "}
                         {!isAllowed && !isCurrentStatus
                           ? "(Không được phép)"
@@ -800,9 +841,8 @@ const OrderManagement = () => {
                 </p>
               )}
             </div>
-            
-            {/* Textarea cho lý do hủy khi chọn trạng thái cancelled */}
-            {newStatus === 'cancelled' && (
+
+            {newStatus === "cancelled" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Lý do hủy đơn hàng <span className="text-red-500">*</span>
@@ -822,7 +862,7 @@ const OrderManagement = () => {
                 )}
               </div>
             )}
-            
+
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <AlertCircle className="h-4 w-4" />

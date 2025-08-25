@@ -4,6 +4,55 @@ import { Star, ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { motion } from "framer-motion";
 import { getImageUrl } from "../../utils/imageUtils";
+// props.imageBase: đường dẫn KHÔNG có đuôi (ví dụ: /images/books/chi-pheo)
+function BookCover({ imageBase, alt }) {
+  // 320w, 480w, 640w là chiều rộng ảnh bạn build trước (nên có bản 2x)
+  return (
+    <picture>
+      {/* AVIF ưu tiên, rồi đến WebP */}
+      <source
+        type="image/avif"
+        srcSet={`
+          ${imageBase}-320.avif 320w,
+          ${imageBase}-480.avif 480w,
+          ${imageBase}-640.avif 640w
+        `}
+        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 300px"
+      />
+      <source
+        type="image/webp"
+        srcSet={`
+          ${imageBase}-320.webp 320w,
+          ${imageBase}-480.webp 480w,
+          ${imageBase}-640.webp 640w
+        `}
+        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 300px"
+      />
+      {/* Fallback JPEG */}
+      <img
+        src={`${imageBase}-480.jpg`}
+        srcSet={`
+          ${imageBase}-320.jpg 320w,
+          ${imageBase}-480.jpg 480w,
+          ${imageBase}-640.jpg 640w
+        `}
+        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 300px"
+        width="300"
+        height="450"
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+        }}
+      />
+    </picture>
+  );
+}
 
 const BookCard = ({ book }) => {
   const { addToCart } = useCart();

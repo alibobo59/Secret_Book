@@ -1,133 +1,143 @@
-import { api } from './api.js';
+// services/orderService.js
+ import { api } from './api'; // dùng default import (phổ biến nhất). Nếu bạn export { api } thì đổi lại cho khớp.
 
 const orderService = {
-  // User order functions
-  // Get user's orders
+  /** USER */
+  // Lấy danh sách đơn của user (có phân trang)
   getUserOrders: async (params = {}) => {
     try {
-      const response = await api.get('/orders', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Get user orders error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get('/orders', { params }); // đảm bảo truyền { params }
+      return res.data;
+    } catch (err) {
+      console.error('Get user orders error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Create new order (will trigger email notification)
+  // Tạo đơn (user)
   createOrder: async (orderData) => {
     try {
-      const response = await api.post('/orders', orderData);
-      return response.data;
-    } catch (error) {
-      console.error('Create order error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.post('/orders', orderData);
+      return res.data;
+    } catch (err) {
+      console.error('Create order error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Get order details
+  // Lấy chi tiết đơn theo ID (user)
   getOrderById: async (orderId) => {
     try {
-      const response = await api.get(`/orders/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get order error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get(`/orders/${orderId}`);
+      return res.data;
+    } catch (err) {
+      console.error('Get order error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Cancel order (user)
+  // Hủy đơn (user)
   cancelOrder: async (orderId) => {
     try {
-      const response = await api.patch(`/orders/${orderId}/cancel`);
-      return response.data;
-    } catch (error) {
-      console.error('Cancel order error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.patch(`/orders/${orderId}/cancel`);
+      return res.data;
+    } catch (err) {
+      console.error('Cancel order error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Admin order functions
-  // Get all orders (Admin)
+  /** ADMIN */
+  // Danh sách tất cả đơn (admin)
   getAllOrders: async (params = {}) => {
     try {
-      const response = await api.get('/admin/orders', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Get all orders error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get('/admin/orders', { params });
+      return res.data;
+    } catch (err) {
+      console.error('Get all orders error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Get order details (Admin)
+  // Chi tiết đơn (admin)
   getAdminOrderById: async (orderId) => {
     try {
-      const response = await api.get(`/admin/orders/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get admin order error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get(`/admin/orders/${orderId}`);
+      return res.data;
+    } catch (err) {
+      console.error('Get admin order error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Update order status (Admin) - will trigger email notifications
+  // Cập nhật trạng thái (admin)
   updateOrderStatus: async (orderId, status, reason = '') => {
     try {
-      const response = await api.patch(`/admin/orders/${orderId}/status`, {
-        status,
-        reason
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Update order status error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.patch(`/admin/orders/${orderId}/status`, { status, reason });
+      return res.data;
+    } catch (err) {
+      console.error('Update order status error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Update payment status (Admin)
+  // Cập nhật thanh toán (admin)
   updatePaymentStatus: async (orderId, paymentStatus) => {
     try {
-      const response = await api.patch(`/admin/orders/${orderId}/payment`, {
-        payment_status: paymentStatus
+      const res = await api.patch(`/admin/orders/${orderId}/payment`, {
+        payment_status: paymentStatus,
       });
-      return response.data;
-    } catch (error) {
-      console.error('Update payment status error:', error.response?.data || error.message);
-      throw error;
+      return res.data;
+    } catch (err) {
+      console.error('Update payment status error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Delete order (Admin)
+  // Xoá đơn (admin)
   deleteOrder: async (orderId) => {
     try {
-      const response = await api.delete(`/admin/orders/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Delete order error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.delete(`/admin/orders/${orderId}`);
+      return res.data;
+    } catch (err) {
+      console.error('Delete order error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Get allowed statuses for order
+  // Trạng thái cho phép (admin)
   getAllowedStatuses: async (orderId) => {
     try {
-      const response = await api.get(`/admin/orders/${orderId}/allowed-statuses`);
-      return response.data;
-    } catch (error) {
-      console.error('Get allowed statuses error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get(`/admin/orders/${orderId}/allowed-statuses`);
+      return res.data;
+    } catch (err) {
+      console.error('Get allowed statuses error:', err?.response?.data || err.message);
+      throw err;
     }
   },
 
-  // Get order statistics (Admin)
+  // Thống kê (admin)
   getOrderStats: async () => {
     try {
-      const response = await api.get('/admin/orders/stats');
-      return response.data;
-    } catch (error) {
-      console.error('Get order stats error:', error.response?.data || error.message);
-      throw error;
+      const res = await api.get('/admin/orders/stats');
+      return res.data;
+    } catch (err) {
+      console.error('Get order stats error:', err?.response?.data || err.message);
+      throw err;
     }
-  }
+  },
+
+  /** SEARCH */
+  // (User/Admin) Tìm theo mã đơn, ví dụ ORD-XXXX
+  searchByCode: async (code) => {
+    try {
+      const res = await api.get('/orders/search', { params: { code } });
+      return res.data;
+    } catch (err) {
+      // để fallback sang duyệt nhiều trang
+      throw err;
+    }
+  },
 };
 
 export default orderService;

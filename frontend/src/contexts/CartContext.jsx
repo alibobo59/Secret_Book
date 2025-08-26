@@ -1,5 +1,3 @@
-// frontend/src/contexts/CartContext.jsx
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import cartService from "../services/cartService";

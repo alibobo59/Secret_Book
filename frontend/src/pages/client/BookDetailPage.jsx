@@ -41,8 +41,8 @@ const BookDetailPage = () => {
       setError(null);
       try {
         const response = await api.get(`/books/${id}`);
-        console.log("API Response for Book Detail:", response.data); // Debug API response
-        const bookData = response.data.data; // Handle nested data
+        console.log("API Response for Book Detail:", response.data); 
+        const bookData = response.data.data; 
         console.log(bookData);
         setBook(bookData);
       } catch (err) {
@@ -249,7 +249,7 @@ const BookDetailPage = () => {
             {book.description || "Không có mô tả"}
           </p>
 
-          {/* Price and Add to Cart */}
+        
           <div className="space-y-4">
             <div className="flex items-baseline">
               <span className="text-3xl font-bold text-gray-800 dark:text-white">

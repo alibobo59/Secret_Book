@@ -1,3 +1,5 @@
+
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useBook } from "../../contexts/BookContext";
@@ -33,7 +35,7 @@ const HomePage = () => {
   const newReleases = React.useMemo(() => {
     console.log("Computing newReleases, books length:", books?.length);
     if (!books) return [];
-    return [...books].slice(5, 10); // Adjusted to avoid duplicating featuredBooks
+    return [...books].slice(5, 10); 
   }, [books]);
 
   const handleSearch = (e) => {

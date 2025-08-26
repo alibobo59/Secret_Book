@@ -3,18 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
-import {
-  Star,
-  ShoppingCart,
-  Calendar,
-  Book,
-  Hash,
-  ArrowLeft,
-} from "lucide-react";
+import { Star, ShoppingCart, Book, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { api, reviewAPI } from "../../services/api";
 import { Loading } from "../../components/common";
+import BookCard from "../../components/client/BookCard";
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -34,6 +28,9 @@ const BookDetailPage = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [canReview, setCanReview] = useState(false);
   const [reviewEligibility, setReviewEligibility] = useState(null);
+  // Thêm state cho sách liên quan
+  const [relatedBooks, setRelatedBooks] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   // Fetch book details
   useEffect(() => {
@@ -88,6 +85,69 @@ const BookDetailPage = () => {
     };
     checkReviewEligibility();
   }, [user, id]);
+
+  // Fetch related books (theo embedding). Fallback: cùng tác giả/cùng danh mục
+  useEffect(() => {
+    const fetchRelated = async () => {
+      if (!id) return;
+      setRelatedLoading(true);
+      try {
+        const res = await api.get(`/books/${id}/related`);
+        let items = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+        const currentId = parseInt(id);
+        items = (items || []).filter((b) => b && b.id !== currentId);
+
+        if ((!items || items.length === 0) && book) {
+          let fallback = [];
+          if (book.author_id) {
+            try {
+              const byAuthor = await api.get(`/books`, {
+                params: { author_id: book.author_id, per_page: 12 },
+              });
+              const listA = Array.isArray(byAuthor.data)
+                ? byAuthor.data
+                : Array.isArray(byAuthor.data?.data)
+                ? byAuthor.data.data
+                : [];
+              fallback = listA.filter((b) => b && b.id !== currentId);
+            } catch (e) {
+              console.warn("Fallback by author failed", e);
+            }
+          }
+          if ((!fallback || fallback.length === 0) && book.category_id) {
+            try {
+              const byCategory = await api.get(`/books`, {
+                params: { category_id: book.category_id, per_page: 12 },
+              });
+              const listC = Array.isArray(byCategory.data)
+                ? byCategory.data
+                : Array.isArray(byCategory.data?.data)
+                ? byCategory.data.data
+                : [];
+              fallback = listC.filter((b) => b && b.id !== currentId);
+            } catch (e) {
+              console.warn("Fallback by category failed", e);
+            }
+          }
+          items = fallback.slice(0, 4);
+        }
+
+        setRelatedBooks(items.slice(0, 4));
+      } catch (e) {
+        console.error("Failed to fetch related books:", e);
+        setRelatedBooks([]);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+
+    fetchRelated();
+  }, [id, book]);
 
   if (loading) {
     return (
@@ -258,7 +318,7 @@ const BookDetailPage = () => {
             />
           </div>
         </motion.div>
-
+        
         {/* Book Details */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -298,17 +358,8 @@ const BookDetailPage = () => {
           {/* Book Info */}
           <div className="space-y-3">
             <div className="flex items-center text-gray-600 dark:text-gray-400">
-              <Calendar className="h-5 w-5 mr-2" />
-              Xuất bản:
-              {new Date(book.published_date).toLocaleDateString()}
-            </div>
-            <div className="flex items-center text-gray-600 dark:text-gray-400">
               <Book className="h-5 w-5 mr-2" />
-              Số trang: {book.page_count || "Không có"}
-            </div>
-            <div className="flex items-center text-gray-600 dark:text-gray-400">
-              <Hash className="h-5 w-5 mr-2" />
-              ISBN: {book.isbn || "N/A"}
+              Nhà xuất bản: {book.publisher?.name || "Không có"}
             </div>
           </div>
 
@@ -437,6 +488,35 @@ const BookDetailPage = () => {
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* Related Books Section */}
+      <div className="mt-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-serif font-bold text-gray-800 dark:text-white">
+            Sách Liên Quan
+          </h2>
+        </div>
+        {relatedLoading ? (
+          <Loading size={32} message="Đang gợi ý..." />
+        ) : relatedBooks && relatedBooks.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {relatedBooks.map((rb, idx) => (
+              <motion.div
+                key={rb.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+              >
+                <BookCard book={rb} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-600 dark:text-gray-400">
+            Chưa có gợi ý phù hợp.
+          </p>
+        )}
       </div>
 
       {/* Reviews Section */}

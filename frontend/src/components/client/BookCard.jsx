@@ -160,11 +160,7 @@ const BookCard = ({ book }) => {
                   ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                   : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}>
-              {stockQuantity > 10
-                ? "Còn hàng"
-                : stockQuantity > 0
-                ? `Chỉ còn ${stockQuantity} cuốn`
-                : "Hết hàng"}
+              {`Còn ${stockQuantity} cuốn`}
             </span>
           </div>
         </div>

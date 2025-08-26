@@ -19,6 +19,7 @@ use App\Http\Controllers\API\SettingsController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ImageUploadController;
 use App\Http\Controllers\RefundController;
+use App\Http\Controllers\API\RecommendationController;
 // Root route
 Route::get('/', function () {
     return 'API';
@@ -211,6 +212,7 @@ Route::get('/orders/search', [\App\Http\Controllers\API\OrderController::class, 
 
 // (Public) xem review của 1 sách
 Route::get('/books/{book}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+Route::get('/books/{book}/related', [RecommendationController::class, 'related'])->name('books.related');
 
 // YÊU CẦU ĐĂNG NHẬP
 Route::middleware(['auth:sanctum', 'check.user.status'])->group(function () {

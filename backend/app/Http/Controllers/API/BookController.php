@@ -11,6 +11,8 @@
     use Illuminate\Support\Facades\Storage;
     use Illuminate\Support\Facades\Validator;
     use Symfony\Component\HttpFoundation\Response;
+    use App\Services\EmbeddingService;
+use App\Jobs\UpsertBookEmbedding;
 
     class BookController extends Controller
     {
@@ -76,7 +78,8 @@
                         }
                     }
                 }
-                $request->merge(['variations' => $input['variations']]);
+                unset($variation); // IMPORTANT: break the reference to avoid unintended side effects later
+                // Không cần merge vì đã sử dụng $input trực tiếp
             }
 
             $validator = Validator::make($request->all(), [
@@ -137,9 +140,12 @@
             if ($request->has('variations')) {
                 $variationSkus = collect($request->variations)
                     ->pluck('sku')
-                    ->filter()
+                    ->filter(function($sku) {
+                        return !empty($sku) && trim($sku) !== '';
+                    })
                     ->toArray();
                 
+
                 if (count($variationSkus) !== count(array_unique($variationSkus))) {
                     return response()->json([
                         'error' => [
@@ -165,7 +171,7 @@
                 if ($request->hasFile('image')) {
                     $folder = 'books/' . $book->id;
                     $image = $request->file('image');
-                    $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+                    $imageName = 'book-' . $book->id . '-' . Str::slug($input['title']) . '.' . $image->getClientOriginalExtension();
                     $imagePath = $image->storeAs($folder, $imageName, 'public');
                     $book->update(['image' => $imagePath]);
                 }
@@ -198,6 +204,14 @@
                 }
                 
                 DB::commit();
+
+                // Dispatch job to upsert embedding (non-blocking)
+                try {
+                    \App\Jobs\UpsertBookEmbedding::dispatch($book->id)->onQueue('embeddings');
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Dispatch UpsertBookEmbedding job failed on store: ' . $e->getMessage());
+                }
+
                 return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_CREATED);
                 
             } catch (\Exception $e) {
@@ -212,26 +226,36 @@
 
         public function update(Request $request, $id)
         {
-            // --- START: ALL LOGIC IS NEW/HEAVILY MODIFIED ---
+            // Lấy dữ liệu từ luồng JSON thay vì input thông thường
+            // Prefer JSON body, fallback to standard input (form-data / x-www-form-urlencoded)
+            $input = $request->isJson() ? $request->json()->all() : $request->all();
+            
+            // Debug: Check raw request data
+            if (isset($input['variations'])) {
+                $rawSkus = collect($input['variations'])->pluck('sku')->toArray();
+                \Illuminate\Support\Facades\Log::info('Raw variation SKUs from request:', $rawSkus);
+            }
+            
             $book = Book::with('variations')->find($id);
 
             if (!$book) {
                 return response()->json(['error' => 'Không tìm thấy sách'], Response::HTTP_NOT_FOUND);
             }
 
-            // 1. Preprocess variations to decode JSON attributes, just like in store()
-            $input = $request->all();
+            // 1. Preprocess variations to decode JSON attributes (nếu cần)
+            // Trong trường hợp này, vì đã dùng json()->all(), bước này có thể không cần thiết
             if (isset($input['variations'])) {
                 foreach ($input['variations'] as &$variation) {
                     if (isset($variation['attributes']) && is_string($variation['attributes'])) {
                         $variation['attributes'] = json_decode($variation['attributes'], true);
                     }
                 }
+                unset($variation); // IMPORTANT: break the reference to avoid unintended side effects later
                 $request->merge(['variations' => $input['variations']]);
             }
 
-            // 2. Update validation rules to handle variations and unique SKU check for update
-            $validator = Validator::make($request->all(), [
+            // 2. Create base validation rules
+            $rules = [
                 'title' => 'required|string|max:255',
                 'sku' => 'required|string|unique:books,sku,' . $book->id,
                 'description' => 'nullable|string',
@@ -242,14 +266,23 @@
                 'publisher_id' => 'nullable|exists:publishers,id',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'variations' => 'sometimes|array',
-                'variations.*.id' => 'sometimes|exists:book_variations,id', // For existing variations
+                'variations.*.id' => 'sometimes|exists:book_variations,id',
                 'variations.*.attributes' => 'required|array',
                 'variations.*.price' => 'nullable|numeric|min:0',
                 'variations.*.stock_quantity' => 'required|integer|min:0',
-                // Unique SKU check must ignore the variation's own ID
-                'variations.*.sku' => 'nullable|string|unique:book_variations,sku,' . ($request->input('variations.*.id') ?? 'NULL') . ',id',
+                'variations.*.sku' => 'nullable|string',
                 'variations.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            ], [
+            ];
+
+            // Add unique SKU validation for each variation individually
+            if (isset($input['variations'])) {
+                foreach ($input['variations'] as $index => $variation) {
+                    $variationId = $variation['id'] ?? null;
+                    $rules["variations.{$index}.sku"] = 'nullable|string|unique:book_variations,sku,' . ($variationId ?? 'NULL') . ',id';
+                }
+            }
+
+            $validator = Validator::make($input, $rules, [
                 'title.required' => 'Tiêu đề là bắt buộc.',
                 'title.string' => 'Tiêu đề phải là chuỗi ký tự.',
                 'title.max' => 'Tiêu đề không được vượt quá 255 ký tự.',
@@ -288,18 +321,51 @@
                 return response()->json(['error' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            // 3. Update the main book data
-            $updateData = $request->only([
-                'title', 'sku', 'description', 'price', 'stock_quantity', 'category_id', 'author_id', 'publisher_id'
-            ]);
-            
-            // Remove price and stock_quantity if variations exist
-            if ($request->has('variations')) {
-                unset($updateData['price']);
-                unset($updateData['stock_quantity']);
+            // Custom validation: Check for duplicate SKUs within the same request
+            if (isset($input['variations'])) {
+                // Debug: Check what variations look like at this point
+                \Illuminate\Support\Facades\Log::info('Variations at duplicate check:', $input['variations']);
+                
+                $variationSkus = collect($input['variations'])
+                    ->pluck('sku')
+                    ->filter(function($sku) {
+                        return !empty($sku) && trim($sku) !== '';
+                    })
+                    ->toArray();
+                
+                \Illuminate\Support\Facades\Log::info('Filtered SKUs for duplicate check:', $variationSkus);
+                
+                // Debug output
+                $uniqueSkus = array_unique($variationSkus);
+                if (count($variationSkus) !== count($uniqueSkus)) {
+                    return response()->json([
+                        'error' => [
+                            'variations' => ['Có SKU biến thể trùng lặp trong cùng một yêu cầu.'],
+                            'debug' => [
+                                'all_skus' => $variationSkus,
+                                'unique_skus' => array_values($uniqueSkus),
+                                'count_all' => count($variationSkus),
+                                'count_unique' => count($uniqueSkus)
+                            ]
+                        ]
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
             }
-            
-            $book->update($updateData);
+
+            // 3. Update the main book data with transaction
+            DB::beginTransaction();
+            try {
+                $updateData = collect($input)->only([
+                    'title', 'sku', 'description', 'price', 'stock_quantity', 'category_id', 'author_id', 'publisher_id'
+                ])->all();
+                
+                // Remove price and stock_quantity if variations exist
+                if (isset($input['variations'])) {
+                    unset($updateData['price']);
+                    unset($updateData['stock_quantity']);
+                }
+                
+                $book->update($updateData);
 
             // Handle main image update
             if ($request->hasFile('image')) {
@@ -310,21 +376,32 @@
                 // Store new image
                 $folder = 'books/' . $book->id;
                 $image = $request->file('image');
-                $imageName = 'book-' . $book->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+                $imageName = 'book-' . $book->id . '-' . Str::slug($input['title']) . '.' . $image->getClientOriginalExtension();
                 $imagePath = $image->storeAs($folder, $imageName, 'public');
                 $book->update(['image' => $imagePath]);
             }
 
             // 4. Sync Variations (Create, Update, Delete)
-            if ($request->has('variations')) {
+            if (isset($input['variations'])) {
                 $incomingVariationIds = [];
 
-                foreach ($request->variations as $index => $variationData) {
+                foreach ($input['variations'] as $index => $variationData) {
                     $variationData['price'] = $variationData['price'] ?? $book->price;
 
                     // Find existing or create new variation
-                    $variation = $book->variations()->findOrNew($variationData['id'] ?? 0);
-                    $variation->fill($variationData);
+                    if (isset($variationData['id']) && $variationData['id']) {
+                        $variation = $book->variations()->find($variationData['id']);
+                        if (!$variation) {
+                            throw new \Exception("Variation with ID {$variationData['id']} not found.");
+                        }
+                    } else {
+                        $variation = new BookVariation();
+                    }
+                    
+                    // Remove 'id' from variationData before filling
+                    $fillableData = $variationData;
+                    unset($fillableData['id']);
+                    $variation->fill($fillableData);
                     $variation->book_id = $book->id;
                     $variation->save();
 
@@ -338,7 +415,7 @@
                         }
                         $folder = 'books/' . $book->id . '/variations/' . $variation->id;
                         $image = $request->file("variations.{$index}.image");
-                        $imageName = 'variation-' . $variation->id . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+                        $imageName = 'variation-' . $variation->id . '-' . Str::slug($input['title']) . '.' . $image->getClientOriginalExtension();
                         $imagePath = $image->storeAs($folder, $imageName, 'public');
                         $variation->update(['image' => $imagePath]);
                     }
@@ -352,7 +429,7 @@
                     $variation->delete();
                 });
 
-            } elseif ($request->has('stock_quantity')) {
+            } elseif (isset($input['stock_quantity'])) {
                 // If switched from variable to simple, delete all variations
                 $book->variations()->get()->each(function($variation) {
                     if ($variation->image && Storage::disk('public')->exists($variation->image)) {
@@ -363,7 +440,25 @@
             }
             // --- END: MODIFIED LOGIC ---
 
-            return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_OK);
+                DB::commit();
+
+                // Dispatch job to upsert embedding (non-blocking)
+                try {
+                    \App\Jobs\UpsertBookEmbedding::dispatch($book->id)->onQueue('embeddings');
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Dispatch UpsertBookEmbedding job failed on update: ' . $e->getMessage());
+                }
+
+                return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_OK);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => [
+                        'message' => 'Có lỗi xảy ra khi cập nhật sách: ' . $e->getMessage()
+                    ]
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
         }
 
         public function destroy($id)

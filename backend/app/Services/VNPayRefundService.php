@@ -17,9 +17,10 @@ class VNPayRefundService
 
     public function __construct()
     {
-        $this->vnp_TmnCode = config('services.vnpay.vnp_TmnCode');
-        $this->vnp_HashSecret = config('services.vnpay.vnp_HashSecret');
-        $this->vnp_ApiUrl = config('services.vnpay.vnp_ApiUrl', 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction');
+        // Đồng bộ với cấu hình VNPay hiện tại (không thay đổi hash/secret, chỉ đọc đúng key)
+        $this->vnp_TmnCode = config('services.vnpay.tmn_code');
+        $this->vnp_HashSecret = config('services.vnpay.hash_secret');
+        $this->vnp_ApiUrl = config('services.vnpay.api_url', 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction');
         $this->vnp_Api_Version = '2.1.0';
     }
 
@@ -35,12 +36,13 @@ class VNPayRefundService
             // Tạo bản ghi hoàn tiền
             $refund = $this->createRefundRecord($order, $order->payment_amount, 'full', $reason, $requestedBy);
 
-            // Gọi API VNPay để hoàn tiền
+            // Gọi API VNPay để hoàn tiền (TransactionType 02 = Full)
             $vnpayResponse = $this->callVNPayRefundAPI(
-                $order->payment_transaction_id,
+                $order,
                 $order->payment_amount,
                 $refund->refund_number,
-                $reason
+                $reason,
+                '02'
             );
 
             // Cập nhật thông tin phản hồi từ VNPay
@@ -81,12 +83,13 @@ class VNPayRefundService
             // Tạo bản ghi hoàn tiền
             $refund = $this->createRefundRecord($order, $refundAmount, 'partial', $reason, $requestedBy);
 
-            // Gọi API VNPay để hoàn tiền
+            // Gọi API VNPay để hoàn tiền (TransactionType 03 = Partial)
             $vnpayResponse = $this->callVNPayRefundAPI(
-                $order->payment_transaction_id,
+                $order,
                 $refundAmount,
                 $refund->refund_number,
-                $reason
+                $reason,
+                '03'
             );
 
             // Cập nhật thông tin phản hồi từ VNPay
@@ -118,34 +121,47 @@ class VNPayRefundService
     /**
      * Kiểm tra trạng thái hoàn tiền từ VNPay
      */
-    public function queryRefundStatus(string $vnpayTransactionId, string $refundTransactionId): array
+    public function queryRefundStatus(Refund $refund): array
     {
         try {
+            $order = $refund->order()->firstOrFail();
+
+            $vnpTxnRef = $this->getVnpTxnRefFromOrder($order);
+            if (!$vnpTxnRef) {
+                throw new Exception('Không tìm thấy vnp_TxnRef của giao dịch thanh toán');
+            }
+
+            $vnp_TransactionDate = $this->getVnpTransactionDateFromOrder($order);
+            if (!$vnp_TransactionDate) {
+                throw new Exception('Không tìm thấy thời gian giao dịch (vnp_TransactionDate/vnp_PayDate)');
+            }
+
             $requestData = [
                 'vnp_RequestId' => $this->generateRequestId(),
                 'vnp_Version' => $this->vnp_Api_Version,
                 'vnp_Command' => 'querydr',
                 'vnp_TmnCode' => $this->vnp_TmnCode,
-                'vnp_TxnRef' => $refundTransactionId,
-                'vnp_OrderInfo' => 'Truy van ket qua hoan tien',
-                'vnp_TransactionNo' => $vnpayTransactionId,
-                'vnp_TransDate' => date('YmdHis'),
+                'vnp_TxnRef' => $vnpTxnRef,
+                'vnp_OrderInfo' => 'Query transaction',
+                // 'vnp_TransactionNo' => $order->payment_transaction_id, // tuỳ chọn
+                'vnp_TransactionDate' => $vnp_TransactionDate,
                 'vnp_CreateDate' => date('YmdHis'),
                 'vnp_IpAddr' => request()->ip() ?? '127.0.0.1'
             ];
 
-            // Tạo chữ ký
-            $requestData['vnp_SecureHash'] = $this->generateSecureHash($requestData);
+            // Tạo chữ ký theo định dạng querydr của VNPay demo
+            $requestData['vnp_SecureHash'] = $this->generateSecureHashForQuery($requestData);
 
             // Gọi API VNPay
-            $response = Http::timeout(30)->post($this->vnp_ApiUrl, $requestData);
+            $response = Http::timeout(30)->asJson()->post($this->vnp_ApiUrl, $requestData);
 
             if ($response->successful()) {
                 $responseData = $response->json();
                 
                 Log::info('VNPay Query Refund Status Response', [
-                    'transaction_id' => $vnpayTransactionId,
-                    'refund_transaction_id' => $refundTransactionId,
+                    'refund_id' => $refund->id,
+                    'order_id' => $order->id,
+                    'vnp_TxnRef' => $vnpTxnRef,
                     'response' => $responseData
                 ]);
 
@@ -159,8 +175,7 @@ class VNPayRefundService
 
         } catch (Exception $e) {
             Log::error('VNPay Query Refund Status Error: ' . $e->getMessage(), [
-                'transaction_id' => $vnpayTransactionId,
-                'refund_transaction_id' => $refundTransactionId
+                'refund_id' => $refund->id,
             ]);
 
             return [
@@ -173,42 +188,53 @@ class VNPayRefundService
     /**
      * Gọi API VNPay để thực hiện hoàn tiền
      */
-    private function callVNPayRefundAPI(string $transactionId, float $amount, string $refundRef, string $reason): array
+    private function callVNPayRefundAPI(Order $order, float $amount, string $refundRef, string $reason, string $transactionType): array
     {
+        $vnpTxnRef = $this->getVnpTxnRefFromOrder($order);
+        if (!$vnpTxnRef) {
+            throw new Exception('Không tìm thấy vnp_TxnRef của giao dịch thanh toán');
+        }
+
+        $vnp_TransactionDate = $this->getVnpTransactionDateFromOrder($order);
+        if (!$vnp_TransactionDate) {
+            throw new Exception('Không tìm thấy thời gian giao dịch (vnp_TransactionDate/vnp_PayDate)');
+        }
+
         $requestData = [
             'vnp_RequestId' => $this->generateRequestId(),
             'vnp_Version' => $this->vnp_Api_Version,
             'vnp_Command' => 'refund',
             'vnp_TmnCode' => $this->vnp_TmnCode,
-            'vnp_TransactionType' => '02', // 02: Hoàn tiền toàn phần, 03: Hoàn tiền một phần
-            'vnp_TxnRef' => $refundRef,
+            'vnp_TransactionType' => $transactionType, // 02: Hoàn tiền toàn phần, 03: Hoàn tiền một phần
+            'vnp_TxnRef' => $vnpTxnRef,
             'vnp_Amount' => intval($amount * 100), // VNPay yêu cầu số tiền tính bằng đồng
-            'vnp_OrderInfo' => $reason ?: 'Hoan tien don hang',
-            'vnp_TransactionNo' => $transactionId,
-            'vnp_TransDate' => date('YmdHis'),
+            'vnp_OrderInfo' => $reason ?: 'Hoan Tien Giao Dich',
+            'vnp_TransactionNo' => $order->payment_transaction_id ?? '0',
+            'vnp_TransactionDate' => $vnp_TransactionDate,
             'vnp_CreateDate' => date('YmdHis'),
-            'vnp_CreateBy' => 'System',
+            'vnp_CreateBy' => $this->buildCreateBy(),
             'vnp_IpAddr' => request()->ip() ?? '127.0.0.1'
         ];
 
-        // Tạo chữ ký
-        $requestData['vnp_SecureHash'] = $this->generateSecureHash($requestData);
+        // Tạo chữ ký theo định dạng refund của VNPay demo
+        $requestData['vnp_SecureHash'] = $this->generateSecureHashForRefund($requestData);
 
         Log::info('VNPay Refund API Request', [
             'request_data' => $requestData,
-            'transaction_id' => $transactionId,
+            'order_id' => $order->id,
+            'refund_ref' => $refundRef,
             'amount' => $amount
         ]);
 
-        // Gọi API VNPay
-        $response = Http::timeout(30)->post($this->vnp_ApiUrl, $requestData);
+        // Gọi API VNPay (JSON)
+        $response = Http::timeout(30)->asJson()->post($this->vnp_ApiUrl, $requestData);
 
         if ($response->successful()) {
             $responseData = $response->json();
             
             Log::info('VNPay Refund API Response', [
                 'response_data' => $responseData,
-                'transaction_id' => $transactionId
+                'order_id' => $order->id
             ]);
 
             return $responseData;
@@ -231,7 +257,8 @@ class VNPayRefundService
             'original_amount' => $order->total,
             'status' => Refund::STATUS_PENDING,
             'refund_method' => Refund::METHOD_VNPAY,
-            'vnpay_txn_ref' => $order->payment_transaction_id,
+            // Lưu đúng TxnRef của giao dịch thanh toán VNPay để dùng cho refund/querydr
+            'vnpay_txn_ref' => $this->getVnpTxnRefFromOrder($order),
             'reason' => $reason
         ]);
     }
@@ -245,12 +272,12 @@ class VNPayRefundService
             throw new Exception('Đơn hàng không được thanh toán bằng VNPay');
         }
 
-        if ($order->payment_status !== 'completed') {
+        if (!in_array($order->payment_status, ['completed', 'paid'])) {
             throw new Exception('Đơn hàng chưa được thanh toán thành công');
         }
 
         if (empty($order->payment_transaction_id)) {
-            throw new Exception('Không tìm thấy mã giao dịch VNPay');
+            throw new Exception('Không tìm thấy mã giao dịch VNPay (vnp_TransactionNo)');
         }
 
         // Kiểm tra xem đã có hoàn tiền thành công chưa
@@ -284,27 +311,66 @@ class VNPayRefundService
     }
 
     /**
-     * Tạo chữ ký bảo mật
+     * Tạo chữ ký bảo mật chung (KHÔNG dùng cho refund/querydr)
      */
     private function generateSecureHash(array $data): string
     {
-        // Loại bỏ vnp_SecureHash nếu có
         unset($data['vnp_SecureHash']);
-        
-        // Sắp xếp theo key
         ksort($data);
-        
-        // Tạo chuỗi hash
         $hashData = "";
         foreach ($data as $key => $value) {
-            if (strlen($value) > 0) {
+            if (strlen((string)$value) > 0) {
                 $hashData .= $key . "=" . $value . "&";
             }
         }
-        
         $hashData = rtrim($hashData, '&');
-        
         return hash_hmac('sha512', $hashData, $this->vnp_HashSecret);
+    }
+
+    /**
+     * Tạo chữ ký cho API Refund theo demo VNPAY (đúng thứ tự các trường, nối bằng |)
+     */
+    private function generateSecureHashForRefund(array $d): string
+    {
+        $format = '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s';
+        $dataHash = sprintf(
+            $format,
+            $d['vnp_RequestId'] ?? '',
+            $d['vnp_Version'] ?? '',
+            $d['vnp_Command'] ?? '',
+            $d['vnp_TmnCode'] ?? '',
+            $d['vnp_TransactionType'] ?? '',
+            $d['vnp_TxnRef'] ?? '',
+            $d['vnp_Amount'] ?? '',
+            $d['vnp_TransactionNo'] ?? '',
+            $d['vnp_TransactionDate'] ?? '',
+            $d['vnp_CreateBy'] ?? '',
+            $d['vnp_CreateDate'] ?? '',
+            $d['vnp_IpAddr'] ?? '',
+            $d['vnp_OrderInfo'] ?? ''
+        );
+        return hash_hmac('SHA512', $dataHash, $this->vnp_HashSecret);
+    }
+
+    /**
+     * Tạo chữ ký cho API Querydr theo demo VNPAY (đúng thứ tự các trường, nối bằng |)
+     */
+    private function generateSecureHashForQuery(array $d): string
+    {
+        $format = '%s|%s|%s|%s|%s|%s|%s|%s|%s';
+        $dataHash = sprintf(
+            $format,
+            $d['vnp_RequestId'] ?? '',
+            $d['vnp_Version'] ?? '',
+            $d['vnp_Command'] ?? '',
+            $d['vnp_TmnCode'] ?? '',
+            $d['vnp_TxnRef'] ?? '',
+            $d['vnp_TransactionDate'] ?? '',
+            $d['vnp_CreateDate'] ?? '',
+            $d['vnp_IpAddr'] ?? '',
+            $d['vnp_OrderInfo'] ?? ''
+        );
+        return hash_hmac('SHA512', $dataHash, $this->vnp_HashSecret);
     }
 
     /**
@@ -313,6 +379,51 @@ class VNPayRefundService
     private function generateRequestId(): string
     {
         return date('YmdHis') . rand(100000, 999999);
+    }
+
+    /**
+     * Lấy vnp_TxnRef từ payment_details của Order
+     */
+    private function getVnpTxnRefFromOrder(Order $order): ?string
+    {
+        $details = $this->getPaymentDetailsArray($order);
+        return $details['vnp_TxnRef'] ?? null;
+    }
+
+    /**
+     * Lấy vnp_TransactionDate từ payment_details (ưu tiên vnp_PayDate), fallback payment_date của Order
+     */
+    private function getVnpTransactionDateFromOrder(Order $order): ?string
+    {
+        $details = $this->getPaymentDetailsArray($order);
+        if (!empty($details['vnp_PayDate'])) {
+            return $details['vnp_PayDate'];
+        }
+        if (!empty($order->payment_date)) {
+            return date('YmdHis', strtotime($order->payment_date));
+        }
+        return null;
+    }
+
+    private function getPaymentDetailsArray(Order $order): array
+    {
+        if (is_array($order->payment_details)) {
+            return $order->payment_details;
+        }
+        if (is_string($order->payment_details)) {
+            $decoded = json_decode($order->payment_details, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
+
+    /**
+     * Xây dựng giá trị vnp_CreateBy
+     */
+    private function buildCreateBy(): string
+    {
+        // Có thể gắn thông tin hệ thống/người dùng tại đây
+        return 'System';
     }
 
     /**

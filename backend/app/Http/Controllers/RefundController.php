@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Services\VNPayRefundService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class RefundController extends Controller
 {
@@ -309,10 +310,7 @@ class RefundController extends Controller
             }
 
             // Gọi API VNPay để kiểm tra trạng thái
-            $result = $this->vnpayRefundService->queryRefundStatus(
-                $refund->vnpay_txn_ref,
-                $refund->refund_number
-            );
+            $result = $this->vnpayRefundService->queryRefundStatus($refund);
 
             if ($result['success']) {
                 // Cập nhật thông tin từ VNPay nếu cần
@@ -436,6 +434,15 @@ class RefundController extends Controller
                 ], 400);
             }
 
+            // Lấy vnp_TxnRef từ payment_details
+            $vnpTxnRef = null;
+            if (is_array($order->payment_details)) {
+                $vnpTxnRef = $order->payment_details['vnp_TxnRef'] ?? null;
+            } elseif (is_string($order->payment_details)) {
+                $decoded = json_decode($order->payment_details, true);
+                $vnpTxnRef = is_array($decoded) ? ($decoded['vnp_TxnRef'] ?? null) : null;
+            }
+
             // Tạo yêu cầu hoàn tiền (chờ admin xử lý)
             $refund = Refund::create([
                 'order_id' => $order->id,
@@ -446,7 +453,7 @@ class RefundController extends Controller
                 'original_amount' => $order->total,
                 'status' => Refund::STATUS_PENDING,
                 'refund_method' => Refund::METHOD_VNPAY,
-                'vnpay_txn_ref' => $order->payment_transaction_id,
+                'vnpay_txn_ref' => $vnpTxnRef,
                 'reason' => $request->reason
             ]);
 

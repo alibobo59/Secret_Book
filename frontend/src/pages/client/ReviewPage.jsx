@@ -24,6 +24,8 @@ const ReviewPage = () => {
   const [reviews, setReviews] = useState({});
   const [submitting, setSubmitting] = useState({});
   const [submitted, setSubmitted] = useState({});
+  const [selectedImages, setSelectedImages] = useState({}); // { [bookId]: File[] }
+  const [imagePreviews, setImagePreviews] = useState({}); // { [bookId]: string[] }
 
   useEffect(() => {
     if (!user) {
@@ -40,12 +42,12 @@ const ReviewPage = () => {
       const foundOrder = orders.find(o => o.id.toString() === orderId);
       
       if (!foundOrder) {
-        setError("Order not found");
+        setError("Không tìm thấy đơn hàng");
         return;
       }
       
       if (foundOrder.status !== "delivered") {
-        setError("You can only review delivered orders");
+        setError("Bạn chỉ có thể đánh giá các đơn hàng đã giao");
         return;
       }
       
@@ -65,17 +67,17 @@ const ReviewPage = () => {
               hoveredRating: 0
             };
           } else {
-            console.log(`Cannot review book ${bookId}: ${canReviewResponse.data.reason}`);
+            console.log(`Không thể đánh giá sách ${bookId}: ${canReviewResponse.data.reason}`);
           }
         } catch (error) {
-          console.error(`Error checking review permission for book ${bookId}:`, error);
+          console.error(`Lỗi khi kiểm tra quyền đánh giá cho sách ${bookId}:`, error);
         }
       }
       setReviews(initialReviews);
       
     } catch (err) {
-      console.error("Failed to load order:", err);
-      setError("Failed to load order details");
+      console.error("Tải đơn hàng thất bại:", err);
+      setError("Không thể tải chi tiết đơn hàng");
     } finally {
       setLoading(false);
     }
@@ -91,10 +93,38 @@ const ReviewPage = () => {
     }));
   };
 
+  // Image handlers per book
+  const handleImageChange = (bookId, e) => {
+    const files = Array.from(e.target.files || []);
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const filtered = files.filter((f) => validTypes.includes(f.type));
+    const combined = [...(selectedImages[bookId] || []), ...filtered].slice(0, 3);
+
+    // cleanup old previews
+    (imagePreviews[bookId] || []).forEach((url) => URL.revokeObjectURL(url));
+
+    const previews = combined.map((f) => URL.createObjectURL(f));
+    setSelectedImages((prev) => ({ ...prev, [bookId]: combined }));
+    setImagePreviews((prev) => ({ ...prev, [bookId]: previews }));
+
+    // reset input
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (bookId, idx) => {
+    const currentFiles = selectedImages[bookId] || [];
+    const currentPreviews = imagePreviews[bookId] || [];
+    if (currentPreviews[idx]) URL.revokeObjectURL(currentPreviews[idx]);
+    const nextFiles = currentFiles.filter((_, i) => i !== idx);
+    const nextPreviews = currentPreviews.filter((_, i) => i !== idx);
+    setSelectedImages((prev) => ({ ...prev, [bookId]: nextFiles }));
+    setImagePreviews((prev) => ({ ...prev, [bookId]: nextPreviews }));
+  };
+
   const submitReview = async (bookId) => {
     const reviewData = reviews[bookId];
     if (!reviewData || reviewData.rating === 0) {
-      alert("Please provide a rating");
+      alert("Vui lòng chọn mức đánh giá");
       return;
     }
 
@@ -111,11 +141,17 @@ const ReviewPage = () => {
       await reviewAPI.submitReview({
         book_id: bookId,
         rating: reviewData.rating,
-        review: reviewData.review.trim() || null
+        review: reviewData.review.trim() || null,
+        images: selectedImages[bookId] || [],
       });
       
       setSubmitted(prev => ({ ...prev, [bookId]: true }));
-      alert("Review submitted successfully!");
+      alert("Gửi đánh giá thành công!");
+
+      // cleanup previews for this book
+      (imagePreviews[bookId] || []).forEach((url) => URL.revokeObjectURL(url));
+      setSelectedImages((prev) => ({ ...prev, [bookId]: [] }));
+      setImagePreviews((prev) => ({ ...prev, [bookId]: [] }));
       
       // Check if all items have been reviewed
       const reviewableItems = order?.items?.filter(item => {
@@ -136,8 +172,8 @@ const ReviewPage = () => {
       }
       
     } catch (error) {
-      console.error("Failed to submit review:", error);
-      const errorMessage = error.response?.data?.message || "Failed to submit review. Please try again.";
+      console.error("Gửi đánh giá thất bại:", error);
+      const errorMessage = error.response?.data?.message || "Gửi đánh giá thất bại. Vui lòng thử lại.";
       alert(errorMessage);
     } finally {
       setSubmitting(prev => ({ ...prev, [bookId]: false }));
@@ -151,7 +187,7 @@ const ReviewPage = () => {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
             <span className="ml-3 text-gray-600 dark:text-gray-400">
-              Loading order details...
+              Đang tải chi tiết đơn hàng...
             </span>
           </div>
         </div>
@@ -201,7 +237,7 @@ const ReviewPage = () => {
                 Đánh giá đơn hàng của bạn
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Order #{order?.order_number || order?.id} • Delivered on{" "}
+                Đơn hàng #{order?.order_number || order?.id} • Đã giao vào{" "}
                 {new Date(order?.updated_at || order?.created_at).toLocaleDateString()}
               </p>
             </div>
@@ -237,7 +273,7 @@ const ReviewPage = () => {
                       {item.book?.title || item.title}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-2">
-                      by {item.book?.author?.name || item.author}
+                      bởi {item.book?.author?.name || item.author}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>Số lượng: {item.quantity}</span>
@@ -247,7 +283,7 @@ const ReviewPage = () => {
                     {!isReviewable && (
                       <p className="mt-2 text-amber-600 dark:text-amber-500">
                         <AlertCircle className="inline-block w-4 h-4 mr-1" />
-                        You have already reviewed this book
+                        Bạn đã đánh giá sách này rồi
                       </p>
                     )}
                   </div>
@@ -258,10 +294,10 @@ const ReviewPage = () => {
                   <div className="text-center py-8">
                     <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                     <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-2">
-                      Review Submitted!
+                      Đã gửi đánh giá!
                     </h4>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Thank you for your feedback.
+                      Cảm ơn bạn đã phản hồi.
                     </p>
                   </div>
                 ) : (
@@ -292,7 +328,7 @@ const ReviewPage = () => {
                         ))}
                         {reviewData.rating > 0 && (
                           <span className="ml-3 text-gray-600 dark:text-gray-400">
-                            {reviewData.rating} out of 5 stars
+                            {reviewData.rating} trên 5 sao
                           </span>
                         )}
                       </div>
@@ -301,7 +337,7 @@ const ReviewPage = () => {
                     {/* Review Text */}
                     <div className="mb-6">
                       <label className="block text-gray-700 dark:text-gray-300 mb-3 font-medium">
-                        Share your thoughts (optional)
+                        Chia sẻ cảm nhận của bạn (tùy chọn)
                       </label>
                       <textarea
                         value={reviewData.review}
@@ -310,6 +346,44 @@ const ReviewPage = () => {
                         rows="4"
                         placeholder="Chia sẻ suy nghĩ của bạn (tùy chọn)"
                       />
+                    </div>
+
+                    {/* Review Images */}
+                    <div className="mb-6">
+                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-medium">
+                        Ảnh minh họa (tùy chọn, tối đa 3 ảnh)
+                      </label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={(e) => handleImageChange(bookId, e)}
+                        className="block w-full text-sm text-gray-900 dark:text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 dark:file:bg-gray-700 dark:file:text-gray-200"
+                      />
+
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{(imagePreviews[bookId]?.length || 0)}/3 ảnh đã chọn</p>
+                      
+                       {imagePreviews[bookId]?.length > 0 && (
+                        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                           {imagePreviews[bookId].map((src, idx) => (
+                              <div key={idx} className="relative group rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700">
+                                <div className="aspect-square">
+                                  <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(bookId, idx)}
+                                  className="absolute top-1 right-1 px-2 py-1 text-xs bg-black/70 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Xóa
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      
+                       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                         Hỗ trợ JPG, PNG, WEBP, GIF. Tối đa 3 ảnh.
+                       </p>
                     </div>
 
                     {/* Submit Button */}
@@ -321,12 +395,12 @@ const ReviewPage = () => {
                         {isSubmitting ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            Submitting...
+                            Đang gửi...
                           </>
                         ) : (
                           <>
                             <Star className="h-4 w-4" />
-                            Submit Review
+                            Gửi đánh giá
                           </>
                         )}
                       </button>
@@ -345,7 +419,7 @@ const ReviewPage = () => {
           transition={{ delay: 0.5 }}
           className="mt-8 text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Your reviews help other customers make informed decisions.
+            Đánh giá của bạn giúp những khách hàng khác đưa ra quyết định tốt hơn.
           </p>
           <Link
             to="/orders"

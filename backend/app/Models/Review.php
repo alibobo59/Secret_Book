@@ -38,6 +38,12 @@ class Review extends Model
         return $this->belongsTo(Order::class);
     }
 
+    // Thêm quan hệ ảnh review
+    public function images()
+    {
+        return $this->hasMany(ReviewImage::class);
+    }
+
     // Scope to get verified purchase reviews only
     public function scopeVerifiedPurchase($query)
     {

@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\OrderItem;
 use App\Models\Review;
+use App\Models\ReviewImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ReviewController extends Controller
 {
@@ -59,7 +62,7 @@ class ReviewController extends Controller
         $reviews = Review::query()
             ->where('book_id', $book->id)
             ->where('is_hidden', false)
-            ->with('user:id,name')
+            ->with(['user:id,name', 'images'])
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -68,14 +71,16 @@ class ReviewController extends Controller
 
     /**
      * POST /reviews
-     * body: { book_id, rating(1..5), review? }
+     * body: multipart/form-data { book_id, rating(1..5), review?, images[] (<=3) }
      */
     public function store(Request $request)
     {
         $request->validate([
-            'book_id' => 'required|exists:books,id',
-            'rating'  => 'required|integer|min:1|max:5',
-            'review'  => 'nullable|string|max:1000',
+            'book_id'   => 'required|exists:books,id',
+            'rating'    => 'required|integer|min:1|max:5',
+            'review'    => 'nullable|string|max:1000',
+            'images'    => 'nullable|array|max:3',
+            'images.*'  => 'file|image|mimes:jpeg,png,jpg,webp,gif|max:2048', // 2MB mỗi ảnh
         ]);
 
         $user   = Auth::user();
@@ -111,14 +116,36 @@ class ReviewController extends Controller
             ->latest('created_at')
             ->first();
 
-        $review = Review::create([
-            'user_id'  => $user->id,
-            'book_id'  => $bookId,
-            'order_id' => optional($order)->id,
-            'rating'   => (int) $request->rating,
-            'review'   => $request->review,
-            'is_hidden'=> false,
-        ])->load('user:id,name');
+        DB::beginTransaction();
+        try {
+            $review = Review::create([
+                'user_id'  => $user->id,
+                'book_id'  => $bookId,
+                'order_id' => optional($order)->id,
+                'rating'   => (int) $request->rating,
+                'review'   => $request->review,
+                'is_hidden'=> false,
+            ]);
+
+            // Xử lý lưu ảnh nếu có
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    if (!$file->isValid()) continue;
+                    $path = $file->store('reviews', 'public'); // lưu vào storage/app/public/reviews
+                    ReviewImage::create([
+                        'review_id' => $review->id,
+                        'path'      => $path,
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Không thể lưu đánh giá: '.$e->getMessage()], 500);
+        }
+
+        $review->load(['user:id,name', 'images']);
 
         return response()->json([
             'message' => 'Gửi đánh giá thành công.',
@@ -150,20 +177,6 @@ class ReviewController extends Controller
             'message' => 'Cập nhật đánh giá thành công.',
             'review'  => $review->load('user:id,name'),
         ]);
-    }
-
-    /**
-     * DELETE /reviews/{review}
-     */
-    public function destroy(Review $review)
-    {
-        $user = Auth::user();
-        if ($review->user_id !== $user->id && (($user->role ?? null) !== 'admin')) {
-            return response()->json(['message' => 'Không có quyền xóa đánh giá này.'], 403);
-        }
-
-        $review->delete();
-        return response()->json(['message' => 'Xóa đánh giá thành công.']);
     }
 
     /**
@@ -208,33 +221,5 @@ class ReviewController extends Controller
             'message' => $review->is_hidden ? 'Review đã được ẩn' : 'Review đã được hiển thị',
             'data'    => $review->load(['user:id,name,email', 'book:id,title']),
         ]);
-    }
-
-    /**
-     * Admin – GET /admin/reviews/stats
-     */
-    public function getStats()
-    {
-        try {
-            $stats = [
-                'total_reviews'   => Review::count(),
-                'visible_reviews' => Review::where('is_hidden', false)->count(),
-                'hidden_reviews'  => Review::where('is_hidden', true)->count(),
-                'average_rating'  => round((float) Review::where('is_hidden', false)->avg('rating'), 2),
-                'rating_distribution' => [
-                    '5' => Review::where('is_hidden', false)->where('rating', 5)->count(),
-                    '4' => Review::where('is_hidden', false)->where('rating', 4)->count(),
-                    '3' => Review::where('is_hidden', false)->where('rating', 3)->count(),
-                    '2' => Review::where('is_hidden', false)->where('rating', 2)->count(),
-                    '1' => Review::where('is_hidden', false)->where('rating', 1)->count(),
-                ],
-                'recent_reviews'  => Review::with(['user:id,name', 'book:id,title'])
-                    ->orderByDesc('created_at')->limit(5)->get(),
-            ];
-
-            return response()->json(['success' => true, 'data' => $stats]);
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Lỗi thống kê: '.$e->getMessage()], 500);
-        }
     }
 }

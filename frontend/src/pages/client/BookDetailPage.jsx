@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { api, reviewAPI } from "../../services/api";
 import { Loading } from "../../components/common";
 import BookCard from "../../components/client/BookCard";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -31,6 +32,9 @@ const BookDetailPage = () => {
   // Thêm state cho sách liên quan
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
+  // Ảnh đính kèm review
+  const [selectedImages, setSelectedImages] = useState([]); // File[]
+  const [imagePreviews, setImagePreviews] = useState([]); // string[] (blob urls)
 
   // Fetch book details
   useEffect(() => {
@@ -265,18 +269,33 @@ const BookDetailPage = () => {
     if (rating === 0) return;
 
     try {
-      const reviewData = {
-        book_id: parseInt(id),
-        rating: rating,
-        review: review.trim() || null,
-      };
-
-      await reviewAPI.submitReview(reviewData);
+      // Nếu có ảnh, dùng FormData; nếu không, dùng JSON như cũ
+      if (selectedImages.length > 0) {
+        const fd = new FormData();
+        fd.append("book_id", parseInt(id));
+        fd.append("rating", rating);
+        if (review.trim()) fd.append("review", review.trim());
+        selectedImages.slice(0, 3).forEach((file) => {
+          if (file) fd.append("images[]", file);
+        });
+        await reviewAPI.submitReview(fd);
+      } else {
+        const reviewData = {
+          book_id: parseInt(id),
+          rating: rating,
+          review: review.trim() || null,
+        };
+        await reviewAPI.submitReview(reviewData);
+      }
 
       // Reset form
       setRating(0);
       setReview("");
       setShowReviewForm(false);
+      // cleanup previews
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      setSelectedImages([]);
+      setImagePreviews([]);
 
       // Refresh reviews and book data
       const [reviewsResponse, bookResponse] = await Promise.all([
@@ -546,6 +565,15 @@ const BookDetailPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-8 shadow-md"
             onSubmit={handleSubmitReview}>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Tên người review</span>
+              <span className="font-medium text-gray-900 dark:text-white">{user?.name || "Bạn"}</span>
+              {user?.role === "admin" && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                  Quản trị viên
+                </span>
+              )}
+            </div>
             <div className="mb-4">
               <label className="block text-gray-700 dark:text-gray-300 mb-2">
                 Đánh giá
@@ -570,6 +598,54 @@ const BookDetailPage = () => {
                 ))}
               </div>
             </div>
+            {/* Nhận xét được chuyển xuống dưới phần ảnh */}
+            {/* Image Upload */}
+            <div className="mb-4">
+              <label className="block text-gray-700 dark:text-gray-300 mb-2">
+                Ảnh đính kèm (tối đa 3)
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  // Lọc theo mime và size <= 2MB
+                  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+                  const filtered = files.filter((f) => allowed.includes(f.type) && f.size <= 2 * 1024 * 1024);
+                  const combined = [...selectedImages, ...filtered].slice(0, 3);
+                  const newPreviews = combined.map((f) => URL.createObjectURL(f));
+                  // cleanup old previews
+                  imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+                  setSelectedImages(combined);
+                  setImagePreviews(newPreviews);
+                }}
+                className="block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 dark:file:bg-gray-700 dark:file:text-gray-200"/>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hỗ trợ JPG, PNG, WEBP, GIF. Mỗi ảnh tối đa 2MB.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{imagePreviews.length}/3 ảnh đã chọn</p>
+
+              {imagePreviews.length > 0 && (
+                <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                  {imagePreviews.map((src, idx) => (
+                    <div key={idx} className="relative group rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700">
+                      <div className="aspect-square">
+                        <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextFiles = selectedImages.filter((_, i) => i !== idx);
+                          const nextPreviews = imagePreviews.filter((_, i) => i !== idx);
+                          URL.revokeObjectURL(imagePreviews[idx]);
+                          setSelectedImages(nextFiles);
+                          setImagePreviews(nextPreviews);
+                        }}
+                        className="absolute top-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Xóa</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="mb-4">
               <label className="block text-gray-700 dark:text-gray-300 mb-2">
                 Nhận xét
@@ -583,7 +659,12 @@ const BookDetailPage = () => {
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
-                onClick={() => setShowReviewForm(false)}
+                onClick={() => {
+                  setShowReviewForm(false);
+                  imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+                  setSelectedImages([]);
+                  setImagePreviews([]);
+                }}
                 className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 Hủy
               </button>
@@ -629,8 +710,31 @@ const BookDetailPage = () => {
                     {new Date(review.created_at).toLocaleDateString()}
                   </span>
                 </div>
+                {Array.isArray(review.images) && review.images.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-2">
+                    {review.images.map((img) => {
+                      const url = getImageUrl(img.path);
+                      return (
+                        <a
+                          key={img.id}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block group rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 ring-1 ring-gray-200 dark:ring-gray-700">
+                          <div className="aspect-square">
+                            <img
+                              src={url}
+                              alt="review-image"
+                              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            />
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
                 {review.review && (
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="mt-3 text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                     {review.review}
                   </p>
                 )}

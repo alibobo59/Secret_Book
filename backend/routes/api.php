@@ -191,7 +191,9 @@ Route::prefix('chatbot')->group(function () {
 });
 Route::get('/orders/search', [OrderController::class, 'searchByCode'])
     ->middleware(['auth:sanctum']);
+// Ensure can-review endpoint requires authentication to access user context
 Route::get('/books/{book}/can-review', [ReviewController::class, 'canReview'])
+    ->middleware(['auth:sanctum', 'check.user.status'])
     ->name('reviews.can-review');
 
 use App\Http\Controllers\API\AiChatController;

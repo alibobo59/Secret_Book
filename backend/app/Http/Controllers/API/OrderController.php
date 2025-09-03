@@ -144,6 +144,7 @@ public function searchByCode(Request $req)
             'address.ward_id' => 'required|exists:wards,id',
             'address.phone' => 'required|string|max:20',
             'address.email' => 'required|email|max:255',
+            'payment_method' => 'nullable|in:cod,vnpay',
         ], [
             'items.required' => 'Danh sách sản phẩm là bắt buộc.',
             'items.array' => 'Danh sách sản phẩm phải là mảng.',
@@ -192,6 +193,7 @@ public function searchByCode(Request $req)
             $user = Auth::user();
             $items = $request->items;
             $shipping = $request->shipping ?? 0;
+            $paymentMethod = $request->input('payment_method', 'cod');
 
             // Calculate subtotal
             $subtotal = 0;
@@ -256,7 +258,78 @@ public function searchByCode(Request $req)
 
             $total = $orderAmount - $discountAmount;
 
+            // Pre-validate stock availability before creating order
+            $stockErrors = [];
+            foreach ($items as $item) {
+                // Load book with variations
+                $book = Book::with(['variations'])->find($item['book_id'] ?? null);
+                $requestedQty = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                $variationId = $item['variation_id'] ?? null;
+
+                if (!$book) {
+                    $stockErrors[] = [
+                        'book_id' => $item['book_id'] ?? null,
+                        'variation_id' => $variationId,
+                        'title' => null,
+                        'requested' => $requestedQty,
+                        'available' => 0,
+                        'type' => 'book',
+                        'reason' => 'book_not_found',
+                        'suggestion_new_quantity' => 0,
+                    ];
+                    continue;
+                }
+
+                $available = $book->stock_quantity;
+                $title = $book->title;
+                $type = 'book';
+
+                if ($variationId) {
+                    $variation = $book->variations()->find($variationId);
+                    if (!$variation) {
+                        $stockErrors[] = [
+                            'book_id' => $item['book_id'] ?? null,
+                            'variation_id' => $variationId,
+                            'title' => $book->title,
+                            'requested' => $requestedQty,
+                            'available' => 0,
+                            'type' => 'variation',
+                            'reason' => 'variation_not_found',
+                            'suggestion_new_quantity' => 0,
+                        ];
+                        continue;
+                    }
+                    $available = (int)$variation->stock_quantity;
+                    $title = $book->title . ' (biến thể)';
+                    $type = 'variation';
+                }
+
+                if ($available < $requestedQty) {
+                    $stockErrors[] = [
+                        'book_id' => $item['book_id'] ?? null,
+                        'variation_id' => $variationId,
+                        'title' => $title,
+                        'requested' => $requestedQty,
+                        'available' => $available,
+                        'type' => $type,
+                        'suggestion_new_quantity' => max(0, min($requestedQty, $available)),
+                    ];
+                }
+            }
+
+            if (!empty($stockErrors)) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'OUT_OF_STOCK',
+                    'message' => 'Một số sản phẩm đã hết hàng hoặc không đủ số lượng',
+                    'items' => $stockErrors,
+                ], Response::HTTP_CONFLICT);
+            }
+
             // Create order
+            $paymentStatus = $paymentMethod === 'cod' ? 'completed' : 'pending';
+            $initialStatus = $paymentMethod === 'cod' ? 'processing' : 'pending';
+
             $order = Order::create([
                 'user_id' => $user->id,
                 'order_number' => 'ORD-' . strtoupper(Str::random(8)),
@@ -264,8 +337,11 @@ public function searchByCode(Request $req)
                 'shipping' => $shipping,
                 'discount_amount' => $discountAmount,
                 'total' => $total,
-                'status' => 'pending',
-                'payment_status' => 'pending',
+                'status' => $initialStatus,
+                'payment_method' => $paymentMethod,
+                'payment_status' => $paymentStatus,
+                'payment_amount' => $paymentMethod === 'cod' ? $total : null,
+                'payment_date' => $paymentMethod === 'cod' ? now() : null,
                 'notes' => $request->notes,
             ]);
 

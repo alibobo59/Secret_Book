@@ -30,6 +30,7 @@ const CheckoutPage = () => {
     getSelectedItems,
     getSelectedTotal,
     getSelectedItemsCount,
+    applyStockHints,
   } = useCart();
   const { user } = useAuth();
   const { createOrder, loading } = useOrder();
@@ -125,7 +126,7 @@ const CheckoutPage = () => {
         const itemNames = outOfStockItems.map(item => item.title).join(", ");
         setErrors(prev => ({
           ...prev,
-          stock: `Sản phẩm sau đã hết hàng hoặc không đủ số lượng: ${itemNames}`
+          stock: itemNames
         }));
       } else {
         setErrors(prev => {
@@ -169,7 +170,7 @@ const CheckoutPage = () => {
     
     if (outOfStockItems.length > 0) {
       const itemNames = outOfStockItems.map(item => item.title).join(", ");
-      newErrors.stock = `Sản phẩm sau đã hết hàng hoặc không đủ số lượng: ${itemNames}`;
+      newErrors.stock = itemNames;
     }
 
     setErrors(newErrors);
@@ -231,7 +232,29 @@ const CheckoutPage = () => {
       }
     } catch (error) {
       console.error("Lỗi gửi đơn hàng:", error);
-      showError("Lỗi Đơn Hàng", "Đã xảy ra lỗi khi đặt hàng của bạn");
+      const resp = error?.response;
+      const data = resp?.data;
+      if (resp?.status === 409 && data?.code === 'OUT_OF_STOCK') {
+        // Áp dụng stock hints chỉ để hiển thị tồn khả dụng, KHÔNG tự chỉnh số lượng
+        try {
+          applyStockHints?.(data?.items || []);
+        } catch (e) {
+          console.warn('applyStockHints failed:', e);
+        }
+        // Thiết lập lỗi kho để khóa nút Đặt hàng và hiển thị hướng dẫn
+        const names = (data?.items || []).map(i => i?.title).filter(Boolean);
+        const stockMsg = names.length
+          ? names.join(", ")
+          : (data?.message || 'Một số sản phẩm đã hết hàng hoặc không đủ số lượng');
+        setErrors(prev => ({ ...prev, stock: stockMsg }));
+        // Toast lỗi tổng quát
+        showError(
+          "Hết hàng",
+          data?.message || "Một số sản phẩm đã hết hàng hoặc không đủ số lượng. Vui lòng điều chỉnh số lượng trong giỏ hàng."
+        );
+        return; // giữ nguyên giỏ/SL, yêu cầu người dùng tự điều chỉnh
+      }
+      showError("Lỗi Đơn Hàng", data?.message || "Đã xảy ra lỗi khi đặt hàng của bạn");
     } finally {
       setIsSubmitting(false);
     }
@@ -729,15 +752,7 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Stock Error Display */}
-              {errors.stock && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600 text-sm font-medium">{errors.stock}</p>
-                  <p className="text-red-500 text-xs mt-1">
-                    Vui lòng quay lại giỏ hàng để cập nhật số lượng hoặc xóa sản phẩm hết hàng.
-                  </p>
-                </div>
-              )}
+              {/* Đã bỏ hiển thị thông báo lỗi tổng quát; vẫn giữ highlight từng item và disable nút khi có lỗi tồn kho */}
 
               <button
                 type="submit"

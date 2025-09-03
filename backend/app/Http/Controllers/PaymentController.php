@@ -116,22 +116,7 @@ class PaymentController extends Controller
                     'status' => 'processing' // Update order status
                 ]);
 
-                // Update stock for order items with variations
-                foreach ($order->items as $item) {
-                    if ($item->variation_id) {
-                        // Update variation stock
-                        $variation = \App\Models\BookVariation::find($item->variation_id);
-                        if ($variation && $variation->stock_quantity >= $item->quantity) {
-                            $variation->decrement('stock_quantity', $item->quantity);
-                        }
-                    } else {
-                        // Update book stock if no variation
-                        $book = \App\Models\Book::find($item->book_id);
-                        if ($book && $book->stock_quantity >= $item->quantity) {
-                            $book->decrement('stock_quantity', $item->quantity);
-                        }
-                    }
-                }
+                // NOTE: Do NOT decrement stock here because stock was already reserved (decremented) at order creation
 
                 Log::info('VNPay payment successful', [
                     'order_number' => $orderNumber,
@@ -147,10 +132,27 @@ class PaymentController extends Controller
                     'transaction_id' => $vnp_TransactionNo
                 ]);
             } else {
-                // Payment failed
+                // Payment failed - restore stock and cancel order if not already cancelled
+                if ($order->status !== 'cancelled') {
+                    foreach ($order->items as $item) {
+                        if ($item->variation_id) {
+                            $variation = \App\Models\BookVariation::find($item->variation_id);
+                            if ($variation) {
+                                $variation->increment('stock_quantity', $item->quantity);
+                            }
+                        } else {
+                            $book = \App\Models\Book::find($item->book_id);
+                            if ($book) {
+                                $book->increment('stock_quantity', $item->quantity);
+                            }
+                        }
+                    }
+                }
+
                 $order->update([
                     'payment_status' => 'failed',
-                    'payment_details' => json_encode($inputData)
+                    'payment_details' => json_encode($inputData),
+                    'status' => 'cancelled'
                 ]);
 
                 Log::warning('VNPay payment failed', [
@@ -299,13 +301,15 @@ class PaymentController extends Controller
             ];
 
             if ($paymentMethod === 'cod') {
-                // For COD, mark as pending and waiting for delivery
-                $updateData['payment_status'] = 'pending';
-                // Keep order status as pending for COD - don't auto-change to processing
+                // For COD, mark as paid immediately and keep order status as processing
+                $updateData['payment_status'] = 'completed';
+                $updateData['status'] = $order->status === 'cancelled' ? $order->status : 'processing';
+                $updateData['payment_amount'] = $order->total;
+                $updateData['payment_date'] = now();
                 
                 $order->update($updateData);
 
-                Log::info('Payment method changed to COD', [
+                Log::info('Payment method changed to COD and marked as paid', [
                     'order_id' => $orderId,
                     'user_id' => Auth::user()->id,
                     'new_method' => $paymentMethod
@@ -313,7 +317,7 @@ class PaymentController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Đã chuyển sang thanh toán khi nhận hàng (COD)',
+                    'message' => 'Đã chuyển sang thanh toán khi nhận hàng (COD) và đánh dấu đã thanh toán',
                     'order_number' => $order->order_number,
                     'payment_method' => $paymentMethod
                 ]);

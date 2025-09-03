@@ -286,6 +286,28 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // UI-only: apply stock hints for items (used when server returns OUT_OF_STOCK conflicts)
+  const applyStockHints = (hints = []) => {
+    if (!Array.isArray(hints) || hints.length === 0) return;
+    setCartItems((prev) =>
+      prev.map((i) => {
+        const match = hints.find((h) => {
+          const hBook = h.book_id ?? h.id;
+          const hVar = h.variation_id ?? h.variant_id ?? h.variation?.id ?? null;
+          const iBook = i.book_id ?? i.id;
+          const iVar = i.variation_id ?? null;
+          return String(hBook) === String(iBook) && String(hVar ?? '') === String(iVar ?? '');
+        });
+        if (match) {
+          const availableRaw = match.available ?? match.stock_available ?? match.stock_quantity ?? match.stock ?? 0;
+          const available = parseInt(availableRaw) || 0;
+          return { ...i, stock_quantity: available, stock: available };
+        }
+        return i;
+      })
+    );
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -307,6 +329,7 @@ export const CartProvider = ({ children }) => {
         getSelectedItemsCount,
         clearSelectedItems,
         mergeGuestCart,
+        applyStockHints,
       }}
     >
       {children}

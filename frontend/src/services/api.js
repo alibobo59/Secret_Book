@@ -32,8 +32,14 @@ api.interceptors.response.use(
   async (error) => {
     const { config } = error;
 
-    // Skip retry for specific status codes (authentication and validation errors)
-    if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 419 || error.response?.status === 422) {
+    // Skip retry for specific status codes (authentication, validation, conflict errors)
+    if (
+      error.response?.status === 401 ||
+      error.response?.status === 403 ||
+      error.response?.status === 419 ||
+      error.response?.status === 422 ||
+      error.response?.status === 409
+    ) {
       return Promise.reject(error);
     }
 
@@ -53,39 +59,7 @@ api.interceptors.response.use(
       return api(config);
     }
 
-    if (error.code === "ECONNABORTED") {
-      return Promise.reject(
-        new Error("The request timed out. Please try again.")
-      );
-    }
-
-    if (!error.response) {
-      return Promise.reject(
-        new Error(
-          "Unable to connect to the server. Please check your connection."
-        )
-      );
-    }
-
-    if (error.response?.status === 419) {
-      return Promise.reject(new Error("CSRF token mismatch"));
-    }
-
-    if (error.response?.status === 401 && !config.url.includes("login")) {
-      return null;
-    }
-
-    // Handle 403 errors (account locked) - but not for login endpoint
-    if (error.response?.status === 403 && !config.url.includes('login')) {
-      const errorMessage = error.response?.data?.message || error.response?.data?.error;
-      if (errorMessage && errorMessage.includes('khóa')) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.assign("/login");
-        return Promise.reject(new Error(errorMessage));
-      }
-    }
-
+    // If retries exhausted, reject the error
     return Promise.reject(error);
   }
 );

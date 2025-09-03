@@ -213,6 +213,7 @@ const CheckoutPage = () => {
         shipping: 0, // Add shipping calculation if needed
         notes: formData.notes,
         coupon_code: appliedCoupon?.code || null,
+        paymentMethod: paymentMethod,
       };
       
       console.log('Final order data:', orderData);

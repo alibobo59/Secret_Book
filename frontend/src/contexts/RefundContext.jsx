@@ -116,6 +116,8 @@ export const RefundProvider = ({ children }) => {
     } catch (error) {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hoàn tiền');
+    } finally {
+      setLoading(false);
     }
   }, [state.filters, showError]);
 
@@ -127,6 +129,8 @@ export const RefundProvider = ({ children }) => {
     } catch (error) {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tải thông tin hoàn tiền');
+    } finally {
+      setLoading(false);
     }
   }, [showError]);
 
@@ -141,6 +145,8 @@ export const RefundProvider = ({ children }) => {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tạo yêu cầu hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tạo yêu cầu hoàn tiền');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [showSuccess, showError]);
 
@@ -155,6 +161,8 @@ export const RefundProvider = ({ children }) => {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tạo yêu cầu hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tạo yêu cầu hoàn tiền');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [showSuccess, showError]);
 
@@ -169,6 +177,8 @@ export const RefundProvider = ({ children }) => {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [showSuccess, showError]);
 
@@ -183,6 +193,8 @@ export const RefundProvider = ({ children }) => {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi kiểm tra trạng thái VNPay');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi kiểm tra trạng thái VNPay');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [showSuccess, showError]);
 
@@ -194,6 +206,8 @@ export const RefundProvider = ({ children }) => {
     } catch (error) {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tải thống kê hoàn tiền');
+    } finally {
+      setLoading(false);
     }
   }, [showError]);
 
@@ -207,6 +221,8 @@ export const RefundProvider = ({ children }) => {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu hoàn tiền');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [showSuccess, showError]);
 
@@ -218,6 +234,8 @@ export const RefundProvider = ({ children }) => {
     } catch (error) {
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hoàn tiền');
       showError('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hoàn tiền');
+    } finally {
+      setLoading(false);
     }
   }, [showError]);
 

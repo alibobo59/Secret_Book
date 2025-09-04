@@ -95,12 +95,6 @@ function AdminSidebar({
       icon: <Star size={20} />,
       path: "/admin/reviews",
     },
-    {
-      id: "analytics",
-      label: "Phân Tích",
-      icon: <BarChart3 size={20} />,
-      path: "/admin/analytics",
-    },
   ];
 
   return (

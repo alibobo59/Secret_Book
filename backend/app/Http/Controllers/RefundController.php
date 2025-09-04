@@ -125,7 +125,9 @@ class RefundController extends Controller
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
             'reason' => 'nullable|string|max:1000',
-            'admin_notes' => 'nullable|string|max:1000'
+            'admin_notes' => 'nullable|string|max:1000',
+            'refund_method' => 'nullable|in:cash,bank_transfer',
+            'payout_details' => 'nullable|string|max:1000'
         ]);
 
         if ($validator->fails()) {
@@ -142,34 +144,82 @@ class RefundController extends Controller
             $order = Order::findOrFail($request->order_id);
             $userId = Auth::id();
 
-            // Gọi service để tạo hoàn tiền
-            $result = $this->vnpayRefundService->createFullRefund(
-                $order,
-                $request->reason ?? '',
-                $userId
-            );
+            // Nhánh theo phương thức thanh toán
+            if ($order->payment_method === 'vnpay') {
+                // Gọi service để tạo hoàn tiền qua VNPay
+                $result = $this->vnpayRefundService->createFullRefund(
+                    $order,
+                    $request->reason ?? '',
+                    $userId
+                );
 
-            if (!$result['success']) {
+                if (!$result['success']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['error']
+                    ], 400);
+                }
+
+                // Cập nhật ghi chú admin nếu có
+                if ($request->admin_notes) {
+                    $result['refund']->update(['admin_notes' => $request->admin_notes]);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $result['refund']->load(['order', 'user']),
+                    'message' => 'Tạo yêu cầu hoàn tiền thành công'
+                ]);
+            } elseif ($order->payment_method === 'cod') {
+                // Xử lý hoàn tiền COD (offline) trực tiếp tại controller
+                // Yêu cầu đơn hàng đã thanh toán thành công
+                if (!in_array($order->payment_status, ['completed'])) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng COD chưa xác nhận thanh toán, không thể hoàn tiền'
+                    ], 400);
+                }
+
+                $method = in_array($request->refund_method, [Refund::METHOD_CASH, Refund::METHOD_BANK_TRANSFER])
+                    ? $request->refund_method
+                    : Refund::METHOD_CASH;
+
+                $adminNotes = $request->admin_notes;
+                if ($request->payout_details) {
+                    $adminNotes = trim(($adminNotes ? ($adminNotes . "\n") : '') . 'Payout details: ' . $request->payout_details);
+                }
+
+                $refund = Refund::create([
+                    'order_id' => $order->id,
+                    'user_id' => $userId,
+                    'refund_number' => Refund::generateRefundNumber(),
+                    'refund_type' => Refund::TYPE_FULL,
+                    'refund_amount' => $order->total,
+                    'original_amount' => $order->total,
+                    'status' => Refund::STATUS_PROCESSING,
+                    'refund_method' => $method,
+                    'reason' => $request->reason,
+                    'admin_notes' => $adminNotes,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $refund->load(['order', 'user']),
+                    'message' => 'Tạo yêu cầu hoàn tiền (COD) thành công'
+                ]);
+            } else {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => $result['error']
+                    'message' => 'Phương thức thanh toán không được hỗ trợ hoàn tiền tự động'
                 ], 400);
             }
-
-            // Cập nhật ghi chú admin nếu có
-            if ($request->admin_notes) {
-                $result['refund']->update(['admin_notes' => $request->admin_notes]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data' => $result['refund']->load(['order', 'user']),
-                'message' => 'Tạo yêu cầu hoàn tiền thành công'
-            ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Create full refund error: ' . $e->getMessage());
@@ -189,7 +239,9 @@ class RefundController extends Controller
             'order_id' => 'required|exists:orders,id',
             'refund_amount' => 'required|numeric|min:0.01',
             'reason' => 'nullable|string|max:1000',
-            'admin_notes' => 'nullable|string|max:1000'
+            'admin_notes' => 'nullable|string|max:1000',
+            'refund_method' => 'nullable|in:cash,bank_transfer',
+            'payout_details' => 'nullable|string|max:1000'
         ]);
 
         if ($validator->fails()) {
@@ -206,35 +258,91 @@ class RefundController extends Controller
             $order = Order::findOrFail($request->order_id);
             $userId = Auth::id();
 
-            // Gọi service để tạo hoàn tiền
-            $result = $this->vnpayRefundService->createPartialRefund(
-                $order,
-                $request->refund_amount,
-                $request->reason ?? '',
-                $userId
-            );
+            // Nhánh theo phương thức thanh toán
+            if ($order->payment_method === 'vnpay') {
+                // Gọi service để tạo hoàn tiền qua VNPay
+                $result = $this->vnpayRefundService->createPartialRefund(
+                    $order,
+                    $request->refund_amount,
+                    $request->reason ?? '',
+                    $userId
+                );
 
-            if (!$result['success']) {
+                if (!$result['success']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['error']
+                    ], 400);
+                }
+
+                // Cập nhật ghi chú admin nếu có
+                if ($request->admin_notes) {
+                    $result['refund']->update(['admin_notes' => $request->admin_notes]);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $result['refund']->load(['order', 'user']),
+                    'message' => 'Tạo yêu cầu hoàn tiền một phần thành công'
+                ]);
+            } elseif ($order->payment_method === 'cod') {
+                // Xử lý hoàn tiền COD (offline) trực tiếp tại controller
+                if (!in_array($order->payment_status, ['completed'])) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng COD chưa xác nhận thanh toán, không thể hoàn tiền'
+                    ], 400);
+                }
+
+                $amount = (float) $request->refund_amount;
+                if ($amount <= 0 || $amount > (float) $order->total) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Số tiền hoàn không hợp lệ'
+                    ], 400);
+                }
+
+                $method = in_array($request->refund_method, [Refund::METHOD_CASH, Refund::METHOD_BANK_TRANSFER])
+                    ? $request->refund_method
+                    : Refund::METHOD_CASH;
+
+                $adminNotes = $request->admin_notes;
+                if ($request->payout_details) {
+                    $adminNotes = trim(($adminNotes ? ($adminNotes . "\n") : '') . 'Payout details: ' . $request->payout_details);
+                }
+
+                $refund = Refund::create([
+                    'order_id' => $order->id,
+                    'user_id' => $userId,
+                    'refund_number' => Refund::generateRefundNumber(),
+                    'refund_type' => Refund::TYPE_PARTIAL,
+                    'refund_amount' => $amount,
+                    'original_amount' => $order->total,
+                    'status' => Refund::STATUS_PROCESSING,
+                    'refund_method' => $method,
+                    'reason' => $request->reason,
+                    'admin_notes' => $adminNotes,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $refund->load(['order', 'user']),
+                    'message' => 'Tạo yêu cầu hoàn tiền một phần (COD) thành công'
+                ]);
+            } else {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => $result['error']
+                    'message' => 'Phương thức thanh toán không được hỗ trợ hoàn tiền tự động'
                 ], 400);
             }
-
-            // Cập nhật ghi chú admin nếu có
-            if ($request->admin_notes) {
-                $result['refund']->update(['admin_notes' => $request->admin_notes]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data' => $result['refund']->load(['order', 'user']),
-                'message' => 'Tạo yêu cầu hoàn tiền một phần thành công'
-            ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Create partial refund error: ' . $e->getMessage());
@@ -271,6 +379,18 @@ class RefundController extends Controller
             $refund->updateStatus($request->status, $request->admin_notes);
             $refund->processed_by = $userId;
             $refund->save();
+
+            // Nếu là hoàn tiền offline (COD) và đã hoàn thành, cập nhật trạng thái thanh toán của đơn hàng
+            if ($refund->status === Refund::STATUS_COMPLETED && $refund->refund_method !== Refund::METHOD_VNPAY) {
+                $order = $refund->order;
+                if ($order) {
+                    if ($refund->refund_type === Refund::TYPE_FULL) {
+                        $order->payment_status = 'refunded';
+                        $order->save();
+                    }
+                    // Với hoàn tiền một phần COD: giữ nguyên payment_status = completed
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -390,7 +510,9 @@ class RefundController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'reason' => 'required|string|max:1000'
+            'reason' => 'required|string|max:1000',
+            'refund_method' => 'nullable|in:cash,bank_transfer',
+            'payout_details' => 'nullable|string|max:1000'
         ]);
 
         if ($validator->fails()) {
@@ -407,63 +529,114 @@ class RefundController extends Controller
                          ->where('user_id', $userId)
                          ->firstOrFail();
 
-            // Kiểm tra điều kiện yêu cầu hoàn tiền
-            if ($order->payment_method !== 'vnpay') {
+            // Kiểm tra điều kiện yêu cầu hoàn tiền theo phương thức thanh toán
+            if ($order->payment_method === 'vnpay') {
+                if (!in_array($order->payment_status, ['completed', 'processing', 'paid'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng chưa được thanh toán thành công'
+                    ], 400);
+                }
+
+                // Kiểm tra xem đã có yêu cầu hoàn tiền chưa
+                $existingRefund = $order->refunds()
+                    ->whereIn('status', ['pending', 'processing', 'completed'])
+                    ->first();
+
+                if ($existingRefund) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng đã có yêu cầu hoàn tiền'
+                    ], 400);
+                }
+
+                // Lấy vnp_TxnRef từ payment_details
+                $vnpTxnRef = null;
+                if (is_array($order->payment_details)) {
+                    $vnpTxnRef = $order->payment_details['vnp_TxnRef'] ?? null;
+                } elseif (is_string($order->payment_details)) {
+                    $decoded = json_decode($order->payment_details, true);
+                    $vnpTxnRef = is_array($decoded) ? ($decoded['vnp_TxnRef'] ?? null) : null;
+                }
+
+                // Tạo yêu cầu hoàn tiền (chờ admin xử lý)
+                $refund = Refund::create([
+                    'order_id' => $order->id,
+                    'user_id' => $userId,
+                    'refund_number' => Refund::generateRefundNumber(),
+                    'refund_type' => 'full',
+                    'refund_amount' => $order->total,
+                    'original_amount' => $order->total,
+                    'status' => Refund::STATUS_PENDING,
+                    'refund_method' => Refund::METHOD_VNPAY,
+                    'vnpay_txn_ref' => $vnpTxnRef,
+                    'reason' => $request->reason
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $refund->load(['order']),
+                    'message' => 'Yêu cầu hoàn tiền đã được gửi thành công. Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.'
+                ]);
+            } elseif ($order->payment_method === 'cod') {
+                // Chỉ cho phép yêu cầu hoàn tiền COD nếu đơn hàng đã thanh toán hoàn tất
+                if (!in_array($order->payment_status, ['completed'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng COD chưa xác nhận thanh toán, không thể yêu cầu hoàn tiền'
+                    ], 400);
+                }
+
+                // Kiểm tra nếu đã có yêu cầu hoàn tiền đang chờ/xử lý/hoàn tất
+                $existingRefund = $order->refunds()
+                    ->whereIn('status', ['pending', 'processing', 'completed'])
+                    ->first();
+
+                if ($existingRefund) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Đơn hàng đã có yêu cầu hoàn tiền'
+                    ], 400);
+                }
+
+                $method = in_array($request->refund_method, [Refund::METHOD_CASH, Refund::METHOD_BANK_TRANSFER])
+                    ? $request->refund_method
+                    : Refund::METHOD_CASH;
+
+                $adminNotes = null;
+                if ($request->payout_details) {
+                    $adminNotes = 'Payout details: ' . $request->payout_details;
+                }
+
+                // Tạo yêu cầu hoàn tiền offline ở trạng thái pending
+                $refund = Refund::create([
+                    'order_id' => $order->id,
+                    'user_id' => $userId,
+                    'refund_number' => Refund::generateRefundNumber(),
+                    'refund_type' => Refund::TYPE_FULL,
+                    'refund_amount' => $order->total,
+                    'original_amount' => $order->total,
+                    'status' => Refund::STATUS_PENDING,
+                    'refund_method' => $method,
+                    'reason' => $request->reason,
+                    'admin_notes' => $adminNotes,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $refund->load(['order']),
+                    'message' => 'Yêu cầu hoàn tiền COD đã được gửi. Bộ phận hỗ trợ sẽ liên hệ để xử lý trong thời gian sớm nhất.'
+                ]);
+            } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Chỉ có thể yêu cầu hoàn tiền cho đơn hàng thanh toán bằng VNPay'
+                    'message' => 'Phương thức thanh toán không được hỗ trợ yêu cầu hoàn tiền'
                 ], 400);
             }
 
-            if (!in_array($order->payment_status, ['completed', 'processing', 'paid'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng chưa được thanh toán thành công'
-                ], 400);
-            }
-
-            // Kiểm tra xem đã có yêu cầu hoàn tiền chưa
-            $existingRefund = $order->refunds()
-                ->whereIn('status', ['pending', 'processing', 'completed'])
-                ->first();
-
-            if ($existingRefund) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng đã có yêu cầu hoàn tiền'
-                ], 400);
-            }
-
-            // Lấy vnp_TxnRef từ payment_details
-            $vnpTxnRef = null;
-            if (is_array($order->payment_details)) {
-                $vnpTxnRef = $order->payment_details['vnp_TxnRef'] ?? null;
-            } elseif (is_string($order->payment_details)) {
-                $decoded = json_decode($order->payment_details, true);
-                $vnpTxnRef = is_array($decoded) ? ($decoded['vnp_TxnRef'] ?? null) : null;
-            }
-
-            // Tạo yêu cầu hoàn tiền (chờ admin xử lý)
-            $refund = Refund::create([
-                'order_id' => $order->id,
-                'user_id' => $userId,
-                'refund_number' => Refund::generateRefundNumber(),
-                'refund_type' => 'full',
-                'refund_amount' => $order->total,
-                'original_amount' => $order->total,
-                'status' => Refund::STATUS_PENDING,
-                'refund_method' => Refund::METHOD_VNPAY,
-                'vnpay_txn_ref' => $vnpTxnRef,
-                'reason' => $request->reason
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'data' => $refund->load(['order']),
-                'message' => 'Yêu cầu hoàn tiền đã được gửi thành công. Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.'
-            ]);
-
-        } catch (\Exception $e) {
+        } catch (
+            \Exception $e
+        ) {
             Log::error('Customer request refund error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,

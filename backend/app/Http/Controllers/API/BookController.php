@@ -65,24 +65,28 @@ use App\Jobs\UpsertBookEmbedding;
 
         public function store(Request $request)
         {
-            // Preprocess variations to decode JSON attributes
-            $input = $request->all();
+            // Prefer JSON body, fallback to standard input (form-data / x-www-form-urlencoded)
+            $input = $request->isJson() ? $request->json()->all() : $request->all();
+
+            // Preprocess variations to decode JSON attributes (when attributes is provided as JSON string)
             if (isset($input['variations'])) {
                 foreach ($input['variations'] as &$variation) {
                     if (isset($variation['attributes']) && is_string($variation['attributes'])) {
-                        $variation['attributes'] = json_decode($variation['attributes'], true);
+                        $decoded = json_decode($variation['attributes'], true);
                         if (json_last_error() !== JSON_ERROR_NONE) {
                             return response()->json([
                                 'error' => ['variations.*.attributes' => ['Định dạng JSON không hợp lệ trong thuộc tính.']]
                             ], Response::HTTP_UNPROCESSABLE_ENTITY);
                         }
+                        $variation['attributes'] = $decoded;
                     }
                 }
                 unset($variation); // IMPORTANT: break the reference to avoid unintended side effects later
-                // Không cần merge vì đã sử dụng $input trực tiếp
+                // Merge back so Validator and $request->has() can see parsed variations
+                $request->merge(['variations' => $input['variations']]);
             }
 
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make($input, [
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'price' => 'required_without:variations|nullable|numeric|min:0',
@@ -137,14 +141,13 @@ use App\Jobs\UpsertBookEmbedding;
             }
 
             // Custom validation: Check for duplicate SKUs within the same request
-            if ($request->has('variations')) {
-                $variationSkus = collect($request->variations)
+            if (isset($input['variations'])) {
+                $variationSkus = collect($input['variations'])
                     ->pluck('sku')
                     ->filter(function($sku) {
                         return !empty($sku) && trim($sku) !== '';
                     })
                     ->toArray();
-                
 
                 if (count($variationSkus) !== count(array_unique($variationSkus))) {
                     return response()->json([
@@ -158,11 +161,11 @@ use App\Jobs\UpsertBookEmbedding;
             // Use database transaction to ensure data integrity
             try {
                 DB::beginTransaction();
-                
-                $bookData = $request->except(['image', 'variations']);
-                
+
+                $bookData = collect($input)->except(['image', 'variations'])->all();
+
                 // Remove price if variations exist
-                if ($request->has('variations')) {
+                if (isset($input['variations'])) {
                     unset($bookData['price']);
                 }
 
@@ -176,8 +179,8 @@ use App\Jobs\UpsertBookEmbedding;
                     $book->update(['image' => $imagePath]);
                 }
 
-                if ($request->has('variations')) {
-                    foreach ($request->variations as $index => $variationData) {
+                if (isset($input['variations'])) {
+                    foreach ($input['variations'] as $index => $variationData) {
                         // Double-check SKU uniqueness before creating each variation
                         if (!empty($variationData['sku'])) {
                             $existingSku = BookVariation::where('sku', $variationData['sku'])->first();
@@ -185,7 +188,7 @@ use App\Jobs\UpsertBookEmbedding;
                                 throw new \Exception("SKU biến thể '{$variationData['sku']}' đã tồn tại.");
                             }
                         }
-                        
+
                         $variation = $book->variations()->create([
                             'attributes' => $variationData['attributes'],
                             'price' => $variationData['price'] ?? $book->price,
@@ -202,7 +205,7 @@ use App\Jobs\UpsertBookEmbedding;
                         }
                     }
                 }
-                
+
                 DB::commit();
 
                 // Dispatch job to upsert embedding (non-blocking)
@@ -213,7 +216,7 @@ use App\Jobs\UpsertBookEmbedding;
                 }
 
                 return response()->json(['data' => $book->load(['category', 'author', 'publisher', 'variations', 'reviews'])], Response::HTTP_CREATED);
-                
+
             } catch (\Exception $e) {
                 DB::rollBack();
                 return response()->json([
@@ -245,9 +248,17 @@ use App\Jobs\UpsertBookEmbedding;
             // 1. Preprocess variations to decode JSON attributes (nếu cần)
             // Trong trường hợp này, vì đã dùng json()->all(), bước này có thể không cần thiết
             if (isset($input['variations'])) {
-                foreach ($input['variations'] as &$variation) {
+                foreach ($input['variations'] as $vIndex => &$variation) {
                     if (isset($variation['attributes']) && is_string($variation['attributes'])) {
-                        $variation['attributes'] = json_decode($variation['attributes'], true);
+                        $decoded = json_decode($variation['attributes'], true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            return response()->json([
+                                'error' => [
+                                    "variations.$vIndex.attributes" => ['Định dạng JSON không hợp lệ trong thuộc tính.']
+                                ]
+                            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                        }
+                        $variation['attributes'] = $decoded;
                     }
                 }
                 unset($variation); // IMPORTANT: break the reference to avoid unintended side effects later
@@ -267,7 +278,7 @@ use App\Jobs\UpsertBookEmbedding;
                 'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'variations' => 'sometimes|array',
                 'variations.*.id' => 'sometimes|exists:book_variations,id',
-                'variations.*.attributes' => 'required|array',
+                'variations.*.attributes' => 'sometimes|array',
                 'variations.*.price' => 'nullable|numeric|min:0',
                 'variations.*.stock_quantity' => 'required|integer|min:0',
                 'variations.*.sku' => 'nullable|string',

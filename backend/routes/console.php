@@ -84,3 +84,5 @@ Artisan::command('books:backfill-embeddings {--fresh : Xóa embeddings cũ trư�
 
     return $failed === 0 ? 0 : 1;
 })->purpose('Xếp job tạo/cập nhật embeddings cho sách (hỗ trợ --missing, --only)');
+
+// ... giữ file sạch, không đăng ký thủ công các Command class tại đây

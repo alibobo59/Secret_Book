@@ -6,8 +6,9 @@ const analyticsService = {
     try {
       const params = {};
       if (startDate && endDate) {
-        params.start_date = startDate;
-        params.end_date = endDate;
+        // Backend expects camelCase keys: startDate, endDate
+        params.startDate = startDate;
+        params.endDate = endDate;
       } else {
         params.period = period;
       }

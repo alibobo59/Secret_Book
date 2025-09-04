@@ -64,8 +64,23 @@ class AnalyticsController extends Controller
         $totalRevenue = $completedOrders->sum('total');
         $totalOrders = $completedOrders->count();
 
+        // Total products sold (by quantity) and number of distinct products sold in range
+        $productsSold = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.status', 'delivered')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->sum('order_items.quantity');
+
+        $distinctProductsSold = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.status', 'delivered')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->distinct('order_items.book_id')
+            ->count('order_items.book_id');
+
+        // Daily sales within selected range
         $dailySales = Order::where('status', 'delivered')
-            ->where('created_at', '>=', now()->subDays(7))
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy(DB::raw('DATE(created_at)'))
             ->get([
                 DB::raw('DATE(created_at) as date'),
@@ -73,8 +88,9 @@ class AnalyticsController extends Controller
                 DB::raw('COUNT(*) as orders')
             ]);
 
+        // Monthly sales within selected range
         $monthlySales = Order::where('status', 'delivered')
-            ->where('created_at', '>=', now()->subMonths(6))
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'))
             ->get([
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
@@ -86,6 +102,7 @@ class AnalyticsController extends Controller
             ->join('books', 'books.id', '=', 'order_items.book_id')
             ->where('orders.status', 'delivered')
             ->where('orders.created_at', '>=', $startDate)
+            ->where('orders.created_at', '<=', $endDate)
             ->groupBy('books.id', 'books.title')
             ->orderByRaw('SUM(order_items.quantity * order_items.price) DESC')
             ->limit(5)
@@ -100,6 +117,7 @@ class AnalyticsController extends Controller
             ->join('categories', 'categories.id', '=', 'books.category_id')
             ->where('orders.status', 'delivered')
             ->where('orders.created_at', '>=', $startDate)
+            ->where('orders.created_at', '<=', $endDate)
             ->groupBy('categories.id', 'categories.name')
             ->orderByRaw('SUM(order_items.quantity * order_items.price) DESC')
             ->get([
@@ -110,6 +128,8 @@ class AnalyticsController extends Controller
         return [
             'totalRevenue' => $totalRevenue,
             'totalOrders' => $totalOrders,
+            'productsSold' => (int) $productsSold,
+            'distinctProductsSold' => (int) $distinctProductsSold,
             'conversionRate' => $this->calculateConversionRate($startDate),
             'dailySales' => $dailySales,
             'monthlySales' => $monthlySales,
@@ -122,9 +142,11 @@ class AnalyticsController extends Controller
     {
         $totalUsers = User::count();
         
+        $newUsers = User::where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)->count();
+
         $userSegments = [
-            'New Users' => User::where('created_at', '>=', $startDate)
-                ->where('created_at', '<=', $endDate)->count(),
+            'New Users' => $newUsers,
             'Returning Users' => DB::table('orders')
                 ->where('created_at', '>=', $startDate)
                 ->where('created_at', '<=', $endDate)
@@ -153,6 +175,7 @@ class AnalyticsController extends Controller
 
         return [
             'totalUsers' => $totalUsers,
+            'newUsers' => $newUsers,
             'userSegments' => array_map(fn($segment, $count) => [
                 'segment' => $segment,
                 'count' => $count

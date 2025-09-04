@@ -26,6 +26,7 @@ import {
   Mail,
   RotateCcw,
 } from "lucide-react";
+import { refundService } from "../../services";
 
 const OrderManagementPage = () => {
   const { user } = useAuth();
@@ -52,11 +53,36 @@ const OrderManagementPage = () => {
   const [now, setNow] = useState(Date.now());
   // Track retrying state per order
   const [retryingPaymentOrderId, setRetryingPaymentOrderId] = useState(null);
+  // Track orders that already have active refund requests
+  const [hasActiveRefundByOrder, setHasActiveRefundByOrder] = useState({});
 
   // Auto-tick every second for countdown updates
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Fetch customer's refunds to determine which orders already have refund requests
+  useEffect(() => {
+    const loadRefunds = async () => {
+      try {
+        const response = await refundService.getCustomerRefunds();
+        const list = response?.data?.data || response?.data || [];
+        const map = {};
+        (Array.isArray(list) ? list : []).forEach((refund) => {
+          const status = (refund?.status || "").toLowerCase();
+          const active = status === "pending" || status === "processing" || status === "completed";
+          const orderId = refund?.order_id || refund?.orderId;
+          if (active && orderId) {
+            map[orderId] = true;
+          }
+        });
+        setHasActiveRefundByOrder(map);
+      } catch (e) {
+        console.error("Không thể tải danh sách hoàn tiền:", e);
+      }
+    };
+    loadRefunds();
   }, []);
 
   // Helpers for VNPay retry and TTL handling
@@ -383,9 +409,10 @@ const OrderManagementPage = () => {
         setIsRefundModalOpen(false);
         setRefundReason("");
 
+        // Ẩn nút yêu cầu hoàn tiền ngay lập tức cho đơn hàng này
+        setHasActiveRefundByOrder((prev) => ({ ...prev, [selectedOrder.id]: true }));
         setSelectedOrder(null);
-        // Reload orders to get updated status
-        window.location.reload();
+        // Không reload trang để tránh mất trạng thái; dữ liệu nút đã được cập nhật cục bộ
       } else {
         alert(response.data.message || "Có lỗi xảy ra khi gửi yêu cầu hoàn tiền");
       }

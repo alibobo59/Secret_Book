@@ -17,12 +17,53 @@ import { Loading } from "../../components/admin";
 import { api } from "../../services/api";
 import { getImageUrl } from "../../utils/imageUtils";
 import axios from "axios";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const BookManagement = () => {
   const { user, getToken, hasRole } = useAuth();
   const { categories, authors, publishers } = useBook();
   const { loading: initialLoading } = useOutletContext();
   const navigate = useNavigate();
+
+  // Helper hiển thị giá: nếu có biến thể -> hiển thị khoảng giá; nếu không -> hiển thị giá đơn
+  const getBookPriceDisplay = (book) => {
+    const variations = Array.isArray(book?.variations) ? book.variations : [];
+    if (!variations.length) {
+      const p = Number(book?.price || 0);
+      return p > 0 ? formatCurrency(p) : "—";
+    }
+
+    const basePrice = Number(book?.price || 0);
+    const prices = variations
+      .map((v) => {
+        const vp = v && v.price != null ? Number(v.price) : basePrice;
+        return Number.isFinite(vp) ? vp : 0;
+      })
+      .filter((p) => p > 0);
+
+    if (!prices.length) {
+      return basePrice > 0 ? formatCurrency(basePrice) : "—";
+    }
+
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    return minP === maxP
+      ? formatCurrency(minP)
+      : `${formatCurrency(minP)} - ${formatCurrency(maxP)}`;
+  };
+
+  // Helper tính tồn kho: nếu có biến thể -> tổng stock các biến thể; nếu không -> dùng stock của sách
+  const getBookStockQuantity = (book) => {
+    const variations = Array.isArray(book?.variations) ? book.variations : [];
+    if (variations.length) {
+      return variations.reduce((sum, v) => {
+        const q = v && v.stock_quantity != null ? parseInt(v.stock_quantity, 10) : 0;
+        return sum + (Number.isFinite(q) ? q : 0);
+      }, 0);
+    }
+    const q = parseInt(book?.stock_quantity ?? 0, 10);
+    return Number.isFinite(q) ? q : 0;
+  };
 
   // Component-specific state
   const [books, setBooks] = useState([]);
@@ -38,10 +79,36 @@ const BookManagement = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Phân trang
+  const [pagination, setPagination] = useState({
+    page: 1,
+    perPage: 15,
+    total: 0,
+    lastPage: 1,
+  });
+
+  // Tính toán danh sách số trang hiển thị (cửa sổ ±2)
+  const pageNumbers = useMemo(() => {
+    const total = pagination.lastPage || 1;
+    const current = pagination.page || 1;
+    const delta = 2;
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+    if (current <= delta) {
+      end = Math.min(total, 1 + 2 * delta);
+    }
+    if (current + delta > total) {
+      start = Math.max(1, total - 2 * delta);
+    }
+    return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+  }, [pagination.page, pagination.lastPage]);
+
   // Debounce search term
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilters((prev) => ({ ...prev, search: searchTerm }));
+      // Reset về trang 1 khi thay đổi tìm kiếm
+      setPagination((prev) => ({ ...prev, page: 1 }));
     }, 500); // 500ms delay
 
     return () => {
@@ -72,9 +139,15 @@ const BookManagement = () => {
       const token = getToken();
 
       // Filter out empty values to avoid sending empty strings as parameters
-      const params = Object.fromEntries(
+      const filtered = Object.fromEntries(
         Object.entries(queryFilters).filter(([key, value]) => value !== "" && value !== null && value !== undefined)
       );
+
+      const params = {
+        ...filtered,
+        page: pagination.page,
+        per_page: pagination.perPage,
+      };
 
       const response = await api.get("/books", {
         params,
@@ -85,10 +158,24 @@ const BookManagement = () => {
         // Check if it's a paginated response (has data property with array)
         if (response.data.data && Array.isArray(response.data.data)) {
           setBooks(response.data.data);
+          // cập nhật metadata phân trang
+          setPagination((prev) => ({
+            ...prev,
+            page: response.data.current_page || prev.page,
+            perPage: response.data.per_page || prev.perPage,
+            lastPage: response.data.last_page || 1,
+            total: typeof response.data.total === "number" ? response.data.total : prev.total,
+          }));
         }
         // Check if it's a direct array response
         else if (Array.isArray(response.data)) {
           setBooks(response.data);
+          setPagination((prev) => ({
+            ...prev,
+            page: 1,
+            lastPage: 1,
+            total: response.data.length,
+          }));
         } else {
           setError("Định dạng phản hồi không hợp lệ từ máy chủ.");
         }
@@ -100,7 +187,7 @@ const BookManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [queryFilters, getToken]);
+  }, [queryFilters, pagination.page, pagination.perPage, getToken]);
 
   useEffect(() => {
     // Check if user has admin or mod role
@@ -123,6 +210,8 @@ const BookManagement = () => {
       setSearchTerm(value);
     } else {
       setFilters((prev) => ({ ...prev, [name]: value }));
+      // Reset về trang 1 khi đổi filter dropdown
+      setPagination((prev) => ({ ...prev, page: 1 }));
     }
   };
 
@@ -138,9 +227,30 @@ const BookManagement = () => {
       publisher_id: "",
     });
     setSearchTerm("");
+    // Reset về trang 1 khi reset filter
+    setPagination((prev) => ({ ...prev, page: 1 }));
     // The useEffect will handle the refetch
   };
 
+  // Điều khiển phân trang
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > pagination.lastPage) return;
+    setPagination((prev) => ({ ...prev, page: newPage }));
+    // Clear selections khi đổi trang
+    setSelectedBooks([]);
+    setShowBulkActions(false);
+  };
+
+  const handlePerPageChange = (e) => {
+    const newPerPage = parseInt(e.target.value, 10);
+    if (!Number.isFinite(newPerPage) || newPerPage <= 0) return;
+    setPagination((prev) => ({ ...prev, perPage: newPerPage, page: 1 }));
+    // Clear selections khi đổi số lượng/trang
+    setSelectedBooks([]);
+    setShowBulkActions(false);
+  };
+
+  // Các handler thao tác sẵn có (đảm bảo không bị mất)
   const handleDelete = async (id) => {
     if (!hasRole(["admin"])) {
       setError("Chỉ quản trị viên mới có thể xóa sách.");
@@ -179,7 +289,6 @@ const BookManagement = () => {
     navigate(`/admin/books/${id}`);
   };
 
-  // Bulk operations functions
   const handleSelectBook = (bookId) => {
     setSelectedBooks((prev) => {
       const newSelected = prev.includes(bookId)
@@ -424,7 +533,7 @@ const BookManagement = () => {
                 Thêm Sách Mới
               </button>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Tổng số {books.length} sách
+                Tổng số {pagination.total || books.length} sách
               </div>
             </div>
 
@@ -578,12 +687,12 @@ const BookManagement = () => {
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
-                        {(book.price || 0).toLocaleString('vi-VN')} VND
+                        {getBookPriceDisplay(book)}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
                         onClick={() => handleViewDetail(book.id)}>
-                        {book.stock_quantity || 0}
+                        {getBookStockQuantity(book)}
                       </td>
                       <td
                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 cursor-pointer"
@@ -624,6 +733,56 @@ const BookManagement = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Trang {pagination.page} / {pagination.lastPage} — Tổng {pagination.total} sách
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Hiển thị</label>
+              <select
+                value={pagination.perPage}
+                onChange={handlePerPageChange}
+                className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-200">
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-600 dark:text-gray-400">/ trang</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+                className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-200">
+                Trước
+              </button>
+
+              {pageNumbers.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handlePageChange(p)}
+                  className={`px-3 py-1 border rounded dark:border-gray-600 ${
+                    p === pagination.page
+                      ? "bg-amber-600 text-white border-amber-600"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+                  }`}>
+                  {p}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.lastPage}
+                className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600 dark:text-gray-200">
+                Sau
+              </button>
+            </div>
           </div>
         </>
       )}

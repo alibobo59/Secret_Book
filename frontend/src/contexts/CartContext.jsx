@@ -14,17 +14,18 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  // Load cart based on user authentication status
+  
+  // Load giỏ hàng dựa theo trạng thái đăng nhập của người dùng
   useEffect(() => {
     const loadCart = async () => {
       setLoading(true);
       try {
         if (user) {
-          // Load from server for authenticated users
+          // Người dùng đã đăng nhập → lấy giỏ từ server
           const serverCart = await cartService.getCart();
           setCartItems(serverCart.items || []);
         } else {
-          // Load from localStorage for guests
+          // Người dùng khách → lấy giỏ từ localStorage
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
             setCartItems(JSON.parse(storedCart));
@@ -32,7 +33,7 @@ export const CartProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to load cart:", error);
-        // Fallback to localStorage if server fails
+        // Nếu server lỗi → fallback về localStorage
         if (user) {
           const storedCart = localStorage.getItem("cart");
           if (storedCart) {
@@ -47,14 +48,16 @@ export const CartProvider = ({ children }) => {
     loadCart();
   }, [user]);
 
-  // Save cart to localStorage for guests only
+
+  // Lưu giỏ hàng vào localStorage cho khách (không đăng nhập)
   useEffect(() => {
     if (!loading && !user) {
       localStorage.setItem("cart", JSON.stringify(cartItems));
     }
   }, [cartItems, loading, user]);
 
-  // Merge guest cart with user cart after login
+
+  // Gộp giỏ của khách với giỏ server sau khi đăng nhập
   const mergeGuestCart = async () => {
     try {
       const guestCart = localStorage.getItem("cart");
@@ -63,7 +66,9 @@ export const CartProvider = ({ children }) => {
         if (guestCartItems.length > 0) {
           const mergeResult = await cartService.mergeCart(guestCartItems);
           setCartItems(mergeResult.cart.items || []);
-          // Clear guest cart from localStorage after successful merge
+
+
+          // Xóa giỏ hàng khách trong localStorage sau khi gộp thành công
           localStorage.removeItem("cart");
         }
       }
@@ -75,13 +80,16 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (book, quantity = 1) => {
     try {
       if (user) {
-        // Add to server cart
+
+        // Người dùng đã đăng nhập → thêm vào giỏ trên server
         await cartService.addItem(book.id, quantity);
-        // Reload cart from server
+
+        // Tải lại giỏ từ server
         const serverCart = await cartService.getCart();
         setCartItems(serverCart.items || []);
       } else {
-        // Add to local cart
+
+        // Người dùng khách → thêm vào giỏ local
         setCartItems((prevItems) => {
           const existingItemIndex = prevItems.findIndex(
             (item) => item.id === book.id
@@ -114,13 +122,16 @@ export const CartProvider = ({ children }) => {
 
     try {
       if (user) {
-        // Update on server
+
+        // Người dùng đã đăng nhập → cập nhật số lượng trên server
         await cartService.updateItem(bookId, quantity);
-        // Reload cart from server
+
+        // Tải lại giỏ từ server
         const serverCart = await cartService.getCart();
         setCartItems(serverCart.items || []);
       } else {
-        // Update local cart
+
+        // Người dùng khách → cập nhật giỏ trong local
         setCartItems((prevItems) =>
           prevItems.map((item) =>
             item.id === bookId ? { ...item, quantity } : item
@@ -136,17 +147,20 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (bookId) => {
     try {
       if (user) {
-        // Remove from server
+
+        // Người dùng đã đăng nhập → xóa trên server
         await cartService.removeItem(bookId);
-        // Reload cart from server
+
+        // Tải lại giỏ từ server
         const serverCart = await cartService.getCart();
         setCartItems(serverCart.items || []);
       } else {
-        // Remove from local cart
+
+        // Người dùng khách → xóa khỏi giỏ local
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== bookId));
       }
       
-      // Also remove from selected items
+      // Đồng thời xóa khỏi danh sách item được chọn
       setSelectedItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(bookId);
@@ -161,10 +175,12 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       if (user) {
-        // Clear server cart
+
+        // Người dùng đã đăng nhập → xóa giỏ hàng trên server
         await cartService.clearCart();
       } else {
-        // Clear local storage
+
+        // Người dùng khách → xóa giỏ trong localStorage
         localStorage.removeItem("cart");
       }
       
@@ -188,7 +204,8 @@ export const CartProvider = ({ children }) => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
-  // Selection functions (unchanged)
+
+  // Các hàm chọn sản phẩm
   const toggleItemSelection = (itemId) => {
     setSelectedItems((prev) => {
       const newSet = new Set(prev);
@@ -230,15 +247,19 @@ export const CartProvider = ({ children }) => {
     
     try {
       if (user) {
-        // Remove selected items from server
+
+        // Người dùng đã đăng nhập → xóa các item đã chọn trên server
         for (const itemId of selectedItemIds) {
           await cartService.removeItem(itemId);
         }
-        // Reload cart from server
+
+
+        // Tải lại giỏ từ server
         const serverCart = await cartService.getCart();
         setCartItems(serverCart.items || []);
       } else {
-        // Remove from local cart
+
+        // Người dùng khách → xóa item đã chọn trong giỏ local
         setCartItems((prevItems) =>
           prevItems.filter((item) => !selectedItemIds.includes(item.id))
         );
@@ -270,7 +291,9 @@ export const CartProvider = ({ children }) => {
         getSelectedTotal,
         getSelectedItemsCount,
         clearSelectedItems,
-        mergeGuestCart, // Expose merge function
+        mergeGuestCart, 
+        
+        // Xuất ra hàm gộp giỏ hàng
       }}>
       {children}
     </CartContext.Provider>

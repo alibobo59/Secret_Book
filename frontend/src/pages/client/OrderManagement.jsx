@@ -43,12 +43,13 @@ const OrderManagementPage = () => {
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [reviewEligibility, setReviewEligibility] = useState({});
-  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("vnpay");
+  // Removed: showPaymentMethodModal & selectedPaymentMethod (tính năng đã gỡ)
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [refundReason, setRefundReason] = useState("");
 
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
+  // Countdown ticker for VNPay pending orders in detail modal
+  const [now, setNow] = useState(Date.now());
 
   // Hàm để định dạng các thuộc tính biến thể từ backend
   const formatVariationAttributes = (attributes) => {
@@ -680,15 +681,8 @@ const OrderManagementPage = () => {
                     </button>
 
                     {order.payment_status === "failed" && (
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowPaymentMethodModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                        <CreditCard className="h-4 w-4" />
-                        Chọn Phương Thức Thanh Toán
-                      </button>
+                      // Nút đổi phương thức thanh toán đã bị gỡ bỏ theo chính sách mới
+                      <></>
                     )}
 
                     {canCancelOrder(order) && (
@@ -1051,160 +1045,14 @@ const OrderManagementPage = () => {
         />
 
         {/* Modal Chọn Phương Thức Thanh Toán */}
+        // Modal đã bị gỡ bỏ
+        {/*
         <AnimatePresence>
           {showPaymentMethodModal && selectedOrder && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Chọn Phương Thức Thanh Toán
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowPaymentMethodModal(false);
-                      setSelectedOrder(null);
-                    }}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                    <XCircle className="h-6 w-6" />
-                  </button>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Đơn hàng: {selectedOrder.order_number || selectedOrder.id}
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="vnpay"
-                        checked={selectedPaymentMethod === "vnpay"}
-                        onChange={(e) =>
-                          setSelectedPaymentMethod(e.target.value)
-                        }
-                        className="mr-3"
-                      />
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <div className="font-medium text-gray-800 dark:text-white">
-                            VNPay
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Thanh toán online qua VNPay
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-
-                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="cod"
-                        checked={selectedPaymentMethod === "cod"}
-                        onChange={(e) =>
-                          setSelectedPaymentMethod(e.target.value)
-                        }
-                        className="mr-3"
-                      />
-                      <div className="flex items-center gap-3">
-                        <Package className="h-5 w-5 text-green-600" />
-                        <div>
-                          <div className="font-medium text-gray-800 dark:text-white">
-                            COD
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Thanh toán khi nhận hàng
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowPaymentMethodModal(false);
-                      setSelectedOrder(null);
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await api.post(
-                          `/payment/change-method/${selectedOrder.id}`,
-                          {
-                            payment_method: selectedPaymentMethod,
-                          }
-                        );
-
-                        if (response.data.success) {
-                          if (selectedPaymentMethod === "cod") {
-                            alert(response.data.message);
-                            // Update local state instead of reloading
-                            setOrders((prevOrders) =>
-                              prevOrders.map((order) =>
-                                order.id === selectedOrder.id
-                                  ? {
-                                      ...order,
-                                      payment_method: "cod",
-                                      payment_status: "pending",
-                                    }
-                                  : order
-                              )
-                            );
-                            // Also update filtered orders to reflect the change immediately
-                            setFilteredOrders((prevFilteredOrders) =>
-                              prevFilteredOrders.map((order) =>
-                                order.id === selectedOrder.id
-                                  ? {
-                                      ...order,
-                                      payment_method: "cod",
-                                      payment_status: "pending",
-                                    }
-                                  : order
-                              )
-                            );
-                          } else {
-                            window.location.href = response.data.payment_url;
-                          }
-                        } else {
-                          alert(
-                            response.data.message ||
-                              "Không thể thay đổi phương thức thanh toán"
-                          );
-                        }
-                      } catch (error) {
-                        console.error("Change payment method error:", error);
-                        alert(
-                          "Có lỗi xảy ra khi thay đổi phương thức thanh toán"
-                        );
-                      }
-                      setShowPaymentMethodModal(false);
-                      setSelectedOrder(null);
-                    }}
-                    className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
-                    Thanh Toán
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
+            ...
           )}
         </AnimatePresence>
+        */}
 
         {/* Modal Yêu Cầu Hoàn Tiền */}
         <AnimatePresence>

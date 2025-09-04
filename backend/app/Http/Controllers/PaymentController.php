@@ -38,23 +38,22 @@ class PaymentController extends Controller
                 ], 400);
             }
 
-            // Update order payment method
+            // Set payment method and start processing, set TTL
+            $ttlMinutes = config('payments.vnpay_ttl_minutes', 15);
+            $expiresAt = Carbon::now()->addMinutes($ttlMinutes);
             $order->update([
                 'payment_method' => 'vnpay',
-                'payment_status' => 'processing'
+                'payment_status' => 'processing',
+                // keep order status as pending until success
+                'payment_expires_at' => $expiresAt,
+                'cancellation_reason' => null,
             ]);
 
-            // Get client IP và đảm bảo IPv4 format
+            // Get client IP and ensure IPv4
             $ipAddr = $request->ip();
-
-            // Validate và convert IP nếu cần
             if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                // Nếu là IPv6 hoặc invalid, dùng IP mặc định
                 $ipAddr = '127.0.0.1';
             }
-
-            // Nếu đang test, có thể dùng IP cố định
-            // $ipAddr = "183.80.234.255"; // Uncomment nếu cần test
 
             // Create VNPay payment URL
             $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
@@ -62,7 +61,8 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'payment_url' => $paymentUrl,
-                'order_number' => $order->order_number
+                'order_number' => $order->order_number,
+                'payment_expires_at' => $expiresAt->toIso8601String(),
             ]);
 
         } catch (\Exception $e) {
@@ -94,7 +94,8 @@ class PaymentController extends Controller
             $vnp_Amount = $inputData['vnp_Amount'] / 100; // Convert back from VNPay format
 
             // Find order by order number (extract from vnp_TxnRef which may have timestamp suffix)
-            $orderNumber = explode('-', $vnp_TxnRef)[0] . '-' . explode('-', $vnp_TxnRef)[1]; // Get ORD-XXXXXXXX part
+            $parts = explode('-', $vnp_TxnRef);
+            $orderNumber = $parts[0] . '-' . $parts[1];
             $order = Order::where('order_number', $orderNumber)->first();
 
             if (!$order) {
@@ -102,6 +103,41 @@ class PaymentController extends Controller
                     'success' => false,
                     'message' => 'Order not found'
                 ], 404);
+            }
+
+            // If expired already and not paid, cancel
+            if (in_array($order->payment_status, ['pending', 'processing']) && $order->payment_expires_at && Carbon::now()->greaterThan($order->payment_expires_at)) {
+                // restore stock if not cancelled yet
+                if ($order->status !== 'cancelled') {
+                    foreach ($order->items as $item) {
+                        if ($item->variation_id) {
+                            $variation = \App\Models\BookVariation::find($item->variation_id);
+                            if ($variation) {
+                                $variation->increment('stock_quantity', $item->quantity);
+                            }
+                        } else {
+                            $book = \App\Models\Book::find($item->book_id);
+                            if ($book) {
+                                $book->increment('stock_quantity', $item->quantity);
+                            }
+                        }
+                    }
+                }
+
+                $order->update([
+                    'payment_status' => 'failed',
+                    'payment_details' => json_encode($inputData),
+                    'status' => 'cancelled',
+                    'cancellation_reason' => 'VNPay quá hạn thanh toán',
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment expired and order has been cancelled',
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'response_code' => 'EXPIRED'
+                ], 400);
             }
 
             // Process payment result
@@ -113,10 +149,10 @@ class PaymentController extends Controller
                     'payment_amount' => $vnp_Amount,
                     'payment_date' => Carbon::now(),
                     'payment_details' => json_encode($inputData),
-                    'status' => 'processing' // Update order status
+                    'status' => 'processing', // business rule: move to processing after paid
+                    'payment_expires_at' => null,
+                    'cancellation_reason' => null,
                 ]);
-
-                // NOTE: Do NOT decrement stock here because stock was already reserved (decremented) at order creation
 
                 Log::info('VNPay payment successful', [
                     'order_number' => $orderNumber,
@@ -152,7 +188,8 @@ class PaymentController extends Controller
                 $order->update([
                     'payment_status' => 'failed',
                     'payment_details' => json_encode($inputData),
-                    'status' => 'cancelled'
+                    'status' => 'cancelled',
+                    'cancellation_reason' => 'VNPay thanh toán thất bại',
                 ]);
 
                 Log::warning('VNPay payment failed', [
@@ -208,178 +245,26 @@ class PaymentController extends Controller
 
     public function retryVNPayPayment(Request $request, $orderId)
     {
-        try {
-            // Validate order exists and belongs to authenticated user
-            $order = Order::where('id', $orderId)
-                         ->where('user_id', Auth::user()->id)
-                         ->first();
-
-            if (!$order) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn.'
-                ], 404);
-            }
-
-            // Check if order can be retried
-            if (!$this->canRetryPayment($order)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng này không thể thanh toán lại.'
-                ], 400);
-            }
-
-            // Update payment method and status for retry (keep order status unchanged)
-            $order->update([
-                'payment_method' => 'vnpay',
-                'payment_status' => 'processing'
-            ]);
-
-            // Get client IP
-            $ipAddr = $request->ip();
-            if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                $ipAddr = '127.0.0.1';
-            }
-
-            // Create new VNPay payment URL
-            $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
-
-            Log::info('VNPay payment retry initiated', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'user_id' => Auth::user()->id
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'payment_url' => $paymentUrl,
-                'order_number' => $order->order_number,
-                'message' => 'Đã tạo liên kết thanh toán mới.'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('VNPay payment retry failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể tạo thanh toán mới: ' . $e->getMessage()
-            ], 500);
-        }
+        // Deprecated per new business rules: always return 410 Gone
+        return response()->json([
+            'success' => false,
+            'message' => 'Tính năng thanh toán lại đã bị vô hiệu hoá. Đơn hàng sẽ tự động huỷ khi quá hạn hoặc thất bại.'
+        ], 410);
     }
 
     public function changePaymentMethod(Request $request, $orderId)
     {
-        try {
-            $request->validate([
-                'payment_method' => 'required|in:cod,vnpay'
-            ]);
-
-            $order = Order::where('id', $orderId)
-                         ->where('user_id', Auth::user()->id)
-                         ->first();
-
-            if (!$order) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn.'
-                ], 404);
-            }
-
-            // Check if order can be retried
-            if (!$this->canRetryPayment($order)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đơn hàng này không thể thay đổi phương thức thanh toán.'
-                ], 400);
-            }
-
-            $paymentMethod = $request->payment_method;
-            
-            // Update order with new payment method
-            $updateData = [
-                'payment_method' => $paymentMethod
-                // Status will be set based on payment method below
-            ];
-
-            if ($paymentMethod === 'cod') {
-                // For COD, mark as paid immediately and keep order status as processing
-                $updateData['payment_status'] = 'completed';
-                $updateData['status'] = $order->status === 'cancelled' ? $order->status : 'processing';
-                $updateData['payment_amount'] = $order->total;
-                $updateData['payment_date'] = now();
-                
-                $order->update($updateData);
-
-                Log::info('Payment method changed to COD and marked as paid', [
-                    'order_id' => $orderId,
-                    'user_id' => Auth::user()->id,
-                    'new_method' => $paymentMethod
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đã chuyển sang thanh toán khi nhận hàng (COD) và đánh dấu đã thanh toán',
-                    'order_number' => $order->order_number,
-                    'payment_method' => $paymentMethod
-                ]);
-            } else if ($paymentMethod === 'vnpay') {
-                // For VNPay, generate new payment URL
-                $updateData['payment_status'] = 'processing';
-                $updateData['status'] = 'processing'; // VNPay requires immediate processing
-                $order->update($updateData);
-
-                // Get client IP
-                $ipAddr = $request->ip();
-                if (!filter_var($ipAddr, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                    $ipAddr = '127.0.0.1';
-                }
-
-                $paymentUrl = $this->vnpayService->createPaymentUrl($order, $ipAddr);
-
-                Log::info('Payment method changed to VNPay', [
-                    'order_id' => $orderId,
-                    'user_id' => Auth::user()->id,
-                    'new_method' => $paymentMethod
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'payment_url' => $paymentUrl,
-                    'message' => 'Đã chuyển sang thanh toán VNPay',
-                    'order_number' => $order->order_number,
-                    'payment_method' => $paymentMethod
-                ]);
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Change payment method failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể thay đổi phương thức thanh toán: ' . $e->getMessage()
-            ], 500);
-        }
+        // Deprecated per new business rules: always return 410 Gone
+        return response()->json([
+            'success' => false,
+            'message' => 'Tính năng thay đổi phương thức thanh toán đã bị loại bỏ.'
+        ], 410);
     }
 
     private function canRetryPayment($order)
     {
-        // Check if payment status is failed, pending, or processing (for VNPay timeout/error cases)
-        if (!in_array($order->payment_status, ['failed', 'pending', 'processing'])) {
-            return false;
-        }
-
-        // Check if order is not too old (24 hours)
-        $orderAge = Carbon::now()->diffInHours($order->created_at);
-        if ($orderAge > 24) {
-            return false;
-        }
-
-        // Check if order items are still available (optional - can be implemented later)
-        // foreach ($order->orderItems as $item) {
-        //     if ($item->product->stock < $item->quantity) {
-        //         return false;
-        //     }
-        // }
-
-        return true;
+        // Legacy method, kept for backward compatibility of code references if any
+        return false;
     }
 
     public function createVNPayPaymentUrl(Request $request)
@@ -397,7 +282,6 @@ class PaymentController extends Controller
 
             $paymentUrl = $this->vnpayService->createPaymentUrl($order, $request->ip());
 
-            // For API calls, return JSON
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -406,7 +290,6 @@ class PaymentController extends Controller
                 ]);
             }
 
-            // For direct browser access, redirect to VNPay
             return redirect($paymentUrl);
 
         } catch (\Exception $e) {
@@ -419,7 +302,6 @@ class PaymentController extends Controller
                 ], 500);
             }
 
-            // Dòng 222
             return redirect()->back()->with('error', 'Tạo thanh toán thất bại');
         }
     }

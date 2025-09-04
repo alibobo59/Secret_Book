@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, AlertTriangle, CreditCard, Package } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { api } from "../../services/api";
 
 const PaymentVNPayReturn = () => {
   const [status, setStatus] = useState("processing"); // processing, success, failed, error
   const [paymentData, setPaymentData] = useState(null);
-  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vnpay');
+
   const [orderNumber, setOrderNumber] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const location = useLocation();
@@ -132,62 +131,7 @@ const PaymentVNPayReturn = () => {
     }
   };
 
-  const handleRetry = () => {
-    navigate("/cart");
-  };
 
-  const handleRetryPayment = async () => {
-    if (!paymentData?.orderNumber) {
-      alert("Không tìm thấy thông tin đơn hàng");
-      return;
-    }
-
-    try {
-      // Extract order ID from order number or use a different approach
-      // For now, we'll need to get the order ID from the order number
-      const response = await api.post(`/payment/vnpay/retry/${paymentData.orderId || paymentData.orderNumber}`);
-      
-      if (response.data.success) {
-        // Redirect to VNPay payment URL
-        window.location.href = response.data.payment_url;
-      } else {
-        alert(response.data.message || "Không thể tạo thanh toán mới");
-      }
-    } catch (error) {
-      console.error("Retry payment error:", error);
-      alert("Có lỗi xảy ra khi tạo thanh toán mới");
-    }
-  };
-
-  const handleChangePaymentMethod = async () => {
-    if (!paymentData?.orderId && !paymentData?.orderNumber) {
-      alert('Không tìm thấy thông tin đơn hàng');
-      return;
-    }
-
-    try {
-      const response = await api.post(`/payment/change-method/${paymentData.orderId || paymentData.orderNumber}`, {
-        payment_method: selectedPaymentMethod
-      });
-      
-      if (response.data.success) {
-        if (selectedPaymentMethod === 'vnpay') {
-          // Redirect to VNPay payment URL
-          window.location.href = response.data.payment_url;
-        } else {
-          // For COD, show success message and redirect
-          alert(response.data.message);
-          navigate('/orders');
-        }
-      } else {
-        alert(response.data.message || 'Không thể thay đổi phương thức thanh toán');
-      }
-    } catch (error) {
-      console.error('Change payment method error:', error);
-      alert('Có lỗi xảy ra khi thay đổi phương thức thanh toán');
-    }
-    setShowPaymentMethodModal(false);
-  };
 
   if (status === "processing") {
     return (
@@ -280,13 +224,8 @@ const PaymentVNPayReturn = () => {
             {status === "failed" && (
               <>
                 <button
-                  onClick={() => setShowPaymentMethodModal(true)}
-                  className="btn-primary mb-3">
-                  Chọn phương thức thanh toán
-                </button>
-                <button
                   onClick={handleContinue}
-                  className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900">
+                  className="btn-primary">
                   Xem đơn hàng
                 </button>
               </>
@@ -303,63 +242,7 @@ const PaymentVNPayReturn = () => {
         </div>
       </div>
 
-      {/* Payment Method Selection Modal */}
-      {showPaymentMethodModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Chọn phương thức thanh toán
-            </h3>
-            
-            <div className="space-y-3 mb-6">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="vnpay"
-                  checked={selectedPaymentMethod === 'vnpay'}
-                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                  className="text-blue-600"
-                />
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-900 dark:text-white">VNPay (Thanh toán online)</span>
-                </div>
-              </label>
-              
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="cod"
-                  checked={selectedPaymentMethod === 'cod'}
-                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                  className="text-green-600"
-                />
-                <div className="flex items-center space-x-2">
-                  <Package className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-900 dark:text-white">COD (Thanh toán khi nhận hàng)</span>
-                </div>
-              </label>
-            </div>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowPaymentMethodModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleChangePaymentMethod}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 transition-colors"
-              >
-                Xác nhận
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal đổi phương thức thanh toán đã bị loại bỏ theo chính sách mới */}
     </div>
   );
 };

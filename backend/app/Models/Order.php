@@ -25,6 +25,8 @@ class Order extends Model
         'payment_amount',
         'payment_date',
         'payment_details',
+        'payment_expires_at',
+        'cancellation_reason',
     ];
 
     protected $casts = [
@@ -36,6 +38,7 @@ class Order extends Model
         'payment_amount' => 'decimal:2',
         'payment_date' => 'datetime',
         'payment_details' => 'array',
+        'payment_expires_at' => 'datetime',
     ];
 
     public function user()

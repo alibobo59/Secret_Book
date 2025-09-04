@@ -2,7 +2,8 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use App\Console\Commands\TestEmail;
+use Illuminate\Support\Facades\Schedule;
+use App\Console\Commands\CancelExpiredVNPayOrders;
 use App\Models\Book;
 use App\Models\BookEmbedding;
 
@@ -10,8 +11,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Register the TestEmail command
-// Artisan::command(TestEmail::class);
+// Schedule: hủy đơn VNPay quá hạn mỗi phút
+Schedule::command('orders:cancel-expired-vnpay')->everyMinute();
 
 // Backfill embeddings for all books
 Artisan::command('books:backfill-embeddings {--fresh : Xóa embeddings cũ trước khi tạo lại} {--missing : Chỉ tạo cho các sách chưa có embedding} {--only= : Danh sách ID sách, phân tách bằng dấu phẩy}', function () {

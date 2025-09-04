@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { api } from "../../services/api";
@@ -11,9 +11,12 @@ const PaymentVNPayReturn = () => {
   const [transactionId, setTransactionId] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const processedRef = useRef(false);
 
   useEffect(() => {
     const processPaymentResult = async () => {
+      if (processedRef.current) return; // guard against duplicate runs
+      processedRef.current = true;
       try {
         // Extract VNPay parameters from URL
         const urlParams = new URLSearchParams(location.search);
@@ -31,8 +34,8 @@ const PaymentVNPayReturn = () => {
           return;
         }
 
-        // Verify payment with backend
-        const response = await api.post("/payment/vnpay/verify", vnpayParams);
+        // Verify payment with backend (no retry)
+        const response = await api.post("/payment/vnpay/verify", vnpayParams, { noRetry: true });
 
         if (response.data.success) {
           // Payment verification successful, now process the result
@@ -43,9 +46,9 @@ const PaymentVNPayReturn = () => {
           setOrderNumber(vnp_TxnRef);
           setTransactionId(vnp_TransactionNo || "");
 
-          // Always call the return endpoint to update database
+          // Always call the return endpoint to update database (no retry)
           try {
-            const returnResponse = await api.post("/payment/vnpay/return", vnpayParams);
+            const returnResponse = await api.post("/payment/vnpay/return", vnpayParams, { noRetry: true });
             
             if (vnp_ResponseCode === "00") {
               setStatus("success");
@@ -207,42 +210,21 @@ const PaymentVNPayReturn = () => {
                 Có lỗi xảy ra
               </h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Không thể xác minh kết quả thanh toán
+                Không thể xác thực kết quả thanh toán. Vui lòng thử lại.
               </p>
             </>
           )}
 
-          <div className="mt-8 space-y-3">
-            {status === "success" && (
-              <button
-                onClick={handleContinue}
-                className="btn-primary">
-                Xem đơn hàng
-              </button>
-            )}
-
-            {status === "failed" && (
-              <>
-                <button
-                  onClick={handleContinue}
-                  className="btn-primary">
-                  Xem đơn hàng
-                </button>
-              </>
-            )}
-
-            {status === "error" && (
-              <button
-                onClick={handleContinue}
-                className="btn-primary">
-                Xem đơn hàng
-              </button>
-            )}
+          <div className="mt-8">
+            <button
+              onClick={handleContinue}
+              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Tiếp tục
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Modal đổi phương thức thanh toán đã bị loại bỏ theo chính sách mới */}
     </div>
   );
 };

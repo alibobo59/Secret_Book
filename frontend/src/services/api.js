@@ -43,6 +43,15 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // If no config or explicitly disabled retry, or VNPay payment endpoints -> do not retry
+    if (!config) {
+      return Promise.reject(error);
+    }
+    const url = typeof config.url === "string" ? config.url : "";
+    if (config.noRetry === true || /\/payment\/vnpay(\/|$)/.test(url)) {
+      return Promise.reject(error);
+    }
+
     // Initialize retry count
     config.retryCount = config.retryCount || 0;
 

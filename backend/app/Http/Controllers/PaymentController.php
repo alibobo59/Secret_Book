@@ -38,9 +38,23 @@ class PaymentController extends Controller
                 ], 400);
             }
 
-            // Set payment method and start processing, set TTL
-            $ttlMinutes = config('payments.vnpay_ttl_minutes', 15);
-            $expiresAt = Carbon::now()->addMinutes($ttlMinutes);
+            // Determine TTL without extending if already set and valid
+            $now = Carbon::now();
+            $expiresAt = null;
+            if ($order->payment_expires_at) {
+                if ($now->greaterThan($order->payment_expires_at)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Payment window has expired'
+                    ], 400);
+                }
+                $expiresAt = $order->payment_expires_at; // keep original TTL
+            } else {
+                $ttlMinutes = config('payments.vnpay_ttl_minutes', 15);
+                $expiresAt = $now->copy()->addMinutes($ttlMinutes);
+            }
+
+            // Set payment method and start processing
             $order->update([
                 'payment_method' => 'vnpay',
                 'payment_status' => 'processing',
@@ -62,7 +76,7 @@ class PaymentController extends Controller
                 'success' => true,
                 'payment_url' => $paymentUrl,
                 'order_number' => $order->order_number,
-                'payment_expires_at' => $expiresAt->toIso8601String(),
+                'payment_expires_at' => optional($expiresAt)->toIso8601String(),
             ]);
 
         } catch (\Exception $e) {
@@ -168,41 +182,44 @@ class PaymentController extends Controller
                     'transaction_id' => $vnp_TransactionNo
                 ]);
             } else {
-                // Payment failed - restore stock and cancel order if not already cancelled
-                if ($order->status !== 'cancelled') {
-                    foreach ($order->items as $item) {
-                        if ($item->variation_id) {
-                            $variation = \App\Models\BookVariation::find($item->variation_id);
-                            if ($variation) {
-                                $variation->increment('stock_quantity', $item->quantity);
-                            }
-                        } else {
-                            $book = \App\Models\Book::find($item->book_id);
-                            if ($book) {
-                                $book->increment('stock_quantity', $item->quantity);
-                            }
-                        }
-                    }
+                // If order already finalized, ignore failure callback
+                if (!in_array($order->payment_status, ['pending', 'processing']) || $order->status === 'cancelled') {
+                    Log::info('VNPay failure callback ignored for finalized order', [
+                        'order_number' => $orderNumber,
+                        'current_payment_status' => $order->payment_status,
+                        'current_status' => $order->status,
+                        'response_code' => $vnp_ResponseCode
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Order already finalized. No state change.',
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'current_payment_status' => $order->payment_status,
+                        'current_status' => $order->status,
+                    ]);
                 }
 
+                // Payment failed but NOT expired: do NOT cancel or restore stock; allow retry within TTL
                 $order->update([
-                    'payment_status' => 'failed',
+                    'payment_status' => 'pending', // revert to pending to allow retry via createVNPayPayment
                     'payment_details' => json_encode($inputData),
-                    'status' => 'cancelled',
-                    'cancellation_reason' => 'VNPay thanh toán thất bại',
+                    // keep status as-is, keep payment_expires_at unchanged, do not set cancellation_reason
                 ]);
 
-                Log::warning('VNPay payment failed', [
+                Log::warning('VNPay payment failed within TTL; order not cancelled', [
                     'order_number' => $orderNumber,
                     'response_code' => $vnp_ResponseCode
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Payment failed',
+                    'message' => 'Payment failed. You can retry before expiration.',
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'response_code' => $vnp_ResponseCode
+                    'response_code' => $vnp_ResponseCode,
+                    'payment_expires_at' => optional($order->payment_expires_at)->toIso8601String(),
                 ], 400);
             }
 
@@ -298,11 +315,11 @@ class PaymentController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Payment URL creation failed: ' . $e->getMessage()
+                    'message' => 'Failed to create VNPay payment URL'
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'Tạo thanh toán thất bại');
+            return back()->withErrors(['error' => 'Failed to create VNPay payment URL']);
         }
     }
 }

@@ -9,6 +9,15 @@ use App\Models\BookVariation;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+/*
+ * LƯU Ý VỀ LỊCH CHẠY (scheduler)
+ * - Lệnh này KHÔNG cấu hình tần suất ngay trong file này.
+ * - Tần suất được cấu hình tại routes/console.php, ví dụ:
+ *   Schedule::command('orders:cancel-expired-vnpay')->everyMinute();
+ * - Muốn thay đổi tần suất/cron, timezone, withoutOverlapping, onOneServer,
+ *   hãy sửa dòng trên ở routes/console.php, sau đó khởi động lại schedule:work (nếu đang chạy).
+ * - Dev/local: dùng `php artisan schedule:work`; Prod: cron gọi `php artisan schedule:run` mỗi phút.
+ */
 class CancelExpiredVNPayOrders extends Command
 {
     /**

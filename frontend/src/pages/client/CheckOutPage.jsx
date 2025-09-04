@@ -225,7 +225,7 @@ const CheckoutPage = () => {
         // Create VNPay payment
         const paymentResponse = await api.post("/payment/vnpay/create", {
           order_id: order.id,
-        });
+        }, { noRetry: true });
         window.location.href = paymentResponse.data.payment_url;
       } else {
         // COD - order is already created, just redirect to success

@@ -50,6 +50,76 @@ const OrderManagementPage = () => {
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
   // Countdown ticker for VNPay pending orders in detail modal
   const [now, setNow] = useState(Date.now());
+  // Track retrying state per order
+  const [retryingPaymentOrderId, setRetryingPaymentOrderId] = useState(null);
+
+  // Auto-tick every second for countdown updates
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Helpers for VNPay retry and TTL handling
+  const isVNPay = (order) => {
+    const pm = (order?.payment_method || order?.paymentMethod?.type || "").toString().toLowerCase();
+    return pm.includes("vnpay");
+  };
+
+  const getPaymentExpiry = (order) => {
+    const exp = order?.payment_expires_at || order?.paymentExpiresAt;
+    if (!exp) return null;
+    const t = new Date(exp).getTime();
+    return Number.isFinite(t) ? t : null;
+  };
+
+  const getRemainingMs = (order) => {
+    const exp = getPaymentExpiry(order);
+    if (!exp) return null;
+    return Math.max(0, exp - now);
+  };
+
+  const formatRemainingTime = (ms) => {
+    if (ms == null) return null;
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
+  const isPaymentRetryable = (order) => {
+    if (!order) return false;
+    if (!isVNPay(order)) return false;
+    const pStatus = order.payment_status || order.paymentStatus;
+    const inRetryableState = pStatus === "pending" || pStatus === "failed";
+    if (!inRetryableState) return false;
+    // Respect hard TTL if provided
+    const rem = getRemainingMs(order);
+    if (rem == null) return true; // if BE doesn't provide expiry, allow and let BE validate
+    return rem > 0;
+  };
+
+  const handleRetryVNPay = async (order) => {
+    if (!order) return;
+    try {
+      setRetryingPaymentOrderId(order.id);
+      const resp = await api.post("/payment/vnpay/create", { order_id: order.id }, { noRetry: true });
+      const url = resp?.data?.payment_url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        alert("Không thể tạo liên kết thanh toán. Vui lòng thử lại sau.");
+      }
+    } catch (err) {
+      console.error("Retry VNPay error:", err);
+      const msg = err?.response?.data?.message || "Không thể tạo lại thanh toán VNPay. Có thể đã hết hạn.";
+      alert(msg);
+    } finally {
+      setRetryingPaymentOrderId(null);
+    }
+  };
 
   // Hàm để định dạng các thuộc tính biến thể từ backend
   const formatVariationAttributes = (attributes) => {
@@ -602,6 +672,15 @@ const OrderManagementPage = () => {
                           : order.status.charAt(0).toUpperCase() +
                             order.status.slice(1)}
                       </span>
+                      {(() => {
+                        const ms = getRemainingMs(order);
+                        return isPaymentRetryable(order) && ms != null && ms > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                            <Clock className="h-3 w-3" />
+                            Còn {formatRemainingTime(ms)}
+                          </span>
+                        ) : null;
+                      })()}
                       <span className="text-lg font-bold text-gray-800 dark:text-white">
                         {formatCurrency(order.total)}
                       </span>
@@ -683,6 +762,18 @@ const OrderManagementPage = () => {
                     {order.payment_status === "failed" && (
                       // Nút đổi phương thức thanh toán đã bị gỡ bỏ theo chính sách mới
                       <></>
+                    )}
+
+                    {isPaymentRetryable(order) && (
+                      <button
+                        onClick={() => handleRetryVNPay(order)}
+                        disabled={retryingPaymentOrderId === order.id}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:opacity-60">
+                        <CreditCard className="h-4 w-4" />
+                        {retryingPaymentOrderId === order.id
+                          ? "Đang mở VNPay..."
+                          : "Tiếp Tục Thanh Toán"}
+                      </button>
                     )}
 
                     {canCancelOrder(order) && (

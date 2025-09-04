@@ -31,9 +31,9 @@ export const BookProvider = ({ children }) => {
       setError(null);
 
       // Fetch all required data in parallel with individual error handling
-      const fetchWithTimeout = async (endpoint) => {
+      const fetchWithTimeout = async (endpoint, config = {}) => {
         try {
-          const response = await api.get(endpoint);
+          const response = await api.get(endpoint, config);
           return response;
         } catch (error) {
           console.error(`Error fetching ${endpoint}:`, error);
@@ -47,7 +47,8 @@ export const BookProvider = ({ children }) => {
         authorsResponse,
         publishersResponse,
       ] = await Promise.all([
-        fetchWithTimeout("/books"),
+        // Request ~300 books in one paginated response
+        fetchWithTimeout("/books", { params: { per_page: 300 } }),
         fetchWithTimeout("/categories"),
         fetchWithTimeout("/authors"),
         fetchWithTimeout("/publishers"),
